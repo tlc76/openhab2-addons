@@ -96,7 +96,7 @@ public class EBusHandler extends BaseThingHandler {
                     // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
-                thingStructureChanged();
+                // thingStructureChanged();
             }
         };
         r.run();

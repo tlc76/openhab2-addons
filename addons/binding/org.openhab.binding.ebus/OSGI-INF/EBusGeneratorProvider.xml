@@ -12,5 +12,6 @@
       <provide interface="org.eclipse.smarthome.core.thing.binding.ThingTypeProvider"/>
       <provide interface="org.openhab.binding.ebus.thing.EBusGenerator"/>
       <provide interface="org.eclipse.smarthome.config.core.ConfigDescriptionProvider"/>
+      <provide interface="org.eclipse.smarthome.core.thing.type.ChannelTypeProvider"/>
    </service>
 </scr:component>
