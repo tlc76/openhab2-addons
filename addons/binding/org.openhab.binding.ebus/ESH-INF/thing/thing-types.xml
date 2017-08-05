@@ -7,7 +7,7 @@
 	<!-- Sample Thing Type -->
 	<thing-type id="sample">
 		<label>eBus Binding Thing</label>
-		<description>Sample thing for eBus Binding</description>
+		<description>Sample thing for EBus Binding</description>
 
 		<channels>
 			<channel id="channel1" typeId="sample-channel"/>
@@ -16,9 +16,18 @@
 
 	<!-- Sample Channel Type -->
 	<channel-type id="sample-channel">
-		<item-type>ebusItem</item-type>
-		<label>eBus Binding Channel</label>
-		<description>Sample channel for eBus Binding</description>
+		<item-type>Number</item-type>
+		<label>EBus Binding Channel</label>
+		<description>Sample channel for EBus Binding</description>
 	</channel-type>
+	
+    <channel-type id="temperature">
+        <item-type>Number</item-type>
+        <label>Temperature</label>
+        <description>Current temperature in degrees celsius</description>
+        <category>Temperature</category>
+        <state readOnly="true" pattern="%.1f °C">
+        </state>
+    </channel-type>
 
 </thing:thing-descriptions>
