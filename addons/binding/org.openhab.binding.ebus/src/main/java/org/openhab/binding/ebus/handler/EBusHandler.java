@@ -8,9 +8,10 @@
  */
 package org.openhab.binding.ebus.handler;
 
-import static org.openhab.binding.ebus.EBusBindingConstants.CHANNEL_1;
+import static org.openhab.binding.ebus.EBusBindingConstants.*;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -22,6 +23,7 @@ import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.ThingStatusDetail;
+import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
 import org.eclipse.smarthome.core.thing.binding.builder.ChannelBuilder;
 import org.eclipse.smarthome.core.thing.binding.builder.ThingBuilder;
@@ -110,6 +112,39 @@ public class EBusHandler extends BaseThingHandler {
         startAutomaticRefresh();
     }
 
+    @Override
+    protected void updateConfiguration(Configuration configuration) {
+        // TODO Auto-generated method stub
+        super.updateConfiguration(configuration);
+        System.out.println("EBusHandler.enclosing_method()");
+
+        xy(configuration);
+    }
+
+    @Override
+    protected void updateProperties(Map<String, String> properties) {
+        // TODO Auto-generated method stub
+        super.updateProperties(properties);
+        System.out.println("EBusHandler.updateProperties()");
+    }
+
+    @Override
+    public void handleConfigurationUpdate(Map<String, Object> configurationParameters) {
+        super.handleConfigurationUpdate(configurationParameters);
+        System.out.println("EBusHandler.handleConfigurationUpdate()");
+    }
+
+    protected void xy(Configuration configuration) {
+
+        ThingTypeUID thingTypeUID = new ThingTypeUID(BINDING_ID, "autotype1");
+        // ThingBuilder thingBuilder = ThingBuilder.create(this.getThing().getThingTypeUID(), this.getThing().getUID());
+        // updateThing(thingBuilder.build());
+
+        // Configuration configuration = new Configuration();
+
+        changeThingType(thingTypeUID, configuration);
+    }
+
     protected void thingStructureChanged() {
 
         // Prepare properties (convert modes map)
@@ -137,7 +172,10 @@ public class EBusHandler extends BaseThingHandler {
         // Channel channel = ChannelBuilder.create(x, "Number").withType(channelTypeUID).withLabel("DHW Temperature")
         // .withDescription("Meine Beschreibung").build();
 
+        ThingBuilder x = ThingBuilder.create(this.getThing().getThingTypeUID(), this.getThing().getUID());
+
         ThingBuilder thingBuilder = editThing();
+
         thingBuilder.withChannel(channel2);
 
         updateThing(thingBuilder.build());

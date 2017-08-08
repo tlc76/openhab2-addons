@@ -10,9 +10,11 @@ package org.openhab.binding.ebus.internal;
 
 import static org.openhab.binding.ebus.EBusBindingConstants.*;
 
+import org.eclipse.smarthome.config.core.Configuration;
 import org.eclipse.smarthome.core.thing.Bridge;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
+import org.eclipse.smarthome.core.thing.ThingUID;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandlerFactory;
 import org.eclipse.smarthome.core.thing.binding.ThingHandler;
 import org.openhab.binding.ebus.handler.EBusBridgeHandler;
@@ -40,6 +42,26 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory {
 
     }
 
+    @Override
+    protected Thing createThing(ThingTypeUID thingTypeUID, Configuration configuration, ThingUID thingUID) {
+        // TODO Auto-generated method stub
+        System.out.println("EBusHandlerFactory.createThing()1a");
+        return super.createThing(thingTypeUID, configuration, thingUID);
+    }
+
+    @Override
+    public Thing createThing(ThingTypeUID thingTypeUID, Configuration configuration, ThingUID thingUID,
+            ThingUID bridgeUID) {
+        // TODO Auto-generated method stub
+        System.out.println("EBusHandlerFactory.createThing()1b");
+
+        if (configuration.get("device") != null) {
+            thingTypeUID = new ThingTypeUID(BINDING_ID, "autotype1");
+        }
+
+        return super.createThing(thingTypeUID, configuration, thingUID, bridgeUID);
+    }
+
     public void unsetGenerator(EBusGenerator generator) {
         this.generator = null;
     }
@@ -49,7 +71,7 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory {
         ThingTypeUID thingTypeUID = thing.getThingTypeUID();
 
         if (thingTypeUID.equals(THING_TYPE_EBUS_BRIDGE)) {
-            return new EBusBridgeHandler((Bridge) thing);
+            return new EBusBridgeHandler((Bridge) thing, generator);
         }
 
         return new EBusHandler(thing);

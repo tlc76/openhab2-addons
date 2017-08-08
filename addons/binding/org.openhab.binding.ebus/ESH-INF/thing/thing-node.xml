@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<thing:thing-descriptions bindingId="ebus" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:thing="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0"
+	xsi:schemaLocation="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0 http://eclipse.org/smarthome/schemas/thing-description-1.0.0.xsd">
+
+	<!-- Sample Thing Type -->
+	<thing-type id="node">
+		<supported-bridge-type-refs>
+			<bridge-type-ref id="bridge" />
+		</supported-bridge-type-refs>
+
+		<label>eBus Node</label>
+		<description>Sample thing for EBus Binding</description>
+
+		<config-description>
+
+            <parameter name="device" type="text">
+                <label>Device</label>
+                <description>eBus Master Address as Hex value</description>
+                <default></default>
+                
+                <limitToOptions>false</limitToOptions>
+                <options>
+                    <option value="common">eBus Standard</option>
+                    <option value="wolf-cgb2">Wolf CGB2</option>
+                </options>
+            </parameter>
+
+			<parameter name="masterAddress" type="text">
+				<label>Master Address</label>
+				<description>eBus Master Address as Hex value</description>
+				<default>FF</default>
+			</parameter>
+
+			<parameter name="slaveAddress" type="text">
+				<label>Slave Address</label>
+				<description>eBus Slave Address as Hex value</description>
+				<default>04</default>
+			</parameter>
+
+		</config-description>
+
+	</thing-type>
+
+
+</thing:thing-descriptions>
