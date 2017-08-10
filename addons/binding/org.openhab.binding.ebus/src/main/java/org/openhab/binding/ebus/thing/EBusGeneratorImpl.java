@@ -5,7 +5,6 @@ import static org.openhab.binding.ebus.EBusBindingConstants.BINDING_ID;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -30,8 +29,7 @@ import org.eclipse.smarthome.core.types.StateDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Lists;
-
+import de.csdev.ebus.command.EBusCommandCollection;
 import de.csdev.ebus.command.IEBusCommand;
 import de.csdev.ebus.command.IEBusValue;
 
@@ -126,7 +124,7 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
 
     private ChannelType createChannelType(IEBusValue value, IEBusCommand command) {
 
-        String rid = "cid" + random.nextInt(1000);
+        // String rid = "cid" + random.nextInt(1000);
 
         if (StringUtils.isNotEmpty(value.getName()) && StringUtils.isNotEmpty(command.getId())) {
 
@@ -158,74 +156,45 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
         return null;
     }
 
-    public void init() {
+    public void initConfigDescriptions(List<EBusCommandCollection> collections) {
 
-        List<ParameterOption> options = Arrays.asList(new ParameterOption("a", "a"), new ParameterOption("b", "b"));
+        List<ParameterOption> options = new ArrayList<>();
 
-        String label = "labelx";
-        String description = "descriptionx";
+        // transform options
+        for (EBusCommandCollection collection : collections) {
+            options.add(new ParameterOption(collection.getId(), collection.getLabel()));
+        }
 
-        ConfigDescriptionParameter param = ConfigDescriptionParameterBuilder.create("device", Type.TEXT)
-                .withLabel("Devices").withOptions(options).build();
+        List<ConfigDescriptionParameter> parameters = new ArrayList<>();
 
-        List<ConfigDescriptionParameter> parameters = Arrays.asList(param);
+        parameters.add(ConfigDescriptionParameterBuilder.create("device", Type.TEXT).withLabel("Devices")
+                .withOptions(options).withMultiple(true).withLimitToOptions(true).build());
 
-        ConfigDescription n = new ConfigDescription(getURI("xx"), parameters);
+        parameters.add(ConfigDescriptionParameterBuilder.create("useStandardCommands", Type.BOOLEAN)
+                .withLabel("Use standard commands").withDescription("Use standard eBus commands").withRequired(true)
+                .withDefault("true").build());
 
-        configDescriptions.add(n);
+        parameters.add(
+                ConfigDescriptionParameterBuilder.create("masterAddress", Type.TEXT).withLabel("eBus Master Address")
+                        .withDescription("Master address of this node as HEX").withRequired(false).build());
 
-        // String name = "group";
-        // String context = null;
-        // Boolean advanced = false;
-        // String labelx = "labelx";
-        // String descriptionx = "descriptionx";
-        //
-        // ConfigDescriptionParameterGroup paramGroup = new ConfigDescriptionParameterGroup(name, context, advanced,
-        // labelx, descriptionx);
-        //
-        // parameters = Arrays.asList(param);
-        // groups = Arrays.asList(paramGroup);
-        //
-        // return new ConfigDescription(uri, parameters, groups);
+        parameters
+                .add(ConfigDescriptionParameterBuilder.create("slaveAddress", Type.TEXT).withLabel("eBus Slave Address")
+                        .withDescription("Slave address of this node as HEX").withRequired(false).build());
 
+        ConfigDescription n = new ConfigDescription(getURI("nodeConfiguration"), parameters);
+
+        configDescriptions.put(n.getUID(), n);
     }
 
-    // protected URI composeURI(String id) {
-    // try {
-    // return new URI(EBusBindingConstants.BINDING_ID + ":" + id);
-    // } catch (URISyntaxException e) {
-    // logger.error("error!", e);
-    // }
-    // return null;
-    // }
+    private void updateX(EBusCommandCollection collection) {
 
-    @SuppressWarnings("deprecation")
-    @Override
-    public void update(List<IEBusCommand> configurationList) {
-
-        channelGroupTypes.clear();
-        channelTypes.clear();
-        configDescriptions.clear();
-        thingTypes.clear();
-
-        init();
-
-        System.out.println("EBusGeneratorImpl.update()");
-
-        // ChannelDefinition cd = new ChannelDefinition("id", getChannelTypeUNID("channel5"), null, "label",
-        // "description");
-
-        List<ChannelDefinition> channelDefinitions = new ArrayList<>();
         List<ChannelGroupDefinition> channelGroupDefinitions = new ArrayList<>();
 
-        random = new Random();
+        for (IEBusCommand command : collection.getCommands()) {
 
-        // int nextInt = r.nextInt(1000);
-
-        for (IEBusCommand command : configurationList) {
-
-            channelDefinitions = Lists.newArrayList();
-            List<IEBusValue> list = Lists.newArrayList();
+            List<ChannelDefinition> channelDefinitions = new ArrayList<>();
+            List<IEBusValue> list = new ArrayList<>();
 
             if (command.getMasterTypes() != null && !command.getMasterTypes().isEmpty()) {
                 list.addAll(command.getMasterTypes());
@@ -240,7 +209,7 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
                     ChannelType channelType = createChannelType(value, command);
 
                     if (channelType != null) {
-                        channelTypes.add(channelType);
+                        channelTypes.put(channelType.getUID(), channelType);
 
                         ChannelDefinition cd = new ChannelDefinition(value.getName(), channelType.getUID(), null,
                                 value.getLabel(), null);
@@ -258,7 +227,7 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
 
                 ChannelGroupType cgt = new ChannelGroupType(groupTypeUID, false, command.getId(),
                         command.getDescription(), channelDefinitions);
-                channelGroupTypes.add(cgt);
+                channelGroupTypes.put(cgt.getUID(), cgt);
 
                 String cgdid = "cgdid" + random.nextInt(10000);
                 cgdid = command.getId().replace('.', '-') + "-" + command.getType();
@@ -271,10 +240,11 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
 
         }
 
-        ThingTypeUID thingTypeUID = new ThingTypeUID(BINDING_ID, "autotype1");
+        ThingTypeUID thingTypeUID = new ThingTypeUID(BINDING_ID, collection.getId());
 
-        String label = "AutoType1";
-        String description = "My desc";
+        String label = collection.getLabel();
+        String description = collection.getAsString("description");
+
         // List<ChannelDefinition> channelDefinitions = Arrays
         // .asList(new ChannelDefinition("cdfID", getChannelTypeUNID("channel5")));
         // List<ChannelDefinition> channelDefinitions = null;
@@ -283,20 +253,70 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
 
         // URI configDescriptionURI = getURI("a");
 
-        ArrayList channelDefinitions2 = new ArrayList<>();
+        ArrayList<ChannelDefinition> channelDefinitions2 = new ArrayList<>();
 
         ThingType thingType = new ThingType(thingTypeUID, supportedBridgeTypeUIDs, label, description,
-                channelDefinitions2, channelGroupDefinitions, null, getURI("xx"));
+                channelDefinitions2, channelGroupDefinitions, null, getURI("nodeConfiguration"));
 
-        thingTypes.add(thingType);
+        thingTypes.put(thingType.getUID(), thingType);
 
-        // label = "eBus Node";
-        // description = "eBus Node";
-        // thingTypeUID = new ThingTypeUID(BINDING_ID, "node");
-        // thingType = new ThingType(thingTypeUID, supportedBridgeTypeUIDs, label, description, null, null, null, null);
+    }
+
+    @Override
+    public void update(List<EBusCommandCollection> collections) {
+
+        random = new Random();
+        initConfigDescriptions(collections);
+
+        for (EBusCommandCollection collection : collections) {
+            updateX(collection);
+        }
         //
-        // thingTypes.add(thingType);
+        // // ChannelDefinition cd = new ChannelDefinition("id", getChannelTypeUNID("channel5"), null, "label",
+        // // "description");
+        //
+        // List<ChannelDefinition> channelDefinitions = new ArrayList<>();
+        // List<ChannelGroupDefinition> channelGroupDefinitions = new ArrayList<>();
+        //
 
+        //
+        // // int nextInt = r.nextInt(1000);
+        //
+        // ThingTypeUID thingTypeUID = new ThingTypeUID(BINDING_ID, "autotype1");
+        //
+        // String label = "AutoType1";
+        // String description = "My desc";
+        // // List<ChannelDefinition> channelDefinitions = Arrays
+        // // .asList(new ChannelDefinition("cdfID", getChannelTypeUNID("channel5")));
+        // // List<ChannelDefinition> channelDefinitions = null;
+        // // List<ChannelGroupDefinition> channelGroupDefinitions = Arrays
+        // // .asList(new ChannelGroupDefinition("id", getChannelGroupTypeUNID(command.getId())));
+        //
+        // // URI configDescriptionURI = getURI("a");
+        //
+        // ArrayList channelDefinitions2 = new ArrayList<>();
+        //
+        // ThingType thingType = new ThingType(thingTypeUID, supportedBridgeTypeUIDs, label, description,
+        // channelDefinitions2, channelGroupDefinitions, null, getURI("nodeConfiguration"));
+        //
+        // thingTypes.put(thingType.getUID(), thingType);
+        //
+        // // label = "eBus Node";
+        // // description = "eBus Node";
+        // // thingTypeUID = new ThingTypeUID(BINDING_ID, "node");
+        // // thingType = new ThingType(thingTypeUID, supportedBridgeTypeUIDs, label, description, null, null, null,
+        // null);
+        // //
+        // // thingTypes.add(thingType);
+
+    }
+
+    @Override
+    public void clear() {
+        channelGroupTypes.clear();
+        channelTypes.clear();
+        configDescriptions.clear();
+        thingTypes.clear();
     }
 
 }

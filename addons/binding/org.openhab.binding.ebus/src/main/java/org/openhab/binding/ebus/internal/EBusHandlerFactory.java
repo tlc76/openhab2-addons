@@ -55,9 +55,9 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory {
         // TODO Auto-generated method stub
         System.out.println("EBusHandlerFactory.createThing()1b");
 
-        if (configuration.get("device") != null) {
-            thingTypeUID = new ThingTypeUID(BINDING_ID, "autotype1");
-        }
+        // if (configuration.get("device") != null) {
+        // thingTypeUID = new ThingTypeUID(BINDING_ID, "autotype1");
+        // }
 
         return super.createThing(thingTypeUID, configuration, thingUID, bridgeUID);
     }

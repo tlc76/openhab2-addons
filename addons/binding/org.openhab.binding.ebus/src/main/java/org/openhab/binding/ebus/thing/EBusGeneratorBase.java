@@ -3,12 +3,12 @@ package org.openhab.binding.ebus.thing;
 import static org.openhab.binding.ebus.EBusBindingConstants.*;
 
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import org.eclipse.smarthome.config.core.ConfigDescription;
 import org.eclipse.smarthome.config.core.ConfigDescriptionProvider;
@@ -26,25 +26,19 @@ import de.csdev.ebus.command.IEBusValue;
 
 public class EBusGeneratorBase implements ThingTypeProvider, ChannelTypeProvider, ConfigDescriptionProvider {
 
-    protected Collection<ChannelGroupType> channelGroupTypes = new ArrayList<>();
+    protected Map<ChannelGroupTypeUID, ChannelGroupType> channelGroupTypes = new HashMap<>();
 
-    protected Collection<ChannelType> channelTypes = new ArrayList<>();
+    protected Map<ChannelTypeUID, ChannelType> channelTypes = new HashMap<>();
 
-    protected Collection<ConfigDescription> configDescriptions = new ArrayList<>();
+    protected Map<URI, ConfigDescription> configDescriptions = new HashMap<>();
 
     protected final List<String> supportedBridgeTypeUIDs = Arrays.asList(THING_TYPE_EBUS_BRIDGE.getAsString());
 
-    protected Collection<ThingType> thingTypes = new ArrayList<>();
+    protected Map<ThingTypeUID, ThingType> thingTypes = new HashMap<>();
 
     @Override
     public ChannelGroupType getChannelGroupType(ChannelGroupTypeUID channelGroupTypeUID, Locale locale) {
-        for (ChannelGroupType channelGroupType : channelGroupTypes) {
-            if (channelGroupType.getUID().equals(channelGroupTypeUID)) {
-                return channelGroupType;
-            }
-        }
-
-        return null;
+        return channelGroupTypes.get(channelGroupTypeUID);
     }
 
     protected ChannelTypeUID generateChannelTypeUID(IEBusCommand command, IEBusValue value) {
@@ -53,7 +47,7 @@ public class EBusGeneratorBase implements ThingTypeProvider, ChannelTypeProvider
 
     @Override
     public Collection<ChannelGroupType> getChannelGroupTypes(Locale locale) {
-        return Collections.unmodifiableCollection(channelGroupTypes);
+        return channelGroupTypes.values();
     }
 
     protected ChannelGroupTypeUID generateChannelGroupTypeUID(IEBusCommand command) {
@@ -62,48 +56,31 @@ public class EBusGeneratorBase implements ThingTypeProvider, ChannelTypeProvider
 
     @Override
     public ChannelType getChannelType(ChannelTypeUID channelTypeUID, Locale locale) {
-        for (ChannelType channelType : channelTypes) {
-            if (channelType.getUID().equals(channelTypeUID)) {
-                return channelType;
-            }
-        }
-
-        return null;
+        return channelTypes.get(channelTypeUID);
     }
 
     @Override
     public Collection<ChannelType> getChannelTypes(Locale locale) {
-        return Collections.unmodifiableCollection(channelTypes);
+        return channelTypes.values();
     }
 
     @Override
     public ConfigDescription getConfigDescription(URI uri, Locale locale) {
-        for (ConfigDescription configDescription : configDescriptions) {
-            if (configDescription.getUID().equals(uri)) {
-                return configDescription;
-            }
-        }
-        return null;
+        return configDescriptions.get(uri);
     }
 
     @Override
     public Collection<ConfigDescription> getConfigDescriptions(Locale locale) {
-        return configDescriptions;
+        return configDescriptions.values();
     }
 
     @Override
     public ThingType getThingType(ThingTypeUID thingTypeUID, Locale locale) {
-        for (ThingType thingType : thingTypes) {
-            if (thingType.getUID().equals(thingTypeUID)) {
-                return thingType;
-            }
-        }
-
-        return null;
+        return thingTypes.get(thingTypeUID);
     }
 
     @Override
     public Collection<ThingType> getThingTypes(Locale locale) {
-        return thingTypes;
+        return thingTypes.values();
     }
 }

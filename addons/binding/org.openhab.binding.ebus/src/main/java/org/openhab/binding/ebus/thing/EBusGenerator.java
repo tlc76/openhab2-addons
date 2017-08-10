@@ -2,10 +2,12 @@ package org.openhab.binding.ebus.thing;
 
 import java.util.List;
 
-import de.csdev.ebus.command.IEBusCommand;
+import de.csdev.ebus.command.EBusCommandCollection;
 
 public interface EBusGenerator {
 
-    public void update(List<IEBusCommand> configurationList);
+    public void clear();
+
+    public void update(List<EBusCommandCollection> collections);
 
 }

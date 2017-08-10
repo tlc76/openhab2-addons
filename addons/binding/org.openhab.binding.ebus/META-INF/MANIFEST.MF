@@ -15,6 +15,7 @@ Import-Package:
  de.csdev.ebus.core.connection,
  de.csdev.ebus.service.parser,
  de.csdev.ebus.utils,
+ org.apache.commons.io;version="2.2.0",
  org.apache.commons.lang;version="2.6.0",
  org.eclipse.smarthome.config.core,
  org.eclipse.smarthome.core.library.types,

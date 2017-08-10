@@ -15,20 +15,30 @@
         
         <config-description>
         
-            <parameter name="ipAddress" type="text">
-                <context>network_address</context>
-                <label>Network Address</label>
-                <description>Network address of the eBus bridge.</description>
-                <required>false</required>
-            </parameter>
+            <parameter-group name="network" >
+                <label>Network connection</label>
+                <description>Please configure network either serial, not both!</description>
+            </parameter-group>
             
-            <parameter name="port" type="integer">
-                <label>Network Port</label>
-                <description>Network address of the eBus bridge.</description>
-                <required>false</required>
-            </parameter>
+            <parameter-group name="serial" >
+                <label>Serial connection</label>
+                <description>Please configure network either serial, not both!</description>
+            </parameter-group>
+        
+             <parameter name="ipAddress" type="text" groupName="network">
+                 <context>network_address</context>
+                 <label>Network Address</label>
+                 <description>Network address of the eBus bridge.</description>
+                 <required>false</required>
+             </parameter>
+             
+             <parameter name="port" type="integer" groupName="network">
+                 <label>Network Port</label>
+                 <description>Serial port like COM1 or /ttyUSB1</description>
+                 <required>false</required>
+             </parameter>
             
-            <parameter name="serialPort" type="text">
+            <parameter name="serialPort" type="text" groupName="serial">
                 <label>Serial Port</label>
                 <description>
                     Name of a registered hue bridge user, that allows to access the API.
@@ -37,10 +47,17 @@
             </parameter>
             
             <parameter name="masterAddress" type="text">
+                <advanced>true</advanced>
                 <label>eBus Master Address</label>
-                <description>Seconds between fetching values from the Bridge.</description>
+                <description>Master address of this bridge as HEX</description>
                 <required>true</required>
                 <default>FF</default>
+            </parameter>
+            
+            <parameter name="customParsersUrl" type="text">
+                <advanced>true</advanced>
+                <label>Custom Parsers URL</label>
+                <description>Starts with file:// or http:// etc.., use comma as delimiter</description>
             </parameter>
             
         </config-description>

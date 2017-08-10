@@ -11,7 +11,6 @@ package org.openhab.binding.ebus.handler;
 import static org.openhab.binding.ebus.EBusBindingConstants.*;
 
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -121,27 +120,8 @@ public class EBusHandler extends BaseThingHandler {
         xy(configuration);
     }
 
-    @Override
-    protected void updateProperties(Map<String, String> properties) {
-        // TODO Auto-generated method stub
-        super.updateProperties(properties);
-        System.out.println("EBusHandler.updateProperties()");
-    }
-
-    @Override
-    public void handleConfigurationUpdate(Map<String, Object> configurationParameters) {
-        super.handleConfigurationUpdate(configurationParameters);
-        System.out.println("EBusHandler.handleConfigurationUpdate()");
-    }
-
     protected void xy(Configuration configuration) {
-
         ThingTypeUID thingTypeUID = new ThingTypeUID(BINDING_ID, "autotype1");
-        // ThingBuilder thingBuilder = ThingBuilder.create(this.getThing().getThingTypeUID(), this.getThing().getUID());
-        // updateThing(thingBuilder.build());
-
-        // Configuration configuration = new Configuration();
-
         changeThingType(thingTypeUID, configuration);
     }
 

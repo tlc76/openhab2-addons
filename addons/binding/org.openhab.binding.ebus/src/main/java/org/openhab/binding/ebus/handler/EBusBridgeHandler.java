@@ -13,6 +13,8 @@ import static org.openhab.binding.ebus.EBusBindingConstants.CHANNEL_1;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -31,7 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import de.csdev.ebus.cfg.ConfigurationReader;
 import de.csdev.ebus.client.EBusClient;
-import de.csdev.ebus.command.EBusCommand;
+import de.csdev.ebus.command.EBusCommandCollection;
 import de.csdev.ebus.command.EBusCommandRegistry;
 import de.csdev.ebus.command.IEBusCommand;
 import de.csdev.ebus.core.EBusConnectorEventListener;
@@ -125,34 +127,27 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
         reader = new ConfigurationReader();
         reader.setEBusTypes(client.getDataTypes());
 
-        loadConfiguration(EBusController.class.getResourceAsStream("/commands/common-configuration.json"));
-        loadConfiguration(EBusController.class.getResourceAsStream("/commands/wolf-cgb2-configuration.json"));
-        List<IEBusCommand> configurationList = client.getConfigurationProvider().getConfigurationList();
-        generator.update(configurationList);
+        HashMap<String, String> deviceConfigurations = new HashMap<>();
+        deviceConfigurations.put("common", "eBus Standard");
+        deviceConfigurations.put("wolf-cgb2", "Wolf CGB2");
+        deviceConfigurations.put("wolf-sm1", "Wolf SM1");
 
-        boolean disableX = true;
-        if (disableX) {
-            controller.addEBusEventListener(this);
-            // controller.addEBusEventListener(new EBusConnectorEventListener() {
-            // @Override
-            // public void onTelegramReceived(byte[] receivedData, Integer sendQueueId) {
-            // if (EBusBridgeHandler.this.getBridge().getStatus().equals(ThingStatus.INITIALIZING)) {
-            // // set status to online if we are able to receive valid telegrams
-            // updateStatus(ThingStatus.ONLINE);
-            // }
-            // }
-            //
-            // @Override
-            // public void onTelegramException(EBusDataException exception, Integer sendQueueId) {
-            // // noop
-            // }
-            //
-            // @Override
-            // public void onConnectionException(Exception e) {
-            // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, e.getMessage());
-            // }
-            // });
+        List<EBusCommandCollection> collections = new ArrayList<>();
+
+        for (Entry<String, String> entry : deviceConfigurations.entrySet()) {
+            String configPath = "/commands/" + entry.getKey() + "-configuration.json";
+            EBusCommandCollection collection = loadConfiguration(EBusController.class.getResourceAsStream(configPath));
+            if (collection != null) {
+                collections.add(collection);
+            }
         }
+
+        generator.update(collections);
+
+        // loadConfiguration(EBusController.class.getResourceAsStream("/commands/common-configuration.json"));
+        // loadConfiguration(EBusController.class.getResourceAsStream("/commands/wolf-cgb2-configuration.json"));
+        // List<IEBusCommand> configurationList = client.getConfigurationProvider().getConfigurationList();
+        // generator.update(configurationList);
 
         // controller.addEBusEventListener(this);
         client.getResolverService().addEBusParserListener(this);
@@ -163,17 +158,21 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
         // controller.start();
     }
 
-    private void loadConfiguration(InputStream is) {
+    private EBusCommandCollection loadConfiguration(InputStream is) {
+
+        EBusCommandCollection collection = null;
         try {
 
             EBusCommandRegistry provider = client.getConfigurationProvider();
 
-            List<EBusCommand> list = reader.loadConfiguration(is);
-            provider.addTelegramConfigurationList(list);
+            collection = reader.loadConfigurationCollection(is);
+            provider.addTelegramConfigurationList(collection.getCommands());
 
         } catch (IOException e) {
             logger.error("error!", e);
         }
+
+        return collection;
     }
 
     @Override
