@@ -9,36 +9,10 @@
 			<bridge-type-ref id="bridge" />
 		</supported-bridge-type-refs>
 
-		<label>eBus Node</label>
+		<label>eBus Generic Node</label>
 		<description>Sample thing for EBus Binding</description>
 
-		<config-description>
-
-            <parameter name="device" type="text">
-                <label>Device</label>
-                <description>eBus Master Address as Hex value</description>
-                <default></default>
-                
-                <limitToOptions>false</limitToOptions>
-                <options>
-                    <option value="common">eBus Standard</option>
-                    <option value="wolf-cgb2">Wolf CGB2</option>
-                </options>
-            </parameter>
-
-			<parameter name="masterAddress" type="text">
-				<label>Master Address</label>
-				<description>eBus Master Address as Hex value</description>
-				<default>FF</default>
-			</parameter>
-
-			<parameter name="slaveAddress" type="text">
-				<label>Slave Address</label>
-				<description>eBus Slave Address as Hex value</description>
-				<default>04</default>
-			</parameter>
-
-		</config-description>
+		<config-description uri="ebus:nodeConfiguration" />
 
 	</thing-type>
 

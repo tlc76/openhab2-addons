@@ -9,7 +9,7 @@
 			<bridge-type-ref id="bridge" />
 		</supported-bridge-type-refs>
 
-		<label>Wolf CGB2</label>
+		<label>STATIC Wolf CGB2</label>
 		<description>Sample thing for EBus Binding</description>
 
 		<channel-groups>
@@ -136,10 +136,7 @@
 		
 		<state readOnly="true" pattern="%.1f °C">
 		</state>
-		
 
-		
-		
 		<config-description>
 			<parameter name="polling" type="integer">
 				<label>Polling</label>

@@ -23,6 +23,7 @@ import org.apache.commons.lang.StringUtils;
 import org.eclipse.smarthome.config.core.Configuration;
 import org.eclipse.smarthome.core.thing.Bridge;
 import org.eclipse.smarthome.core.thing.ChannelUID;
+import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.thing.binding.BaseBridgeHandler;
@@ -35,7 +36,7 @@ import de.csdev.ebus.cfg.ConfigurationReader;
 import de.csdev.ebus.client.EBusClient;
 import de.csdev.ebus.command.EBusCommandCollection;
 import de.csdev.ebus.command.EBusCommandRegistry;
-import de.csdev.ebus.command.IEBusCommand;
+import de.csdev.ebus.command.IEBusCommandChannel;
 import de.csdev.ebus.core.EBusConnectorEventListener;
 import de.csdev.ebus.core.EBusController;
 import de.csdev.ebus.core.EBusDataException;
@@ -186,13 +187,18 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
         }
     }
 
-    private void updateValue() {
-        // updateState(new ChannelUID(getThing().getUID(), "CHANNEL_TEMPERATURE"), getTemperature());
-    }
-
     @Override
-    public void onTelegramResolved(IEBusCommand command, Map<String, Object> result, byte[] receivedData,
+    public void onTelegramResolved(IEBusCommandChannel commandChannel, Map<String, Object> result, byte[] receivedData,
             Integer sendQueueId) {
+
+        Byte sourceAddress = commandChannel.getSourceAddress();
+        // Byte destinationAddress = command.getDestinationAddress();
+
+        for (Thing thing : this.getBridge().getThings()) {
+            thing.getConfiguration().get("");
+        }
+
+        // this.updateState(channelUID, state);
 
         for (Entry<String, Object> resultEntry : result.entrySet()) {
             // command.getMasterTypes().
