@@ -115,9 +115,9 @@ public class EBusHandler extends BaseThingHandler {
     protected void updateConfiguration(Configuration configuration) {
         // TODO Auto-generated method stub
         super.updateConfiguration(configuration);
-        System.out.println("EBusHandler.enclosing_method()");
-
-        xy(configuration);
+        // System.out.println("EBusHandler.enclosing_method()");
+        //
+        // xy(configuration);
     }
 
     protected void xy(Configuration configuration) {

@@ -6,6 +6,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
@@ -16,6 +17,7 @@ import org.eclipse.smarthome.config.core.ConfigDescriptionParameter;
 import org.eclipse.smarthome.config.core.ConfigDescriptionParameter.Type;
 import org.eclipse.smarthome.config.core.ConfigDescriptionParameterBuilder;
 import org.eclipse.smarthome.config.core.ParameterOption;
+import org.eclipse.smarthome.core.library.CoreItemFactory;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.thing.type.ChannelDefinition;
 import org.eclipse.smarthome.core.thing.type.ChannelGroupDefinition;
@@ -55,6 +57,7 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
             ChannelTypeUID uid = generateChannelTypeUID(mainChannel.getParent(), value);
 
             IEBusCommandChannel commandChannelSet = mainChannel.getParent().getCommandChannel(IEBusCommand.Type.SET);
+            Map<String, Object> valueProperties = value.getProperties();
             boolean readOnly = commandChannelSet == null;
 
             List<StateOption> options = null;
@@ -66,7 +69,7 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
             }
 
             boolean advanced = false;
-            String itemType = options != null ? "String" : "Number";
+            String itemType = options != null ? CoreItemFactory.STRING : CoreItemFactory.NUMBER;
             ChannelKind kind = ChannelKind.STATE;
             String label = StringUtils.defaultIfEmpty(value.getLabel(), value.getName());
             String description = "My Description";
@@ -76,7 +79,9 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
             EventDescription event = null;
             URI configDescriptionURI = null;
 
-            state = new StateDescription(value.getMax(), value.getMin(), value.getStep(), null, readOnly, options);
+            String pattern = value.getFormat();
+
+            state = new StateDescription(value.getMax(), value.getMin(), value.getStep(), pattern, readOnly, options);
 
             return new ChannelType(uid, advanced, itemType, kind, label, description, category, tags, state, event,
                     configDescriptionURI);
@@ -173,8 +178,10 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
                 // ChannelGroupTypeUID typeUID = getChannelGroupTypeUID(command.getId())
                 ChannelGroupTypeUID groupTypeUID = generateChannelGroupTypeUID(command);
 
+                @SuppressWarnings("deprecation")
                 ChannelGroupType cgt = new ChannelGroupType(groupTypeUID, false, command.getId(),
                         command.getDescription(), channelDefinitions);
+
                 channelGroupTypes.put(cgt.getUID(), cgt);
 
                 String cgdid = "cgdid" + random.nextInt(10000);
@@ -193,21 +200,12 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
         String label = collection.getLabel();
         String description = collection.getAsString("description");
 
-        // List<ChannelDefinition> channelDefinitions = Arrays
-        // .asList(new ChannelDefinition("cdfID", getChannelTypeUNID("channel5")));
-        // List<ChannelDefinition> channelDefinitions = null;
-        // List<ChannelGroupDefinition> channelGroupDefinitions = Arrays
-        // .asList(new ChannelGroupDefinition("id", getChannelGroupTypeUNID(command.getId())));
-
-        // URI configDescriptionURI = getURI("a");
-
         ArrayList<ChannelDefinition> channelDefinitions2 = new ArrayList<>();
 
         ThingType thingType = new ThingType(thingTypeUID, supportedBridgeTypeUIDs, label, description,
                 channelDefinitions2, channelGroupDefinitions, null, EBusBindingConstants.CONFIG_DESCRIPTION_URI_THING);
 
         thingTypes.put(thingType.getUID(), thingType);
-
     }
 
     @Override
@@ -219,43 +217,6 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
         for (EBusCommandCollection collection : collections) {
             updateX(collection);
         }
-        //
-        // // ChannelDefinition cd = new ChannelDefinition("id", getChannelTypeUNID("channel5"), null, "label",
-        // // "description");
-        //
-        // List<ChannelDefinition> channelDefinitions = new ArrayList<>();
-        // List<ChannelGroupDefinition> channelGroupDefinitions = new ArrayList<>();
-        //
-
-        //
-        // // int nextInt = r.nextInt(1000);
-        //
-        // ThingTypeUID thingTypeUID = new ThingTypeUID(BINDING_ID, "autotype1");
-        //
-        // String label = "AutoType1";
-        // String description = "My desc";
-        // // List<ChannelDefinition> channelDefinitions = Arrays
-        // // .asList(new ChannelDefinition("cdfID", getChannelTypeUNID("channel5")));
-        // // List<ChannelDefinition> channelDefinitions = null;
-        // // List<ChannelGroupDefinition> channelGroupDefinitions = Arrays
-        // // .asList(new ChannelGroupDefinition("id", getChannelGroupTypeUNID(command.getId())));
-        //
-        // // URI configDescriptionURI = getURI("a");
-        //
-        // ArrayList channelDefinitions2 = new ArrayList<>();
-        //
-        // ThingType thingType = new ThingType(thingTypeUID, supportedBridgeTypeUIDs, label, description,
-        // channelDefinitions2, channelGroupDefinitions, null, getURI("nodeConfiguration"));
-        //
-        // thingTypes.put(thingType.getUID(), thingType);
-        //
-        // // label = "eBus Node";
-        // // description = "eBus Node";
-        // // thingTypeUID = new ThingTypeUID(BINDING_ID, "node");
-        // // thingType = new ThingType(thingTypeUID, supportedBridgeTypeUIDs, label, description, null, null, null,
-        // null);
-        // //
-        // // thingTypes.add(thingType);
 
     }
 

@@ -21,13 +21,17 @@ import java.util.Map.Entry;
 
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.smarthome.config.core.Configuration;
+import org.eclipse.smarthome.core.library.CoreItemFactory;
+import org.eclipse.smarthome.core.library.types.DecimalType;
 import org.eclipse.smarthome.core.thing.Bridge;
+import org.eclipse.smarthome.core.thing.Channel;
 import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.thing.binding.BaseBridgeHandler;
 import org.eclipse.smarthome.core.types.Command;
+import org.openhab.binding.ebus.EBusBindingConstants;
 import org.openhab.binding.ebus.thing.EBusGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -145,18 +149,13 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
 
         generator.update(collections);
 
-        // loadConfiguration(EBusController.class.getResourceAsStream("/commands/common-configuration.json"));
-        // loadConfiguration(EBusController.class.getResourceAsStream("/commands/wolf-cgb2-configuration.json"));
-        // List<IEBusCommand> configurationList = client.getConfigurationProvider().getConfigurationList();
-        // generator.update(configurationList);
-
-        // controller.addEBusEventListener(this);
+        controller.addEBusEventListener(this);
         client.getResolverService().addEBusParserListener(this);
 
-        updateStatus(ThingStatus.ONLINE);
+        // updateStatus(ThingStatus.ONLINE);
 
         // start eBus controller
-        // controller.start();
+        controller.start();
     }
 
     private EBusCommandCollection loadConfiguration(InputStream is) {
@@ -191,29 +190,74 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
     public void onTelegramResolved(IEBusCommandChannel commandChannel, Map<String, Object> result, byte[] receivedData,
             Integer sendQueueId) {
 
-        Byte sourceAddress = commandChannel.getSourceAddress();
+        String sourceAddress = EBusUtils.toHexDumpString(receivedData[0]);
+        String targetAddress = EBusUtils.toHexDumpString(receivedData[1]);
         // Byte destinationAddress = command.getDestinationAddress();
 
-        for (Thing thing : this.getBridge().getThings()) {
-            thing.getConfiguration().get("");
+        logger.info("Received telegram from master address {} with command {}", sourceAddress,
+                commandChannel.getParent().getId());
+
+        if (getThing().getThings() != null) {
+
+            for (Thing thing : getThing().getThings()) {
+
+                String masterAddress = (String) thing.getConfiguration()
+                        .get(EBusBindingConstants.CONFIG_MASTER_ADDRESS);
+
+                String slaveAddress = (String) thing.getConfiguration().get(EBusBindingConstants.CONFIG_SLAVE_ADDRESS);
+
+                if (sourceAddress.equals(masterAddress) || targetAddress.equals(slaveAddress)) {
+
+                    logger.info("Found thing with master address {} or slave address {} ...", masterAddress,
+                            slaveAddress);
+
+                    for (Entry<String, Object> resultEntry : result.entrySet()) {
+
+                        ChannelUID m = new ChannelUID(thing.getUID(),
+                                commandChannel.getParent().getId().replace('.', '-'), resultEntry.getKey());
+
+                        Channel channel = thing.getChannel(m.getId());
+
+                        if ("solar-e1#e1".equals(m.getId())) {
+                            List<Channel> channels = thing.getChannels();
+                            System.out.println("EBusBridgeHandler.onTelegramResolved()");
+                        }
+
+                        logger.info("Try to find a channel with name {} ...", m.getId());
+
+                        if (channel != null) {
+                            logger.info("Found channel @ thing ...");
+                            if (channel.getAcceptedItemType().equals(CoreItemFactory.NUMBER)) {
+
+                                if (resultEntry.getValue() != null) {
+                                    this.updateState(channel.getUID(),
+                                            new DecimalType((BigDecimal) resultEntry.getValue()));
+                                }
+
+                            }
+                        }
+
+                    }
+
+                }
+            }
+
         }
-
-        // this.updateState(channelUID, state);
-
-        for (Entry<String, Object> resultEntry : result.entrySet()) {
-            // command.getMasterTypes().
-        }
-
-        // ChannelTypeUID uid = new ChannelTypeUID(
-        // BINDING_ID + ":" + command.getId().replace('.', ':') + ":" + value.getName());
     }
 
     @Override
     public void onTelegramReceived(byte[] receivedData, Integer sendQueueId) {
-        if (EBusBridgeHandler.this.getBridge().getStatus().equals(ThingStatus.INITIALIZING)) {
+        if (EBusBridgeHandler.this.getThing().getStatus().equals(ThingStatus.INITIALIZING)) {
             // set status to online if we are able to receive valid telegrams
             updateStatus(ThingStatus.ONLINE);
         }
+
+        // 6,7
+        if (receivedData[2] == (byte) 0x50 && receivedData[3] == (byte) 0x22 && receivedData[6] == (byte) 0x2B
+                && receivedData[7] == (byte) 0x0A) {
+            logger.debug(EBusUtils.toHexDumpString(receivedData).toString());
+        }
+
     }
 
     @Override
