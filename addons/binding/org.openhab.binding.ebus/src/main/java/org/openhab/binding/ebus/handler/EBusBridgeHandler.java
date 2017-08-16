@@ -23,6 +23,8 @@ import org.apache.commons.lang.StringUtils;
 import org.eclipse.smarthome.config.core.Configuration;
 import org.eclipse.smarthome.core.library.CoreItemFactory;
 import org.eclipse.smarthome.core.library.types.DecimalType;
+import org.eclipse.smarthome.core.library.types.OnOffType;
+import org.eclipse.smarthome.core.library.types.StringType;
 import org.eclipse.smarthome.core.thing.Bridge;
 import org.eclipse.smarthome.core.thing.Channel;
 import org.eclipse.smarthome.core.thing.ChannelUID;
@@ -194,8 +196,8 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
         String targetAddress = EBusUtils.toHexDumpString(receivedData[1]);
         // Byte destinationAddress = command.getDestinationAddress();
 
-        logger.info("Received telegram from master address {} with command {}", sourceAddress,
-                commandChannel.getParent().getId());
+        // logger.info("Received telegram from master address {} with command {}", sourceAddress,
+        // commandChannel.getParent().getId());
 
         if (getThing().getThings() != null) {
 
@@ -208,8 +210,8 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
 
                 if (sourceAddress.equals(masterAddress) || targetAddress.equals(slaveAddress)) {
 
-                    logger.info("Found thing with master address {} or slave address {} ...", masterAddress,
-                            slaveAddress);
+                    // logger.info("Found thing with master address {} or slave address {} ...", masterAddress,
+                    // slaveAddress);
 
                     for (Entry<String, Object> resultEntry : result.entrySet()) {
 
@@ -220,18 +222,37 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
 
                         if ("solar-e1#e1".equals(m.getId())) {
                             List<Channel> channels = thing.getChannels();
-                            System.out.println("EBusBridgeHandler.onTelegramResolved()");
+                            // System.out.println("EBusBridgeHandler.onTelegramResolved()");
                         }
 
-                        logger.info("Try to find a channel with name {} ...", m.getId());
+                        // logger.info("Try to find a channel with name {} ...", m.getId());
 
                         if (channel != null) {
-                            logger.info("Found channel @ thing ...");
+                            // logger.info("Found channel @ thing ...");
+
                             if (channel.getAcceptedItemType().equals(CoreItemFactory.NUMBER)) {
 
                                 if (resultEntry.getValue() != null) {
-                                    this.updateState(channel.getUID(),
-                                            new DecimalType((BigDecimal) resultEntry.getValue()));
+                                    if (resultEntry.getValue() instanceof BigDecimal) {
+                                        this.updateState(channel.getUID(),
+                                                new DecimalType((BigDecimal) resultEntry.getValue()));
+                                    } else {
+                                        logger.warn("Unexpected datatype {} for channel {} !",
+                                                resultEntry.getValue().getClass().getSimpleName(), m.getAsString());
+                                    }
+
+                                }
+
+                            } else if (channel.getAcceptedItemType().equals(CoreItemFactory.STRING)) {
+                                if (resultEntry.getValue() instanceof String) {
+                                    this.updateState(channel.getUID(), new StringType((String) resultEntry.getValue()));
+                                }
+
+                            } else if (channel.getAcceptedItemType().equals(CoreItemFactory.SWITCH)) {
+                                if (resultEntry.getValue() instanceof Boolean) {
+                                    boolean isOn = ((Boolean) resultEntry.getValue()).booleanValue();
+                                    this.updateState(channel.getUID(), isOn ? OnOffType.ON : OnOffType.OFF);
+                                    // OnOffType.OFF);
                                 }
 
                             }
@@ -253,15 +274,24 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
         }
 
         // 6,7
-        if (receivedData[2] == (byte) 0x50 && receivedData[3] == (byte) 0x22 && receivedData[6] == (byte) 0x2B
-                && receivedData[7] == (byte) 0x0A) {
-            logger.debug(EBusUtils.toHexDumpString(receivedData).toString());
+        if (receivedData[2] == (byte) 0x50 && receivedData[3] == (byte) 0x22 && receivedData[6] == (byte) 0xFB
+                && receivedData[7] == (byte) 0x02) {
+
+            logger.error(EBusUtils.toHexDumpString(receivedData).toString());
+
+        }
+
+        if (receivedData[2] == (byte) 0x07 && receivedData[3] == (byte) 0x00) {
+
+            logger.error(EBusUtils.toHexDumpString(receivedData).toString());
+
         }
 
     }
 
     @Override
     public void onTelegramException(EBusDataException exception, Integer sendQueueId) {
+        logger.error(exception.getLocalizedMessage());
         // noop
     }
 

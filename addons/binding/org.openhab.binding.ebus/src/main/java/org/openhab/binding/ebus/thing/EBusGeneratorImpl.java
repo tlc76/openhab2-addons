@@ -11,6 +11,7 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.smarthome.config.core.ConfigDescription;
 import org.eclipse.smarthome.config.core.ConfigDescriptionParameter;
@@ -34,9 +35,11 @@ import org.openhab.binding.ebus.EBusBindingConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.csdev.ebus.cfg.datatypes.EBusTypeBit;
 import de.csdev.ebus.command.EBusCommandCollection;
 import de.csdev.ebus.command.IEBusCommand;
 import de.csdev.ebus.command.IEBusCommandChannel;
+import de.csdev.ebus.command.IEBusNestedValue;
 import de.csdev.ebus.command.IEBusValue;
 
 public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerator {
@@ -68,8 +71,14 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
                 }
             }
 
+            String itemType = CoreItemFactory.NUMBER;
+            if (ArrayUtils.contains(value.getType().getSupportedTypes(), EBusTypeBit.BIT)) {
+                itemType = CoreItemFactory.SWITCH;
+            } else if (options != null) {
+                itemType = CoreItemFactory.STRING;
+            }
+
             boolean advanced = false;
-            String itemType = options != null ? CoreItemFactory.STRING : CoreItemFactory.NUMBER;
             ChannelKind kind = ChannelKind.STATE;
             String label = StringUtils.defaultIfEmpty(value.getLabel(), value.getName());
             String description = "My Description";
@@ -153,6 +162,15 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
                 if (mainChannel.getSlaveTypes() != null && !mainChannel.getSlaveTypes().isEmpty()) {
                     list.addAll(mainChannel.getSlaveTypes());
                 }
+
+                // now check for nested values
+                List<IEBusValue> childList = new ArrayList<IEBusValue>();
+                for (IEBusValue value : list) {
+                    if (value instanceof IEBusNestedValue) {
+                        childList.addAll(((IEBusNestedValue) value).getChildren());
+                    }
+                }
+                list.addAll(childList);
 
                 for (IEBusValue value : list) {
                     if (StringUtils.isNotEmpty(value.getName())) {
