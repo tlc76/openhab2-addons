@@ -75,7 +75,7 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
             if (ArrayUtils.contains(value.getType().getSupportedTypes(), EBusTypeBit.BIT)) {
                 itemType = CoreItemFactory.SWITCH;
             } else if (options != null) {
-                itemType = CoreItemFactory.STRING;
+                itemType = CoreItemFactory.NUMBER;
             }
 
             boolean advanced = false;
@@ -86,7 +86,7 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
             Set<String> tags = null;
             StateDescription state = null;
             EventDescription event = null;
-            URI configDescriptionURI = null;
+            URI configDescriptionURI = EBusBindingConstants.CONFIG_DESCRIPTION_URI_POLLING_CHANNEL;
 
             String pattern = value.getFormat();
 
@@ -126,7 +126,7 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
                 .withLabel("eBus Slave Address").withDescription("Slave address of this node as HEX")
                 .withRequired(false).build());
 
-        ConfigDescription n = new ConfigDescription(EBusBindingConstants.CONFIG_DESCRIPTION_URI_THING, parameters);
+        ConfigDescription n = new ConfigDescription(EBusBindingConstants.CONFIG_DESCRIPTION_URI_NODE, parameters);
 
         configDescriptions.put(n.getUID(), n);
     }
@@ -221,7 +221,7 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
         ArrayList<ChannelDefinition> channelDefinitions2 = new ArrayList<>();
 
         ThingType thingType = new ThingType(thingTypeUID, supportedBridgeTypeUIDs, label, description,
-                channelDefinitions2, channelGroupDefinitions, null, EBusBindingConstants.CONFIG_DESCRIPTION_URI_THING);
+                channelDefinitions2, channelGroupDefinitions, null, EBusBindingConstants.CONFIG_DESCRIPTION_URI_NODE);
 
         thingTypes.put(thingType.getUID(), thingType);
     }

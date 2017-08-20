@@ -42,6 +42,7 @@ public class EBusBindingConstants {
     public static final String CONFIG_SLAVE_ADDRESS = "slaveAddress";
 
     // configuration uris
-    public static final URI CONFIG_DESCRIPTION_URI_THING = EbusBindingUtils.getURI(BINDING_ID + ":nodeConfiguration");
-
+    public static final URI CONFIG_DESCRIPTION_URI_NODE = EbusBindingUtils.getURI(BINDING_ID + ":nodeConfiguration");
+    public static final URI CONFIG_DESCRIPTION_URI_POLLING_CHANNEL = EbusBindingUtils
+            .getURI(BINDING_ID + ":pollingChannel");
 }
