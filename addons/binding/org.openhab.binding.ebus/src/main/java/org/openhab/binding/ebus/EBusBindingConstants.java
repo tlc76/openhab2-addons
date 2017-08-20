@@ -40,6 +40,9 @@ public class EBusBindingConstants {
     public static final String CONFIG_USE_STANDARD_COMMANDS = "useStandardCommands";
     public static final String CONFIG_MASTER_ADDRESS = "masterAddress";
     public static final String CONFIG_SLAVE_ADDRESS = "slaveAddress";
+    public static final String CONFIG_POLLING = "polling";
+
+    public static final String PROPERTY_COMMAND = "command";
 
     // configuration uris
     public static final URI CONFIG_DESCRIPTION_URI_NODE = EbusBindingUtils.getURI(BINDING_ID + ":nodeConfiguration");

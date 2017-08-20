@@ -5,6 +5,7 @@ import static org.openhab.binding.ebus.EBusBindingConstants.BINDING_ID;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -60,7 +61,7 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
             ChannelTypeUID uid = generateChannelTypeUID(mainChannel.getParent(), value);
 
             IEBusCommandChannel commandChannelSet = mainChannel.getParent().getCommandChannel(IEBusCommand.Type.SET);
-            Map<String, Object> valueProperties = value.getProperties();
+            // Map<String, Object> valueProperties = value.getProperties();
             boolean readOnly = commandChannelSet == null;
 
             List<StateOption> options = null;
@@ -126,9 +127,24 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
                 .withLabel("eBus Slave Address").withDescription("Slave address of this node as HEX")
                 .withRequired(false).build());
 
-        ConfigDescription n = new ConfigDescription(EBusBindingConstants.CONFIG_DESCRIPTION_URI_NODE, parameters);
+        ConfigDescription configDescription = new ConfigDescription(EBusBindingConstants.CONFIG_DESCRIPTION_URI_NODE,
+                parameters);
 
-        configDescriptions.put(n.getUID(), n);
+        configDescriptions.put(configDescription.getUID(), configDescription);
+
+        // channel config
+
+        parameters = new ArrayList<>();
+        parameters.add(ConfigDescriptionParameterBuilder.create(EBusBindingConstants.CONFIG_POLLING, Type.DECIMAL)
+                .withUnit("s").withLabel("Polling")
+                .withDescription(
+                        "Set to poll this channel every n seconds. <br />All channels that are part of this group will also be polled!")
+                .withUnitLabel("Seconds").build());
+
+        configDescription = new ConfigDescription(EBusBindingConstants.CONFIG_DESCRIPTION_URI_POLLING_CHANNEL,
+                parameters);
+
+        configDescriptions.put(configDescription.getUID(), configDescription);
     }
 
     private void updateX(EBusCommandCollection collection) {
@@ -181,8 +197,11 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
                             logger.info("Add channel {} for type {}", channelType.getUID(), mainChannel.getType());
                             channelTypes.put(channelType.getUID(), channelType);
 
-                            ChannelDefinition cd = new ChannelDefinition(value.getName(), channelType.getUID(), null,
-                                    value.getLabel(), null);
+                            Map<String, String> properties = new HashMap<String, String>();
+                            properties.put(EBusBindingConstants.PROPERTY_COMMAND, command.getId());
+
+                            ChannelDefinition cd = new ChannelDefinition(value.getName(), channelType.getUID(),
+                                    properties, value.getLabel(), null);
 
                             logger.info("Add channel definition {}", value.getName());
                             channelDefinitions.add(cd);

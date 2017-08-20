@@ -10,27 +10,27 @@ package org.openhab.binding.ebus.handler;
 
 import static org.openhab.binding.ebus.EBusBindingConstants.*;
 
+import java.nio.ByteBuffer;
 import java.util.HashMap;
-import java.util.Random;
+import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.smarthome.config.core.Configuration;
-import org.eclipse.smarthome.core.library.types.DecimalType;
 import org.eclipse.smarthome.core.thing.Channel;
 import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingStatus;
-import org.eclipse.smarthome.core.thing.ThingStatusDetail;
-import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
-import org.eclipse.smarthome.core.thing.binding.builder.ChannelBuilder;
-import org.eclipse.smarthome.core.thing.binding.builder.ThingBuilder;
-import org.eclipse.smarthome.core.thing.type.ChannelTypeUID;
 import org.eclipse.smarthome.core.types.Command;
 import org.openhab.binding.ebus.EBusBindingConstants;
+import org.openhab.binding.ebus.internal.EBusLibClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import de.csdev.ebus.cfg.datatypes.EBusTypeException;
+import de.csdev.ebus.command.IEBusCommand.Type;
+import de.csdev.ebus.utils.EBusUtils;
 
 /**
  * The {@link EBusHandler} is responsible for handling commands, which are
@@ -41,26 +41,11 @@ import org.slf4j.LoggerFactory;
 public class EBusHandler extends BaseThingHandler {
 
     private final Logger logger = LoggerFactory.getLogger(EBusHandler.class);
-    private ScheduledFuture<?> refreshJob;
+
+    private Map<String, ScheduledFuture<?>> pollings = new HashMap<>();
 
     public EBusHandler(Thing thing) {
         super(thing);
-    }
-
-    private void startAutomaticRefresh() {
-        refreshJob = scheduler.scheduleAtFixedRate(() -> {
-            try {
-                String id = "aa";
-                Random rnd = new Random();
-
-                ChannelUID channelUID = new ChannelUID(getThing().getUID(), id + "-" + "deviceId");
-                updateState(channelUID, new DecimalType(rnd.nextInt(1000)));
-
-            } catch (Exception e) {
-                logger.debug("Exception occurred during execution: {}", e.getMessage(), e);
-                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.OFFLINE.COMMUNICATION_ERROR, e.getMessage());
-            }
-        }, 0, 10, TimeUnit.SECONDS);
     }
 
     @Override
@@ -77,7 +62,15 @@ public class EBusHandler extends BaseThingHandler {
 
     @Override
     public void dispose() {
-        refreshJob.cancel(true);
+        cancelPollingJobs();
+        // refreshJob.cancel(true);
+    }
+
+    private void cancelPollingJobs() {
+        for (ScheduledFuture<?> pollingJob : pollings.values()) {
+            pollingJob.cancel(true);
+        }
+        pollings.clear();
     }
 
     @Override
@@ -86,78 +79,52 @@ public class EBusHandler extends BaseThingHandler {
         // Long running initialization should be done asynchronously in background.
         updateStatus(ThingStatus.ONLINE);
 
-        Runnable r = new Runnable() {
-
-            @Override
-            public void run() {
-                // TODO Auto-generated method stub
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-                // thingStructureChanged();
-            }
-        };
-        r.run();
         // Note: When initialization can NOT be done set the status with more details for further
         // analysis. See also class ThingStatusDetail for all available status details.
         // Add a description to give user information to understand why thing does not work
         // as expected. E.g.
         // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
         // "Can not access device as username and/or password are invalid");
+    }
 
-        startAutomaticRefresh();
+    private EBusLibClient getLibClient() {
+        EBusBridgeHandler handler = (EBusBridgeHandler) getBridge().getHandler();
+        return handler.getLibClient();
     }
 
     @Override
-    protected void updateConfiguration(Configuration configuration) {
-        // TODO Auto-generated method stub
-        super.updateConfiguration(configuration);
-        // System.out.println("EBusHandler.enclosing_method()");
-        //
-        // xy(configuration);
-    }
+    public void thingUpdated(final Thing thing) {
+        super.thingUpdated(thing);
 
-    protected void xy(Configuration configuration) {
-        ThingTypeUID thingTypeUID = new ThingTypeUID(BINDING_ID, "autotype1");
-        changeThingType(thingTypeUID, configuration);
-    }
+        cancelPollingJobs();
 
-    protected void thingStructureChanged() {
+        final EBusLibClient libClient = getLibClient();
 
-        // Prepare properties (convert modes map)
-        HashMap<String, String> properties = new HashMap<String, String>();
+        for (final Channel channel : thing.getChannels()) {
+            Configuration configuration = channel.getConfiguration();
+            Object object = configuration.get(CONFIG_POLLING);
 
-        // Add node id (for refresh and command handling)
-        properties.put("nodeId", "nodeid123");
-        properties.put("nodeId", "nodeid123");
-        String id = "aa";
+            final String commandId = channel.getProperties().get(EBusBindingConstants.PROPERTY_COMMAND);
 
-        Configuration cfg = new Configuration();
-        cfg.put("pattern", "%.1f °C");
+            if (object instanceof Number) {
+                long pollingPeriod = ((Number) object).longValue();
+                try {
+                    final ByteBuffer telegram = libClient.grrr(commandId, Type.GET, thing);
+                    if (telegram != null) {
+                        pollings.put(channel.getUID().getId(), scheduler.scheduleAtFixedRate(() -> {
+                            logger.info("Poll command {} with {} ...", channel.getUID(),
+                                    EBusUtils.toHexDumpString(telegram).toString());
 
-        ChannelTypeUID channelTypeUID = new ChannelTypeUID(EBusBindingConstants.BINDING_ID, "temperature");
-        ChannelUID channelUID = new ChannelUID(getThing().getUID(), id + "-" + "deviceId");
+                            libClient.getClient().getController().addToSendQueue(telegram);
 
-        Channel channel2 = ChannelBuilder.create(channelUID, "Number").withType(channelTypeUID).withLabel("mylabel")
-                .withProperties(properties).build();
+                        }, 0, pollingPeriod, TimeUnit.SECONDS));
+                    }
 
-        // bindingId:type:thingId:1
-        // ChannelUID x = new ChannelUID(EBusBindingConstants.THING_EBUS, "temperature");
-        // x = new ChannelUID("ebus:sample:xxx:1");
-        // ChannelTypeUID channelTypeUID = new ChannelTypeUID("");
+                } catch (EBusTypeException e) {
+                    logger.error("error!", e);
+                }
 
-        // Channel channel = ChannelBuilder.create(x, "Number").withType(channelTypeUID).withLabel("DHW Temperature")
-        // .withDescription("Meine Beschreibung").build();
-
-        ThingBuilder x = ThingBuilder.create(this.getThing().getThingTypeUID(), this.getThing().getUID());
-
-        ThingBuilder thingBuilder = editThing();
-
-        thingBuilder.withChannel(channel2);
-
-        updateThing(thingBuilder.build());
+            }
+        }
     }
 }

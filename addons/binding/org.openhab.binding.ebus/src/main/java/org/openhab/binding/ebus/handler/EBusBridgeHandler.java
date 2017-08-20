@@ -10,12 +10,7 @@ package org.openhab.binding.ebus.handler;
 
 import static org.openhab.binding.ebus.EBusBindingConstants.CHANNEL_1;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -34,20 +29,14 @@ import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.thing.binding.BaseBridgeHandler;
 import org.eclipse.smarthome.core.types.Command;
 import org.openhab.binding.ebus.EBusBindingConstants;
+import org.openhab.binding.ebus.internal.EBusLibClient;
 import org.openhab.binding.ebus.thing.EBusGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.csdev.ebus.cfg.ConfigurationReader;
-import de.csdev.ebus.client.EBusClient;
-import de.csdev.ebus.command.EBusCommandCollection;
-import de.csdev.ebus.command.EBusCommandRegistry;
 import de.csdev.ebus.command.IEBusCommandChannel;
 import de.csdev.ebus.core.EBusConnectorEventListener;
-import de.csdev.ebus.core.EBusController;
 import de.csdev.ebus.core.EBusDataException;
-import de.csdev.ebus.core.connection.EBusTCPConnection;
-import de.csdev.ebus.core.connection.IEBusConnection;
 import de.csdev.ebus.service.parser.EBusParserListener;
 import de.csdev.ebus.utils.EBusUtils;
 
@@ -60,14 +49,18 @@ import de.csdev.ebus.utils.EBusUtils;
 public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserListener, EBusConnectorEventListener {
 
     private final Logger logger = LoggerFactory.getLogger(EBusBridgeHandler.class);
-    private EBusController controller;
-    private EBusClient client;
-    private ConfigurationReader reader;
+
+    private EBusLibClient libClient;
+
     private EBusGenerator generator;
 
     public EBusBridgeHandler(Bridge bridge, EBusGenerator generator) {
         super(bridge);
         this.generator = generator;
+    }
+
+    public EBusLibClient getLibClient() {
+        return libClient;
     }
 
     @Override
@@ -85,9 +78,10 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
     @Override
     public void initialize() {
 
+        libClient = new EBusLibClient();
         Configuration configuration = getThing().getConfiguration();
 
-        IEBusConnection connection = null;
+        // IEBusConnection connection = null;
         String ipAddress = null;
         BigDecimal port = null;
 
@@ -108,7 +102,7 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
         }
 
         if (StringUtils.isNotEmpty(ipAddress) && port != null) {
-            connection = new EBusTCPConnection(ipAddress, port.intValue());
+            libClient.setTCPConnection(ipAddress, port.intValue());
         }
 
         if (!EBusUtils.isMasterAddress(masterAddress)) {
@@ -118,73 +112,29 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
             return;
         }
 
-        if (connection == null) {
+        if (!libClient.isConnectionValid()) {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
                     "Network address and port must be set!");
 
             return;
         }
 
-        // load the eBus core element
-        controller = new EBusController(connection);
+        libClient.initClient(masterAddress);
+        libClient.getClient().getController().addEBusEventListener(this);
+        libClient.getClient().getResolverService().addEBusParserListener(this);
 
-        // load the high level client
-        client = new EBusClient(controller, masterAddress);
-
-        reader = new ConfigurationReader();
-        reader.setEBusTypes(client.getDataTypes());
-
-        HashMap<String, String> deviceConfigurations = new HashMap<>();
-        deviceConfigurations.put("common", "eBus Standard");
-        deviceConfigurations.put("wolf-cgb2", "Wolf CGB2");
-        deviceConfigurations.put("wolf-sm1", "Wolf SM1");
-
-        List<EBusCommandCollection> collections = new ArrayList<>();
-
-        for (Entry<String, String> entry : deviceConfigurations.entrySet()) {
-            String configPath = "/commands/" + entry.getKey() + "-configuration.json";
-            EBusCommandCollection collection = loadConfiguration(EBusController.class.getResourceAsStream(configPath));
-            if (collection != null) {
-                collections.add(collection);
-            }
-        }
-
-        generator.update(collections);
-
-        controller.addEBusEventListener(this);
-        client.getResolverService().addEBusParserListener(this);
-
-        // updateStatus(ThingStatus.ONLINE);
+        // transfer configuration information to generator
+        generator.update(libClient.getConfiguration());
 
         // start eBus controller
-        controller.start();
-    }
-
-    private EBusCommandCollection loadConfiguration(InputStream is) {
-
-        EBusCommandCollection collection = null;
-        try {
-
-            EBusCommandRegistry provider = client.getConfigurationProvider();
-
-            collection = reader.loadConfigurationCollection(is);
-            provider.addTelegramConfigurationList(collection.getCommands());
-
-        } catch (IOException e) {
-            logger.error("error!", e);
-        }
-
-        return collection;
+        libClient.startClient();
     }
 
     @Override
     public void dispose() {
-        if (controller != null && !controller.isInterrupted()) {
-            controller.interrupt();
-        }
-
-        if (client != null) {
-            client = null;
+        if (libClient != null) {
+            libClient.stopClient();
+            libClient = null;
         }
     }
 
@@ -220,10 +170,10 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
 
                         Channel channel = thing.getChannel(m.getId());
 
-                        if ("solar-e1#e1".equals(m.getId())) {
-                            List<Channel> channels = thing.getChannels();
-                            // System.out.println("EBusBridgeHandler.onTelegramResolved()");
-                        }
+                        // if ("solar-e1#e1".equals(m.getId())) {
+                        // List<Channel> channels = thing.getChannels();
+                        // // System.out.println("EBusBridgeHandler.onTelegramResolved()");
+                        // }
 
                         // logger.info("Try to find a channel with name {} ...", m.getId());
 
