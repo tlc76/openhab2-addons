@@ -34,7 +34,7 @@ import org.openhab.binding.ebus.thing.EBusGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.csdev.ebus.command.IEBusCommandChannel;
+import de.csdev.ebus.command.IEBusCommandMethod;
 import de.csdev.ebus.core.EBusConnectorEventListener;
 import de.csdev.ebus.core.EBusDataException;
 import de.csdev.ebus.service.parser.EBusParserListener;
@@ -139,7 +139,7 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
     }
 
     @Override
-    public void onTelegramResolved(IEBusCommandChannel commandChannel, Map<String, Object> result, byte[] receivedData,
+    public void onTelegramResolved(IEBusCommandMethod commandChannel, Map<String, Object> result, byte[] receivedData,
             Integer sendQueueId) {
 
         String sourceAddress = EBusUtils.toHexDumpString(receivedData[0]);

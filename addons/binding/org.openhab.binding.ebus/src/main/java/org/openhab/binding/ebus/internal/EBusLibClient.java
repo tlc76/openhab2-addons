@@ -15,16 +15,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.csdev.ebus.cfg.ConfigurationReader;
+import de.csdev.ebus.cfg.ConfigurationReaderException;
 import de.csdev.ebus.cfg.datatypes.EBusTypeException;
 import de.csdev.ebus.client.EBusClient;
 import de.csdev.ebus.command.EBusCommandCollection;
 import de.csdev.ebus.command.EBusCommandRegistry;
-import de.csdev.ebus.command.EBusCommandUtils;
-import de.csdev.ebus.command.IEBusCommand.Type;
-import de.csdev.ebus.command.IEBusCommandChannel;
+import de.csdev.ebus.command.IEBusCommandMethod;
 import de.csdev.ebus.core.EBusController;
 import de.csdev.ebus.core.connection.EBusTCPConnection;
-import de.csdev.ebus.service.device.EBusDevice;
 import de.csdev.ebus.utils.EBusUtils;
 
 public class EBusLibClient {
@@ -53,16 +51,17 @@ public class EBusLibClient {
         return connection != null;
     }
 
-    public ByteBuffer grrr(String commandId, Type type, Thing targetThing) throws EBusTypeException {
+    public ByteBuffer grrr(String commandId, IEBusCommandMethod.Method type, Thing targetThing)
+            throws EBusTypeException {
 
-        EBusDevice ownDevice = client.getDeviceTable().getOwnDevice();
-        // String masterAddress = (String)
-        // targetThing.getConfiguration().get(EBusBindingConstants.CONFIG_MASTER_ADDRESS);
         String slaveAddress = (String) targetThing.getConfiguration().get(EBusBindingConstants.CONFIG_SLAVE_ADDRESS);
 
-        IEBusCommandChannel commandChannel = client.getConfigurationProvider().getConfigurationById(commandId, type);
+        IEBusCommandMethod commandMethod = client.getConfigurationProvider().getConfigurationById(commandId, type);
 
-        // TODO: check command type - master slave, master master or broadcast
+        if (!commandMethod.getType().equals(IEBusCommandMethod.Type.MASTER_SLAVE)) {
+            logger.warn("Polling is only available for master-slave commands!");
+            return null;
+        }
 
         if (StringUtils.isEmpty(slaveAddress)) {
             logger.warn("Unable to poll, Thing has no slave address defined!");
@@ -71,7 +70,7 @@ public class EBusLibClient {
 
         byte target = EBusUtils.toByte(slaveAddress);
 
-        return EBusCommandUtils.buildMasterTelegram(commandChannel, ownDevice.getMasterAddress(), target, null);
+        return client.buildPollingTelegram(commandMethod, target);
     }
 
     public void initClient(Byte masterAddress) {
@@ -127,6 +126,8 @@ public class EBusLibClient {
             provider.addTelegramConfigurationList(collection.getCommands());
 
         } catch (IOException e) {
+            logger.error("error!", e);
+        } catch (ConfigurationReaderException e) {
             logger.error("error!", e);
         }
 

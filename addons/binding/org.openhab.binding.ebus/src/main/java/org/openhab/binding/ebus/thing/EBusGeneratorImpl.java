@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
 import de.csdev.ebus.cfg.datatypes.EBusTypeBit;
 import de.csdev.ebus.command.EBusCommandCollection;
 import de.csdev.ebus.command.IEBusCommand;
-import de.csdev.ebus.command.IEBusCommandChannel;
+import de.csdev.ebus.command.IEBusCommandMethod;
 import de.csdev.ebus.command.IEBusNestedValue;
 import de.csdev.ebus.command.IEBusValue;
 
@@ -53,16 +53,19 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
 
     }
 
-    private ChannelType createChannelType(IEBusValue value, IEBusCommandChannel mainChannel) {
+    private ChannelType createChannelType(IEBusValue value, IEBusCommandMethod mainChannel) {
 
         if (StringUtils.isNotEmpty(value.getName()) && StringUtils.isNotEmpty(mainChannel.getParent().getId())
                 && !value.getName().startsWith("_")) {
 
             ChannelTypeUID uid = generateChannelTypeUID(mainChannel.getParent(), value);
 
-            IEBusCommandChannel commandChannelSet = mainChannel.getParent().getCommandChannel(IEBusCommand.Type.SET);
+            IEBusCommandMethod commandChannelSet = mainChannel.getParent()
+                    .getCommandMethod(IEBusCommandMethod.Method.SET);
             // Map<String, Object> valueProperties = value.getProperties();
+
             boolean readOnly = commandChannelSet == null;
+            boolean polling = mainChannel.getType().equals(IEBusCommandMethod.Type.MASTER_SLAVE);
 
             List<StateOption> options = null;
             if (value.getMapping() != null && !value.getMapping().isEmpty()) {
@@ -82,14 +85,15 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
             boolean advanced = false;
             ChannelKind kind = ChannelKind.STATE;
             String label = StringUtils.defaultIfEmpty(value.getLabel(), value.getName());
-            String description = "My Description";
-            String category = null;
-            Set<String> tags = null;
-            StateDescription state = null;
-            EventDescription event = null;
-            URI configDescriptionURI = EBusBindingConstants.CONFIG_DESCRIPTION_URI_POLLING_CHANNEL;
-
             String pattern = value.getFormat();
+            StateDescription state = new StateDescription(value.getMax(), value.getMin(), value.getStep(), pattern,
+                    readOnly, options);
+            URI configDescriptionURI = polling ? EBusBindingConstants.CONFIG_DESCRIPTION_URI_POLLING_CHANNEL : null;
+
+            String description = null;
+            Set<String> tags = null;
+            String category = null;
+            EventDescription event = null;
 
             state = new StateDescription(value.getMax(), value.getMin(), value.getStep(), pattern, readOnly, options);
 
@@ -156,14 +160,14 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
             List<ChannelDefinition> channelDefinitions = new ArrayList<>();
             List<IEBusValue> list = new ArrayList<>();
 
-            Collection<IEBusCommand.Type> commandChannelTypes = command.getCommandChannelTypes();
+            Collection<IEBusCommandMethod.Method> commandChannelTypes = command.getCommandChannelMethods();
 
-            IEBusCommandChannel mainChannel = null;
-            if (commandChannelTypes.contains(IEBusCommand.Type.GET)) {
-                mainChannel = command.getCommandChannel(IEBusCommand.Type.GET);
+            IEBusCommandMethod mainChannel = null;
+            if (commandChannelTypes.contains(IEBusCommandMethod.Method.GET)) {
+                mainChannel = command.getCommandMethod(IEBusCommandMethod.Method.GET);
 
-            } else if (commandChannelTypes.contains(IEBusCommand.Type.BROADCAST)) {
-                mainChannel = command.getCommandChannel(IEBusCommand.Type.BROADCAST);
+            } else if (commandChannelTypes.contains(IEBusCommandMethod.Method.BROADCAST)) {
+                mainChannel = command.getCommandMethod(IEBusCommandMethod.Method.BROADCAST);
 
             } else {
                 logger.warn("EBus Command {} only contains a setter channel!", command.getId());
@@ -194,7 +198,7 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
                         ChannelType channelType = createChannelType(value, mainChannel);
 
                         if (channelType != null) {
-                            logger.info("Add channel {} for type {}", channelType.getUID(), mainChannel.getType());
+                            logger.info("Add channel {} for method {}", channelType.getUID(), mainChannel.getMethod());
                             channelTypes.put(channelType.getUID(), channelType);
 
                             Map<String, String> properties = new HashMap<String, String>();

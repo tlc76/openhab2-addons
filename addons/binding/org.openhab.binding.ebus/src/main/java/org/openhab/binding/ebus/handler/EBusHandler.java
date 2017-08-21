@@ -29,7 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.csdev.ebus.cfg.datatypes.EBusTypeException;
-import de.csdev.ebus.command.IEBusCommand.Type;
+import de.csdev.ebus.command.IEBusCommandMethod;
 import de.csdev.ebus.utils.EBusUtils;
 
 /**
@@ -109,7 +109,7 @@ public class EBusHandler extends BaseThingHandler {
             if (object instanceof Number) {
                 long pollingPeriod = ((Number) object).longValue();
                 try {
-                    final ByteBuffer telegram = libClient.grrr(commandId, Type.GET, thing);
+                    final ByteBuffer telegram = libClient.grrr(commandId, IEBusCommandMethod.Method.GET, thing);
                     if (telegram != null) {
                         pollings.put(channel.getUID().getId(), scheduler.scheduleAtFixedRate(() -> {
                             logger.info("Poll command {} with {} ...", channel.getUID(),
