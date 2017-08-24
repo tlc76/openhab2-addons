@@ -8,4 +8,25 @@
 	<description>This is the binding for eBus.</description>
 	<author>Christian Sowada</author>
 
+    <service-id>org.openhab.ebus</service-id>
+
+    <config-description>
+    
+        <parameter name="configurationUrl" type="text">
+            <label>Configuration URL</label>
+            <description>Define a URL to load external configuration files. Ex. http://my.url/custom.json or file:///etc/oh2/custom.json</description>
+        </parameter>
+        
+        <parameter name="configurationUrl1" type="text">
+            <label>Configuration URL</label>
+            <description>Define a URL to load external configuration files. Ex. http://my.url/custom.json or file:///etc/oh2/custom.json</description>
+        </parameter>
+        
+        <parameter name="configurationUrl2" type="text">
+            <label>Configuration URL</label>
+            <description>Define a URL to load external configuration files. Ex. http://my.url/custom.json or file:///etc/oh2/custom.json</description>
+        </parameter>
+        
+    </config-description>
+
 </binding:binding>

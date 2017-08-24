@@ -1,3 +1,11 @@
+/**
+ * Copyright (c) 2010-2017 by the respective copyright holders.
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ */
 package org.openhab.binding.ebus.thing;
 
 import static org.openhab.binding.ebus.EBusBindingConstants.BINDING_ID;
@@ -19,7 +27,6 @@ import org.eclipse.smarthome.config.core.ConfigDescriptionParameter;
 import org.eclipse.smarthome.config.core.ConfigDescriptionParameter.Type;
 import org.eclipse.smarthome.config.core.ConfigDescriptionParameterBuilder;
 import org.eclipse.smarthome.config.core.ParameterOption;
-import org.eclipse.smarthome.core.library.CoreItemFactory;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.thing.type.ChannelDefinition;
 import org.eclipse.smarthome.core.thing.type.ChannelGroupDefinition;
@@ -43,6 +50,10 @@ import de.csdev.ebus.command.IEBusCommandMethod;
 import de.csdev.ebus.command.IEBusNestedValue;
 import de.csdev.ebus.command.IEBusValue;
 
+/**
+ *
+ * @author Christian Sowada - Initial contribution
+ */
 public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerator {
 
     private final Logger logger = LoggerFactory.getLogger(EBusGeneratorImpl.class);
@@ -75,11 +86,11 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
                 }
             }
 
-            String itemType = CoreItemFactory.NUMBER;
+            String itemType = "Number";
             if (ArrayUtils.contains(value.getType().getSupportedTypes(), EBusTypeBit.BIT)) {
-                itemType = CoreItemFactory.SWITCH;
+                itemType = "Switch";
             } else if (options != null) {
-                itemType = CoreItemFactory.NUMBER;
+                itemType = "Number";
             }
 
             boolean advanced = false;
@@ -134,7 +145,7 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
         ConfigDescription configDescription = new ConfigDescription(EBusBindingConstants.CONFIG_DESCRIPTION_URI_NODE,
                 parameters);
 
-        configDescriptions.put(configDescription.getUID(), configDescription);
+        configDescriptions.put(EBusBindingConstants.CONFIG_DESCRIPTION_URI_NODE, configDescription);
 
         // channel config
 
@@ -148,7 +159,7 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
         configDescription = new ConfigDescription(EBusBindingConstants.CONFIG_DESCRIPTION_URI_POLLING_CHANNEL,
                 parameters);
 
-        configDescriptions.put(configDescription.getUID(), configDescription);
+        configDescriptions.put(EBusBindingConstants.CONFIG_DESCRIPTION_URI_POLLING_CHANNEL, configDescription);
     }
 
     private void updateX(EBusCommandCollection collection) {

@@ -1,3 +1,11 @@
+/**
+ * Copyright (c) 2010-2017 by the respective copyright holders.
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ */
 package org.openhab.binding.ebus.thing;
 
 import static org.openhab.binding.ebus.EBusBindingConstants.*;
@@ -24,6 +32,10 @@ import org.eclipse.smarthome.core.thing.type.ThingType;
 import de.csdev.ebus.command.IEBusCommand;
 import de.csdev.ebus.command.IEBusValue;
 
+/**
+ *
+ * @author Christian Sowada - Initial contribution
+ */
 public class EBusGeneratorBase implements ThingTypeProvider, ChannelTypeProvider, ConfigDescriptionProvider {
 
     protected Map<ChannelGroupTypeUID, ChannelGroupType> channelGroupTypes = new HashMap<>();

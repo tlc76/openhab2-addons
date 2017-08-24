@@ -25,12 +25,6 @@ public class EBusBindingConstants {
 
     // List of all Thing Type UIDs
     public static final ThingTypeUID THING_TYPE_EBUS_BRIDGE = new ThingTypeUID(BINDING_ID, "bridge");
-    // public static final String CONFIG_DESCRIPTION_URI_CHANNEL = "channel-type:ebus:config";
-    // public static final String CONFIG_DESCRIPTION_URI_THING = "thing-type:ebus:config";
-
-    // public static final ThingTypeUID THING_TYPE_EBUS = new ThingTypeUID(BINDING_ID, "sample");
-
-    // public static final ThingUID THING_EBUS = new ThingUID(THING_TYPE_EBUS, "woo");
 
     // List of all Channel ids
     public static final String CHANNEL_1 = "channel1";

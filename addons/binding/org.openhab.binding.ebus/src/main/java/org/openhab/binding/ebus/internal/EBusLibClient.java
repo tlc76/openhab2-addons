@@ -1,12 +1,14 @@
+/**
+ * Copyright (c) 2010-2017 by the respective copyright holders.
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ */
 package org.openhab.binding.ebus.internal;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map.Entry;
 
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.smarthome.core.thing.Thing;
@@ -14,17 +16,20 @@ import org.openhab.binding.ebus.EBusBindingConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.csdev.ebus.cfg.ConfigurationReader;
-import de.csdev.ebus.cfg.ConfigurationReaderException;
 import de.csdev.ebus.cfg.datatypes.EBusTypeException;
 import de.csdev.ebus.client.EBusClient;
-import de.csdev.ebus.command.EBusCommandCollection;
-import de.csdev.ebus.command.EBusCommandRegistry;
+import de.csdev.ebus.client.EBusClientConfiguration;
 import de.csdev.ebus.command.IEBusCommandMethod;
 import de.csdev.ebus.core.EBusController;
+import de.csdev.ebus.core.connection.EBusSerialNRJavaSerialConnection;
 import de.csdev.ebus.core.connection.EBusTCPConnection;
+import de.csdev.ebus.core.connection.IEBusConnection;
 import de.csdev.ebus.utils.EBusUtils;
 
+/**
+ *
+ * @author Christian Sowada - Initial contribution
+ */
 public class EBusLibClient {
 
     private final Logger logger = LoggerFactory.getLogger(EBusLibClient.class);
@@ -33,14 +38,18 @@ public class EBusLibClient {
 
     private EBusClient client;
 
-    private ConfigurationReader reader;
+    // private ConfigurationReader reader;
 
-    private EBusTCPConnection connection;
+    private IEBusConnection connection;
 
-    private List<EBusCommandCollection> collections;
+    // private List<EBusCommandCollection> collections;
 
     public void setTCPConnection(String hostname, int port) {
         connection = new EBusTCPConnection(hostname, port);
+    }
+
+    public void setSerialConnection(String serialPort) {
+        connection = new EBusSerialNRJavaSerialConnection(serialPort);
     }
 
     public EBusClient getClient() {
@@ -73,37 +82,19 @@ public class EBusLibClient {
         return client.buildPollingTelegram(commandMethod, target);
     }
 
-    public void initClient(Byte masterAddress) {
+    public void initClient(EBusClientConfiguration configuration, Byte masterAddress) {
 
         // load the eBus core element
         controller = new EBusController(connection);
 
         // load the high level client
-        client = new EBusClient(controller, masterAddress);
-
-        reader = new ConfigurationReader();
-        reader.setEBusTypes(client.getDataTypes());
-
-        HashMap<String, String> deviceConfigurations = new HashMap<>();
-        deviceConfigurations.put("common", "eBus Standard");
-        deviceConfigurations.put("wolf-cgb2", "Wolf CGB2");
-        deviceConfigurations.put("wolf-sm1", "Wolf SM1");
-
-        collections = new ArrayList<>();
-
-        for (Entry<String, String> entry : deviceConfigurations.entrySet()) {
-            String configPath = "/commands/" + entry.getKey() + "-configuration.json";
-            EBusCommandCollection collection = loadConfiguration(EBusController.class.getResourceAsStream(configPath));
-            if (collection != null) {
-                collections.add(collection);
-            }
-        }
+        client = new EBusClient(controller, configuration, masterAddress);
 
     }
 
-    public List<EBusCommandCollection> getConfiguration() {
-        return collections;
-    }
+    // public List<EBusCommandCollection> getConfiguration() {
+    // return collections;
+    // }
 
     public void startClient() {
         controller.start();
@@ -113,25 +104,6 @@ public class EBusLibClient {
         if (controller != null && !controller.isInterrupted()) {
             controller.interrupt();
         }
-    }
-
-    private EBusCommandCollection loadConfiguration(InputStream is) {
-
-        EBusCommandCollection collection = null;
-        try {
-
-            EBusCommandRegistry provider = client.getConfigurationProvider();
-
-            collection = reader.loadConfigurationCollection(is);
-            provider.addTelegramConfigurationList(collection.getCommands());
-
-        } catch (IOException e) {
-            logger.error("error!", e);
-        } catch (ConfigurationReaderException e) {
-            logger.error("error!", e);
-        }
-
-        return collection;
     }
 
 }

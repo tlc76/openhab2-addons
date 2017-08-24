@@ -15,8 +15,9 @@
 
 	<service>
 		<provide interface="org.eclipse.smarthome.core.thing.binding.ThingHandlerFactory"/>
+		<provide interface="org.osgi.service.cm.ManagedService"/>
 	</service>
-
+    <property name="service.pid" value="org.openhab.ebus" />
     <reference bind="setGenerator" cardinality="1..1" interface="org.openhab.binding.ebus.thing.EBusGenerator" name="TypeGenerator" policy="static" unbind="unsetGenerator"/>
 
 </scr:component>
