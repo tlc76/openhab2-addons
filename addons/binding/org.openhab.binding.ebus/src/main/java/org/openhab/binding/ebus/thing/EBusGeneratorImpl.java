@@ -64,6 +64,11 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
 
     }
 
+    /**
+     * @param value
+     * @param mainChannel
+     * @return
+     */
     private ChannelType createChannelType(IEBusValue value, IEBusCommandMethod mainChannel) {
 
         if (StringUtils.isNotEmpty(value.getName()) && StringUtils.isNotEmpty(mainChannel.getParent().getId())
@@ -115,6 +120,9 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
         return null;
     }
 
+    /**
+     * @param collections
+     */
     public void initConfigDescriptions(List<EBusCommandCollection> collections) {
 
         List<ParameterOption> options = new ArrayList<>();
@@ -126,13 +134,13 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
 
         List<ConfigDescriptionParameter> parameters = new ArrayList<>();
 
-        parameters.add(ConfigDescriptionParameterBuilder.create(EBusBindingConstants.CONFIG_DEVICE, Type.TEXT)
-                .withLabel("Devices").withOptions(options).withMultiple(true).withLimitToOptions(true).build());
-
-        parameters.add(ConfigDescriptionParameterBuilder
-                .create(EBusBindingConstants.CONFIG_USE_STANDARD_COMMANDS, Type.BOOLEAN)
-                .withLabel("Use standard commands").withDescription("Use standard eBus commands").withRequired(true)
-                .withDefault("true").build());
+        // parameters.add(ConfigDescriptionParameterBuilder.create(EBusBindingConstants.CONFIG_DEVICE, Type.TEXT)
+        // .withLabel("Devices").withOptions(options).withMultiple(true).withLimitToOptions(true).build());
+        //
+        // parameters.add(ConfigDescriptionParameterBuilder
+        // .create(EBusBindingConstants.CONFIG_USE_STANDARD_COMMANDS, Type.BOOLEAN)
+        // .withLabel("Use standard commands").withDescription("Use standard eBus commands").withRequired(true)
+        // .withDefault("true").build());
 
         parameters.add(ConfigDescriptionParameterBuilder.create(EBusBindingConstants.CONFIG_MASTER_ADDRESS, Type.TEXT)
                 .withLabel("eBus Master Address").withDescription("Master address of this node as HEX")
