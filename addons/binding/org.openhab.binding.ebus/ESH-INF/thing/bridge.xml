@@ -6,11 +6,11 @@
 
     <!-- Hue Bridge -->
     <bridge-type id="bridge">
-        <label>eBus Bridge</label>
-        <description>The eBus bridge represents the eBus hardware interface.</description>
+        <label>eBUS Bridge</label>
+        <description>The eBUS bridge represents the eBus hardware interface.</description>
 
         <properties>
-            <property name="vendor">Generic eBus Interface</property>
+            <property name="vendor">Generic eBUS Interface</property>
         </properties>
         
         <config-description>

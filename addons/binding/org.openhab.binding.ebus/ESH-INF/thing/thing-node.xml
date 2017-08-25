@@ -9,8 +9,8 @@
 			<bridge-type-ref id="bridge" />
 		</supported-bridge-type-refs>
 
-		<label>eBus Generic Node</label>
-		<description>Sample thing for EBus Binding</description>
+		<label>eBUS Generic Node</label>
+		<description>Sample thing for eBUS Binding</description>
 
 		<config-description uri="ebus:nodeConfiguration" />
 

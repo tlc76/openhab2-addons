@@ -10,7 +10,7 @@
 		</supported-bridge-type-refs>
 
 		<label>STATIC Wolf CGB2</label>
-		<description>Sample thing for EBus Binding</description>
+		<description>Sample thing for eBUS Binding</description>
 
 		<channel-groups>
 			<channel-group id="boiler" typeId="boilerGroupType" />
