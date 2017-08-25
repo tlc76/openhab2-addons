@@ -14,15 +14,21 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Dictionary;
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.Map;
 
+import org.eclipse.smarthome.config.discovery.DiscoveryService;
 import org.eclipse.smarthome.core.thing.Bridge;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
+import org.eclipse.smarthome.core.thing.ThingUID;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandlerFactory;
 import org.eclipse.smarthome.core.thing.binding.ThingHandler;
 import org.openhab.binding.ebus.handler.EBusBridgeHandler;
 import org.openhab.binding.ebus.handler.EBusHandler;
 import org.openhab.binding.ebus.thing.EBusGenerator;
+import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.cm.ConfigurationException;
 import org.osgi.service.cm.ManagedService;
 import org.osgi.service.component.ComponentContext;
@@ -39,36 +45,13 @@ import de.csdev.ebus.client.EBusClientConfiguration;
  */
 public class EBusHandlerFactory extends BaseThingHandlerFactory implements ManagedService {
 
-    private final Logger logger = LoggerFactory.getLogger(EBusHandlerFactory.class);
+    private EBusClientConfiguration configuration;
+
+    private Map<ThingUID, ServiceRegistration<?>> discoveryServiceRegs = new HashMap<>();
 
     private EBusGenerator generator;
 
-    private EBusClientConfiguration configuration;
-
-    @Override
-    public boolean supportsThingType(ThingTypeUID thingTypeUID) {
-        return BINDING_ID.equals(thingTypeUID.getBindingId());
-    }
-
-    public void setGenerator(EBusGenerator generator) {
-        this.generator = generator;
-
-    }
-
-    public void unsetGenerator(EBusGenerator generator) {
-        this.generator = null;
-    }
-
-    @Override
-    protected ThingHandler createHandler(Thing thing) {
-        ThingTypeUID thingTypeUID = thing.getThingTypeUID();
-
-        if (thingTypeUID.equals(THING_TYPE_EBUS_BRIDGE)) {
-            return new EBusBridgeHandler((Bridge) thing, configuration);
-        }
-
-        return new EBusHandler(thing);
-    }
+    private final Logger logger = LoggerFactory.getLogger(EBusHandlerFactory.class);
 
     @Override
     protected void activate(ComponentContext componentContext) {
@@ -79,14 +62,67 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory implements Manag
     }
 
     @Override
+    protected ThingHandler createHandler(Thing thing) {
+        ThingTypeUID thingTypeUID = thing.getThingTypeUID();
+
+        if (thingTypeUID.equals(THING_TYPE_EBUS_BRIDGE)) {
+            EBusBridgeHandler handler = new EBusBridgeHandler((Bridge) thing, configuration);
+            registerDiscoveryService(handler);
+            return handler;
+        }
+
+        return new EBusHandler(thing);
+    }
+
+    @Override
     protected void deactivate(ComponentContext componentContext) {
         super.deactivate(componentContext);
         configuration.clear();
     }
 
+    private void loadConfigurationByUrl(EBusClientConfiguration configuration, String url) {
+        try {
+            configuration.loadConfiguration(new URL(url).openStream());
+        } catch (MalformedURLException e) {
+            logger.error("error!", e);
+        } catch (IOException e) {
+            logger.error("error!", e);
+        }
+    }
+
+    private synchronized void registerDiscoveryService(EBusBridgeHandler bridgeHandler) {
+        EBusDiscovery discoveryService = new EBusDiscovery(bridgeHandler);
+        discoveryService.activate();
+        this.discoveryServiceRegs.put(bridgeHandler.getThing().getUID(), bundleContext
+                .registerService(DiscoveryService.class.getName(), discoveryService, new Hashtable<String, Object>()));
+    }
+
     @Override
-    public void updated(Dictionary<String, ?> properties) throws ConfigurationException {
-        updateConfiguration(properties);
+    protected synchronized void removeHandler(ThingHandler thingHandler) {
+        if (thingHandler instanceof EBusBridgeHandler) {
+            ServiceRegistration<?> serviceReg = this.discoveryServiceRegs.get(thingHandler.getThing().getUID());
+            if (serviceReg != null) {
+                // remove discovery service, if bridge handler is removed
+                EBusDiscovery service = (EBusDiscovery) bundleContext.getService(serviceReg.getReference());
+                service.deactivate();
+                serviceReg.unregister();
+                discoveryServiceRegs.remove(thingHandler.getThing().getUID());
+            }
+        }
+    }
+
+    public void setGenerator(EBusGenerator generator) {
+        this.generator = generator;
+
+    }
+
+    @Override
+    public boolean supportsThingType(ThingTypeUID thingTypeUID) {
+        return BINDING_ID.equals(thingTypeUID.getBindingId());
+    }
+
+    public void unsetGenerator(EBusGenerator generator) {
+        this.generator = null;
     }
 
     private void updateConfiguration(Dictionary<String, ?> properties) {
@@ -108,13 +144,10 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory implements Manag
         generator.update(configuration.getCollections());
     }
 
-    private void loadConfigurationByUrl(EBusClientConfiguration configuration, String url) {
-        try {
-            configuration.loadConfiguration(new URL(url).openStream());
-        } catch (MalformedURLException e) {
-            logger.error("error!", e);
-        } catch (IOException e) {
-            logger.error("error!", e);
+    @Override
+    public void updated(Dictionary<String, ?> properties) throws ConfigurationException {
+        if (properties != null) {
+            updateConfiguration(properties);
         }
     }
 }

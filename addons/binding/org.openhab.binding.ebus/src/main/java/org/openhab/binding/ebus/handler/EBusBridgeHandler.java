@@ -51,13 +51,11 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
 
     private EBusLibClient libClient;
 
-    // private EBusGenerator generator;
-
-    private EBusClientConfiguration clientConfiguration;
-
     public EBusBridgeHandler(Bridge bridge, EBusClientConfiguration clientConfiguration) {
         super(bridge);
-        this.clientConfiguration = clientConfiguration;
+
+        // initialize the ebus client wrapper
+        libClient = new EBusLibClient(clientConfiguration);
     }
 
     public EBusLibClient getLibClient() {
@@ -79,7 +77,7 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
     @Override
     public void initialize() {
 
-        libClient = new EBusLibClient();
+        // libClient = new EBusLibClient();
         Configuration configuration = getThing().getConfiguration();
 
         // IEBusConnection connection = null;
@@ -126,12 +124,11 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
             return;
         }
 
-        libClient.initClient(clientConfiguration, masterAddress);
+        libClient.initClient(masterAddress);
+
+        // add listeners
         libClient.getClient().getController().addEBusEventListener(this);
         libClient.getClient().getResolverService().addEBusParserListener(this);
-
-        // transfer configuration information to generator
-        // generator.update(libClient.getConfiguration());
 
         // start eBus controller
         libClient.startClient();
@@ -140,6 +137,11 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
     @Override
     public void dispose() {
         if (libClient != null) {
+
+            // remove listeners
+            libClient.getClient().getController().removeEBusEventListener(this);
+            libClient.getClient().getResolverService().removeEBusParserListener(this);
+
             libClient.stopClient();
             libClient = null;
         }

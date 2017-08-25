@@ -38,11 +38,11 @@ public class EBusLibClient {
 
     private EBusClient client;
 
-    // private ConfigurationReader reader;
-
     private IEBusConnection connection;
 
-    // private List<EBusCommandCollection> collections;
+    public EBusLibClient(EBusClientConfiguration configuration) {
+        client = new EBusClient(configuration);
+    }
 
     public void setTCPConnection(String hostname, int port) {
         connection = new EBusTCPConnection(hostname, port);
@@ -82,19 +82,14 @@ public class EBusLibClient {
         return client.buildPollingTelegram(commandMethod, target);
     }
 
-    public void initClient(EBusClientConfiguration configuration, Byte masterAddress) {
+    public void initClient(Byte masterAddress) {
 
         // load the eBus core element
         controller = new EBusController(connection);
 
-        // load the high level client
-        client = new EBusClient(controller, configuration, masterAddress);
-
+        // connect the high level client
+        client.connect(controller, masterAddress);
     }
-
-    // public List<EBusCommandCollection> getConfiguration() {
-    // return collections;
-    // }
 
     public void startClient() {
         controller.start();
