@@ -49,38 +49,42 @@ public class EBusDiscovery extends AbstractDiscoveryService implements EBusDevic
     @Override
     public void onEBusDeviceUpdate(TYPE type, IEBusDevice device) {
 
-        System.err.println("EBusDiscovery.onEBusDeviceUpdate()");
+        if (!type.equals(TYPE.UPDATE_ACTIVITY)) {
 
-        String masterAddress = EBusUtils.toHexDumpString(device.getMasterAddress());
-        String slaveAddress = EBusUtils.toHexDumpString(device.getSlaveAddress());
+            System.err.println("EBusDiscovery.onEBusDeviceUpdate()");
 
-        String id = "common" + "_" + masterAddress + "_" + slaveAddress;
+            String masterAddress = EBusUtils.toHexDumpString(device.getMasterAddress());
+            String slaveAddress = EBusUtils.toHexDumpString(device.getSlaveAddress());
 
-        ThingTypeUID thingTypeUID = new ThingTypeUID(BINDING_ID, "common");
-        ThingUID thingUID = new ThingUID(BINDING_ID, id);
+            String id = "common" + "_" + masterAddress + "_" + slaveAddress;
 
-        Map<String, Object> properties = new HashMap<>();
+            ThingTypeUID thingTypeUID = new ThingTypeUID(BINDING_ID, "common");
+            ThingUID thingUID = new ThingUID(BINDING_ID, id);
 
-        properties.put(EBusBindingConstants.CONFIG_MASTER_ADDRESS, masterAddress);
-        properties.put(EBusBindingConstants.CONFIG_SLAVE_ADDRESS, slaveAddress);
-        properties.put("vendor", "Wolf");
+            Map<String, Object> properties = new HashMap<>();
 
-        // device.getManufacturer()
+            properties.put(EBusBindingConstants.CONFIG_MASTER_ADDRESS, masterAddress);
+            properties.put(EBusBindingConstants.CONFIG_SLAVE_ADDRESS, slaveAddress);
+            properties.put("vendor", "Wolf");
 
-        // properties.put("", value)
-        // device.getMasterAddress()
+            // device.getManufacturer()
 
-        // if (type.equals(TYPE.NEW)) {
+            // properties.put("", value)
+            // device.getMasterAddress()
 
-        DiscoveryResult discoveryResult = DiscoveryResultBuilder.create(thingUID).withThingType(thingTypeUID)
-                .withProperties(properties).withBridge(bridgeHandle.getThing().getUID())
-                .withRepresentationProperty("eBUS Standard " + masterAddress + " " + slaveAddress)
-                .withLabel("eBUS Standard " + masterAddress + " " + slaveAddress).build();
+            // if (type.equals(TYPE.NEW)) {
 
-        thingRemoved(thingUID);
-        thingDiscovered(discoveryResult);
+            DiscoveryResult discoveryResult = DiscoveryResultBuilder.create(thingUID).withThingType(thingTypeUID)
+                    .withProperties(properties).withBridge(bridgeHandle.getThing().getUID())
+                    .withRepresentationProperty("eBUS Standard " + masterAddress + " " + slaveAddress)
+                    .withLabel("eBUS Standard " + masterAddress + " " + slaveAddress).build();
 
-        // }
+            thingRemoved(thingUID);
+            thingDiscovered(discoveryResult);
+
+            // }
+        }
+
     }
 
 }

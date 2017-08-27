@@ -8,6 +8,7 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ClassPath: .
 Import-Package: 
  de.csdev.ebus.cfg.datatypes,
+ de.csdev.ebus.cfg.datatypes.ext,
  de.csdev.ebus.client,
  de.csdev.ebus.command,
  de.csdev.ebus.core,

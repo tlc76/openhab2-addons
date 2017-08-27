@@ -11,11 +11,14 @@ package org.openhab.binding.ebus.handler;
 import static org.openhab.binding.ebus.EBusBindingConstants.CHANNEL_1;
 
 import java.math.BigDecimal;
+import java.util.Calendar;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.smarthome.config.core.Configuration;
+import org.eclipse.smarthome.core.library.types.DateTimeType;
 import org.eclipse.smarthome.core.library.types.DecimalType;
 import org.eclipse.smarthome.core.library.types.OnOffType;
 import org.eclipse.smarthome.core.library.types.StringType;
@@ -130,6 +133,19 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
         libClient.getClient().getController().addEBusEventListener(this);
         libClient.getClient().getResolverService().addEBusParserListener(this);
 
+        scheduler.schedule(new Runnable() {
+
+            @Override
+            public void run() {
+                try {
+                    // libClient.getClient().getDeviceTableService().startDeviceScan();
+                    libClient.getClient().getDeviceTableService().sendIdentificationRequest((byte) 0x76);
+                } catch (Exception e) {
+                    logger.error("error!", e);
+                }
+            }
+        }, 30, TimeUnit.SECONDS);
+
         // start eBus controller
         libClient.startClient();
     }
@@ -155,8 +171,8 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
         String targetAddress = EBusUtils.toHexDumpString(receivedData[1]);
         // Byte destinationAddress = command.getDestinationAddress();
 
-        // logger.info("Received telegram from master address {} with command {}", sourceAddress,
-        // commandChannel.getParent().getId());
+        logger.info("Received telegram from master address {} with command {}", sourceAddress,
+                commandChannel.getParent().getId());
 
         if (getThing().getThings() != null) {
 
@@ -179,21 +195,13 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
 
                         Channel channel = thing.getChannel(m.getId());
 
-                        // if ("solar-e1#e1".equals(m.getId())) {
-                        // List<Channel> channels = thing.getChannels();
-                        // // System.out.println("EBusBridgeHandler.onTelegramResolved()");
-                        // }
-
-                        // logger.info("Try to find a channel with name {} ...", m.getId());
-
                         if (channel != null) {
                             // logger.info("Found channel @ thing ...");
 
                             if (channel.getAcceptedItemType().equals("Number")) {
-
                                 if (resultEntry.getValue() != null) {
                                     if (resultEntry.getValue() instanceof BigDecimal) {
-                                        this.updateState(channel.getUID(),
+                                        updateState(channel.getUID(),
                                                 new DecimalType((BigDecimal) resultEntry.getValue()));
                                     } else {
                                         logger.warn("Unexpected datatype {} for channel {} !",
@@ -204,17 +212,27 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
 
                             } else if (channel.getAcceptedItemType().equals("String")) {
                                 if (resultEntry.getValue() instanceof String) {
-                                    this.updateState(channel.getUID(), new StringType((String) resultEntry.getValue()));
+                                    updateState(channel.getUID(), new StringType((String) resultEntry.getValue()));
+                                } else if (resultEntry.getValue() instanceof byte[]) {
+                                    // show bytes as hex string
+                                    updateState(channel.getUID(), new StringType(
+                                            EBusUtils.toHexDumpString((byte[]) resultEntry.getValue()).toString()));
                                 }
 
                             } else if (channel.getAcceptedItemType().equals("Switch")) {
                                 if (resultEntry.getValue() instanceof Boolean) {
                                     boolean isOn = ((Boolean) resultEntry.getValue()).booleanValue();
-                                    this.updateState(channel.getUID(), isOn ? OnOffType.ON : OnOffType.OFF);
-                                    // OnOffType.OFF);
+                                    updateState(channel.getUID(), isOn ? OnOffType.ON : OnOffType.OFF);
+                                }
+
+                            } else if (channel.getAcceptedItemType().equals("DateTime")) {
+                                if (resultEntry.getValue() instanceof Calendar) {
+                                    this.updateState(channel.getUID(),
+                                            new DateTimeType((Calendar) resultEntry.getValue()));
                                 }
 
                             }
+
                         }
 
                     }
