@@ -250,6 +250,8 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
             updateStatus(ThingStatus.ONLINE);
         }
 
+        logger.error(EBusUtils.toHexDumpString(receivedData).toString());
+
         // 6,7
         // if (receivedData[2] == (byte) 0x50 && receivedData[3] == (byte) 0x22 && receivedData[6] == (byte) 0xFB
         // && receivedData[7] == (byte) 0x02) {
