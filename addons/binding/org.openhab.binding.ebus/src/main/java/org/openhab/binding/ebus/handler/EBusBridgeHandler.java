@@ -17,6 +17,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang.StringUtils;
+import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.smarthome.config.core.Configuration;
 import org.eclipse.smarthome.core.library.types.DateTimeType;
 import org.eclipse.smarthome.core.library.types.DecimalType;
@@ -54,7 +55,7 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
 
     private EBusLibClient libClient;
 
-    public EBusBridgeHandler(Bridge bridge, EBusClientConfiguration clientConfiguration) {
+    public EBusBridgeHandler(@NonNull Bridge bridge, EBusClientConfiguration clientConfiguration) {
         super(bridge);
 
         // initialize the ebus client wrapper
@@ -250,7 +251,7 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
             updateStatus(ThingStatus.ONLINE);
         }
 
-        logger.error(EBusUtils.toHexDumpString(receivedData).toString());
+        // logger.error(EBusUtils.toHexDumpString(receivedData).toString());
 
         // 6,7
         // if (receivedData[2] == (byte) 0x50 && receivedData[3] == (byte) 0x22 && receivedData[6] == (byte) 0xFB
@@ -270,9 +271,9 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
 
     @Override
     public void onTelegramException(EBusDataException exception, Integer sendQueueId) {
-        if (logger.isErrorEnabled()) {
-            logger.error("eBus telegram error; {}", exception.getLocalizedMessage());
-        }
+        // if (logger.isErrorEnabled()) {
+        // logger.error("eBus telegram error; {}", exception.getLocalizedMessage());
+        // }
     }
 
     @Override

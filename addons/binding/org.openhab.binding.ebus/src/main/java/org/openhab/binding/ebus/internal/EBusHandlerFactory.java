@@ -104,7 +104,10 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory implements Manag
             if (serviceReg != null) {
                 // remove discovery service, if bridge handler is removed
                 EBusDiscovery service = (EBusDiscovery) bundleContext.getService(serviceReg.getReference());
-                service.deactivate();
+                if (service != null) {
+                    service.deactivate();
+                }
+
                 serviceReg.unregister();
                 discoveryServiceRegs.remove(thingHandler.getThing().getUID());
             }

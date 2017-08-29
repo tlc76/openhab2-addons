@@ -18,6 +18,7 @@ Import-Package:
  de.csdev.ebus.utils,
  gnu.io;resolution:=optional,
  org.apache.commons.lang,
+ org.eclipse.jdt.annotation;resolution:=optional,
  org.eclipse.smarthome.config.core,
  org.eclipse.smarthome.config.discovery,
  org.eclipse.smarthome.core.library.types,

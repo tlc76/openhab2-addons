@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.smarthome.config.core.Configuration;
 import org.eclipse.smarthome.core.thing.Channel;
 import org.eclipse.smarthome.core.thing.ChannelUID;
@@ -44,7 +45,7 @@ public class EBusHandler extends BaseThingHandler {
 
     private Map<String, ScheduledFuture<?>> pollings = new HashMap<>();
 
-    public EBusHandler(Thing thing) {
+    public EBusHandler(@NonNull Thing thing) {
         super(thing);
     }
 
@@ -89,7 +90,10 @@ public class EBusHandler extends BaseThingHandler {
 
     private EBusLibClient getLibClient() {
         EBusBridgeHandler handler = (EBusBridgeHandler) getBridge().getHandler();
-        return handler.getLibClient();
+        if (handler != null) {
+            return handler.getLibClient();
+        }
+        return null;
     }
 
     @Override
