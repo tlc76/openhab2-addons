@@ -46,7 +46,7 @@ import org.slf4j.LoggerFactory;
 import de.csdev.ebus.cfg.datatypes.EBusTypeBit;
 import de.csdev.ebus.cfg.datatypes.ext.EBusTypeBytes;
 import de.csdev.ebus.cfg.datatypes.ext.EBusTypeString;
-import de.csdev.ebus.cfg.datatypes.ext.EBusTypeTime;
+import de.csdev.ebus.cfg.datatypes.ext.EBusTypeDateTime;
 import de.csdev.ebus.command.EBusCommandCollection;
 import de.csdev.ebus.command.IEBusCommand;
 import de.csdev.ebus.command.IEBusCommandMethod;
@@ -100,7 +100,7 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
             if (ArrayUtils.contains(value.getType().getSupportedTypes(), EBusTypeBit.BIT)) {
                 itemType = "Switch";
 
-            } else if (ArrayUtils.contains(value.getType().getSupportedTypes(), EBusTypeTime.TIME)) {
+            } else if (ArrayUtils.contains(value.getType().getSupportedTypes(), EBusTypeDateTime.DATETIME)) {
                 itemType = "DateTime";
 
             } else if (ArrayUtils.contains(value.getType().getSupportedTypes(), EBusTypeString.STRING)) {

@@ -11,7 +11,6 @@ package org.openhab.binding.ebus.handler;
 import static org.openhab.binding.ebus.EBusBindingConstants.CHANNEL_1;
 
 import java.math.BigDecimal;
-import java.util.Calendar;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
@@ -41,6 +40,7 @@ import de.csdev.ebus.command.IEBusCommandMethod;
 import de.csdev.ebus.core.EBusConnectorEventListener;
 import de.csdev.ebus.core.EBusDataException;
 import de.csdev.ebus.service.parser.EBusParserListener;
+import de.csdev.ebus.utils.EBusDateTime;
 import de.csdev.ebus.utils.EBusUtils;
 
 /**
@@ -55,11 +55,60 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
 
     private EBusLibClient libClient;
 
+    private EBusClientConfiguration clientConfiguration;
+
     public EBusBridgeHandler(@NonNull Bridge bridge, EBusClientConfiguration clientConfiguration) {
         super(bridge);
+        this.clientConfiguration = clientConfiguration;
 
         // initialize the ebus client wrapper
         libClient = new EBusLibClient(clientConfiguration);
+
+        // scheduler.schedule(new Runnable() {
+        //
+        // @Override
+        // public void run() {
+        // libClient.getClient().getController().
+        // // TODO Auto-generated method stub
+        //
+        // }
+        // }, 10, TimeUnit.SECONDS);
+    }
+
+    @Override
+    protected void updateConfiguration(Configuration configuration) {
+        // TODO Auto-generated method stub
+        logger.info("EBusBridgeHandler.updateConfiguration()");
+        super.updateConfiguration(configuration);
+
+    }
+
+    @Override
+    protected void updateProperties(Map<String, String> properties) {
+        // TODO Auto-generated method stub
+        logger.info("EBusBridgeHandler.updateProperties()");
+        super.updateProperties(properties);
+    }
+
+    @Override
+    protected void updateProperty(@NonNull String name, String value) {
+        // TODO Auto-generated method stub
+        logger.info("EBusBridgeHandler.updateProperty()");
+        super.updateProperty(name, value);
+    }
+
+    @Override
+    public void thingUpdated(@NonNull Thing thing) {
+        // TODO Auto-generated method stub
+        logger.info("EBusBridgeHandler.thingUpdated()");
+        super.thingUpdated(thing);
+    }
+
+    @Override
+    public void handleConfigurationUpdate(Map<String, Object> configurationParameters) {
+        // TODO Auto-generated method stub
+        logger.info("EBusBridgeHandler.handleConfigurationUpdate()");
+        super.handleConfigurationUpdate(configurationParameters);
     }
 
     public EBusLibClient getLibClient() {
@@ -81,6 +130,11 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
     @Override
     public void initialize() {
 
+        logger.info("xxxxxxxxx");
+
+        // initialize the ebus client wrapper
+        libClient = new EBusLibClient(clientConfiguration);
+
         // libClient = new EBusLibClient();
         Configuration configuration = getThing().getConfiguration();
 
@@ -93,6 +147,7 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
         String masterAddressStr = null;
         Byte masterAddress = (byte) 0x00;
 
+        // Thing.PROPERTY_VENDOR
         try {
             ipAddress = (String) configuration.get("ipAddress");
             port = (BigDecimal) configuration.get("port");
@@ -116,7 +171,7 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
 
         if (!EBusUtils.isMasterAddress(masterAddress)) {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
-                    "eBus master address is not a valid master address!");
+                    "eBUS master address is not a valid master address!");
 
             return;
         }
@@ -227,9 +282,9 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
                                 }
 
                             } else if (channel.getAcceptedItemType().equals("DateTime")) {
-                                if (resultEntry.getValue() instanceof Calendar) {
+                                if (resultEntry.getValue() instanceof EBusDateTime) {
                                     this.updateState(channel.getUID(),
-                                            new DateTimeType((Calendar) resultEntry.getValue()));
+                                            new DateTimeType(((EBusDateTime) resultEntry.getValue()).getCalendar()));
                                 }
 
                             }

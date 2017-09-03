@@ -93,6 +93,7 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory implements Manag
     private synchronized void registerDiscoveryService(EBusBridgeHandler bridgeHandler) {
         EBusDiscovery discoveryService = new EBusDiscovery(bridgeHandler);
         discoveryService.activate();
+
         this.discoveryServiceRegs.put(bridgeHandler.getThing().getUID(), bundleContext
                 .registerService(DiscoveryService.class.getName(), discoveryService, new Hashtable<String, Object>()));
     }

@@ -76,16 +76,10 @@ public class EBusHandler extends BaseThingHandler {
 
     @Override
     public void initialize() {
-        // TODO: Initialize the thing. If done set status to ONLINE to indicate proper working.
-        // Long running initialization should be done asynchronously in background.
+
         updateStatus(ThingStatus.ONLINE);
 
-        // Note: When initialization can NOT be done set the status with more details for further
-        // analysis. See also class ThingStatusDetail for all available status details.
-        // Add a description to give user information to understand why thing does not work
-        // as expected. E.g.
-        // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
-        // "Can not access device as username and/or password are invalid");
+        initializePolling();
     }
 
     private EBusLibClient getLibClient() {
@@ -100,6 +94,10 @@ public class EBusHandler extends BaseThingHandler {
     public void thingUpdated(final Thing thing) {
         super.thingUpdated(thing);
 
+        initializePolling();
+    }
+
+    private void initializePolling() {
         cancelPollingJobs();
 
         final EBusLibClient libClient = getLibClient();
