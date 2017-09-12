@@ -17,7 +17,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Random;
 import java.util.Set;
 
 import org.apache.commons.lang.ArrayUtils;
@@ -45,8 +44,8 @@ import org.slf4j.LoggerFactory;
 
 import de.csdev.ebus.cfg.datatypes.EBusTypeBit;
 import de.csdev.ebus.cfg.datatypes.ext.EBusTypeBytes;
-import de.csdev.ebus.cfg.datatypes.ext.EBusTypeString;
 import de.csdev.ebus.cfg.datatypes.ext.EBusTypeDateTime;
+import de.csdev.ebus.cfg.datatypes.ext.EBusTypeString;
 import de.csdev.ebus.command.EBusCommandCollection;
 import de.csdev.ebus.command.IEBusCommand;
 import de.csdev.ebus.command.IEBusCommandMethod;
@@ -60,12 +59,6 @@ import de.csdev.ebus.command.IEBusValue;
 public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerator {
 
     private final Logger logger = LoggerFactory.getLogger(EBusGeneratorImpl.class);
-
-    private Random random;
-
-    public EBusGeneratorImpl() {
-
-    }
 
     /**
      * @param value
@@ -81,7 +74,6 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
 
             IEBusCommandMethod commandChannelSet = mainChannel.getParent()
                     .getCommandMethod(IEBusCommandMethod.Method.SET);
-            // Map<String, Object> valueProperties = value.getProperties();
 
             boolean readOnly = commandChannelSet == null;
             boolean polling = mainChannel.getType().equals(IEBusCommandMethod.Type.MASTER_SLAVE);
@@ -107,7 +99,7 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
                 itemType = "Text";
 
             } else if (ArrayUtils.contains(value.getType().getSupportedTypes(), EBusTypeBytes.BYTES)) {
-                itemType = "String";
+                itemType = "Text";
 
             } else if (options != null) {
                 itemType = "Number";
@@ -150,20 +142,12 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
 
         List<ConfigDescriptionParameter> parameters = new ArrayList<>();
 
-        // parameters.add(ConfigDescriptionParameterBuilder.create(EBusBindingConstants.CONFIG_DEVICE, Type.TEXT)
-        // .withLabel("Devices").withOptions(options).withMultiple(true).withLimitToOptions(true).build());
-        //
-        // parameters.add(ConfigDescriptionParameterBuilder
-        // .create(EBusBindingConstants.CONFIG_USE_STANDARD_COMMANDS, Type.BOOLEAN)
-        // .withLabel("Use standard commands").withDescription("Use standard eBus commands").withRequired(true)
-        // .withDefault("true").build());
-
         parameters.add(ConfigDescriptionParameterBuilder.create(EBusBindingConstants.CONFIG_MASTER_ADDRESS, Type.TEXT)
-                .withLabel("eBus Master Address").withDescription("Master address of this node as HEX")
+                .withLabel("eBUS Master Address").withDescription("Master address of this node as HEX value")
                 .withRequired(false).build());
 
         parameters.add(ConfigDescriptionParameterBuilder.create(EBusBindingConstants.CONFIG_SLAVE_ADDRESS, Type.TEXT)
-                .withLabel("eBus Slave Address").withDescription("Slave address of this node as HEX")
+                .withLabel("eBUS Slave Address").withDescription("Slave address of this node as HEX value")
                 .withRequired(false).build());
 
         ConfigDescription configDescription = new ConfigDescription(EBusBindingConstants.CONFIG_DESCRIPTION_URI_NODE,
@@ -186,7 +170,10 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
         configDescriptions.put(EBusBindingConstants.CONFIG_DESCRIPTION_URI_POLLING_CHANNEL, configDescription);
     }
 
-    private void updateX(EBusCommandCollection collection) {
+    /**
+     * @param collection
+     */
+    private void updateCollection(EBusCommandCollection collection) {
 
         List<ChannelGroupDefinition> channelGroupDefinitions = new ArrayList<>();
 
@@ -205,7 +192,7 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
                 mainChannel = command.getCommandMethod(IEBusCommandMethod.Method.BROADCAST);
 
             } else {
-                logger.warn("EBus Command {} only contains a setter channel!", command.getId());
+                logger.warn("eBUS command {} only contains a setter channel!", command.getId());
                 // mh ... not correct!
             }
 
@@ -251,20 +238,18 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
                 }
             }
             if (StringUtils.isNotEmpty(command.getId())) {
-                // ChannelGroupTypeUID typeUID = getChannelGroupTypeUID(command.getId())
                 ChannelGroupTypeUID groupTypeUID = generateChannelGroupTypeUID(command);
 
                 @SuppressWarnings("deprecation")
-                ChannelGroupType cgt = new ChannelGroupType(groupTypeUID, false, command.getId(),
-                        command.getDescription(), channelDefinitions);
+                ChannelGroupType cgt = new ChannelGroupType(groupTypeUID, false, command.getLabel(), command.getId(),
+                        channelDefinitions);
 
                 channelGroupTypes.put(cgt.getUID(), cgt);
 
-                String cgdid = "cgdid" + random.nextInt(10000);
-                cgdid = command.getId().replace('.', '-');
+                String cgdid = generateChannelGroupID(command);
 
                 ChannelGroupDefinition groupDefinition = new ChannelGroupDefinition(cgdid, groupTypeUID,
-                        command.getId(), command.getDescription());
+                        command.getLabel(), command.getId());
 
                 channelGroupDefinitions.add(groupDefinition);
             }
@@ -274,7 +259,7 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
         ThingTypeUID thingTypeUID = new ThingTypeUID(BINDING_ID, collection.getId());
 
         String label = collection.getLabel();
-        String description = collection.getAsString("description");
+        String description = collection.getDescription();
 
         ArrayList<ChannelDefinition> channelDefinitions2 = new ArrayList<>();
 
@@ -287,11 +272,10 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
     @Override
     public void update(List<EBusCommandCollection> collections) {
 
-        random = new Random();
         initConfigDescriptions(collections);
 
         for (EBusCommandCollection collection : collections) {
-            updateX(collection);
+            updateCollection(collection);
         }
 
     }

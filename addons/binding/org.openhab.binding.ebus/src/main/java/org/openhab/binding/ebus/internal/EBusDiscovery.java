@@ -1,3 +1,11 @@
+/**
+ * Copyright (c) 2010-2017 by the respective copyright holders.
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ */
 package org.openhab.binding.ebus.internal;
 
 import static org.openhab.binding.ebus.EBusBindingConstants.BINDING_ID;
@@ -23,6 +31,10 @@ import de.csdev.ebus.service.device.EBusDeviceTableListener;
 import de.csdev.ebus.service.device.IEBusDevice;
 import de.csdev.ebus.utils.EBusUtils;
 
+/**
+ *
+ * @author Christian Sowada - Initial contribution
+ */
 public class EBusDiscovery extends AbstractDiscoveryService implements EBusDeviceTableListener {
 
     private final Logger logger = LoggerFactory.getLogger(EBusDiscovery.class);
@@ -99,7 +111,9 @@ public class EBusDiscovery extends AbstractDiscoveryService implements EBusDevic
 
             String deviceStr = EBusUtils.toHexDumpString(device.getDeviceId()).toString();
             for (final EBusCommandCollection collection : commandCollections) {
-                if (deviceStr.equals(collection.getIdentification())) {
+
+                if (collection.getIdentification().contains(deviceStr)) {
+                    // if (deviceStr.equals(collection.getIdentification())) {
                     logger.info("Discovered device {} ...", collection.getId());
                     x(device, collection);
                 }

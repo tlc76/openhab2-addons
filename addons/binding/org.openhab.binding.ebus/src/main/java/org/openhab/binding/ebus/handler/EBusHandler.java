@@ -83,6 +83,11 @@ public class EBusHandler extends BaseThingHandler {
     }
 
     private EBusLibClient getLibClient() {
+
+        if (getBridge() == null) {
+            throw new RuntimeException("No eBUS bridge defined!");
+        }
+
         EBusBridgeHandler handler = (EBusBridgeHandler) getBridge().getHandler();
         if (handler != null) {
             return handler.getLibClient();

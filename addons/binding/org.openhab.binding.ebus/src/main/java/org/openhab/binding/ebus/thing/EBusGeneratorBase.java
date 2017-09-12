@@ -66,6 +66,10 @@ public class EBusGeneratorBase implements ThingTypeProvider, ChannelTypeProvider
         return new ChannelGroupTypeUID(BINDING_ID + ":" + command.getId().replace('.', '-'));
     }
 
+    protected String generateChannelGroupID(IEBusCommand command) {
+        return command.getId().replace('.', '-');
+    }
+
     @Override
     public ChannelType getChannelType(ChannelTypeUID channelTypeUID, Locale locale) {
         return channelTypes.get(channelTypeUID);
