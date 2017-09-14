@@ -43,21 +43,19 @@ public class EBusBindingUtils {
     }
 
     public static ChannelTypeUID generateChannelTypeUID(IEBusCommand command, IEBusValue value) {
-        return new ChannelTypeUID(BINDING_ID + ":" + generateChannelGroupID(command) + ":" + value.getName());
+        return new ChannelTypeUID(BINDING_ID + ":" + command.getId().replace('.', ':') + ":" + value.getName());
     }
 
     public static ChannelUID generateChannelUID(IEBusCommand command, IEBusValue value) {
         return new ChannelUID(BINDING_ID + ":" + generateChannelGroupID(command) + ":" + value.getName());
-        // return new ChannelUID(BINDING_ID, BINDING_ID, BINDING_ID);
     }
 
     public static String generateChannelGroupID(IEBusCommand command) {
-        return command.getId().replace('.', ':');
+        return command.getId().replace('.', '-');
     }
 
     public static ChannelGroupTypeUID generateChannelGroupTypeUID(IEBusCommand command) {
         return new ChannelGroupTypeUID(BINDING_ID, generateChannelGroupID(command));
-        // return new ChannelGroupTypeUID(BINDING_ID + ":" + command.getId().replace('.', '-'));
     }
 
     public static ThingTypeUID generateThingTypeUID(EBusCommandCollection collection) {
