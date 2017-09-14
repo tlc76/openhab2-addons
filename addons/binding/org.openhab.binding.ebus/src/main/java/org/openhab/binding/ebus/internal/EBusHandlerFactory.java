@@ -27,7 +27,7 @@ import org.eclipse.smarthome.core.thing.binding.BaseThingHandlerFactory;
 import org.eclipse.smarthome.core.thing.binding.ThingHandler;
 import org.openhab.binding.ebus.handler.EBusBridgeHandler;
 import org.openhab.binding.ebus.handler.EBusHandler;
-import org.openhab.binding.ebus.thing.EBusGenerator;
+import org.openhab.binding.ebus.thing.EBusTypeProvider;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.cm.ConfigurationException;
 import org.osgi.service.cm.ManagedService;
@@ -49,13 +49,13 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory implements Manag
 
     private Map<ThingUID, ServiceRegistration<?>> discoveryServiceRegs = new HashMap<>();
 
-    private EBusGenerator generator;
+    private EBusTypeProvider typeProvider;
 
     private final Logger logger = LoggerFactory.getLogger(EBusHandlerFactory.class);
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.eclipse.smarthome.core.thing.binding.BaseThingHandlerFactory#activate(org.osgi.service.component.
      * ComponentContext)
      */
@@ -69,7 +69,7 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory implements Manag
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
      * org.eclipse.smarthome.core.thing.binding.BaseThingHandlerFactory#createHandler(org.eclipse.smarthome.core.thing.
      * Thing)
@@ -89,7 +89,7 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory implements Manag
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.eclipse.smarthome.core.thing.binding.BaseThingHandlerFactory#deactivate(org.osgi.service.component.
      * ComponentContext)
      */
@@ -126,7 +126,7 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory implements Manag
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
      * org.eclipse.smarthome.core.thing.binding.BaseThingHandlerFactory#removeHandler(org.eclipse.smarthome.core.thing.
      * binding.ThingHandler)
@@ -151,14 +151,14 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory implements Manag
     /**
      * @param generator
      */
-    public void setGenerator(EBusGenerator generator) {
-        this.generator = generator;
+    public void setTypeProvider(EBusTypeProvider typeProvider) {
+        this.typeProvider = typeProvider;
 
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
      * org.eclipse.smarthome.core.thing.binding.ThingHandlerFactory#supportsThingType(org.eclipse.smarthome.core.thing.
      * ThingTypeUID)
@@ -171,8 +171,8 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory implements Manag
     /**
      * @param generator
      */
-    public void unsetGenerator(EBusGenerator generator) {
-        this.generator = null;
+    public void unsetTypeProvider(EBusTypeProvider typeProvider) {
+        this.typeProvider = null;
     }
 
     /**
@@ -194,12 +194,12 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory implements Manag
             loadConfigurationByUrl(configuration, (String) properties.get("configurationUrl2"));
         }
 
-        generator.update(configuration.getCollections());
+        typeProvider.update(configuration.getCollections());
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.osgi.service.cm.ManagedService#updated(java.util.Dictionary)
      */
     @Override

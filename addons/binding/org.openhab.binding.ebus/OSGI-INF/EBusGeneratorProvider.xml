@@ -6,10 +6,10 @@
     which accompanies this distribution, and is available at
     http://www.eclipse.org/legal/epl-v10.html
 -->
-<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="org.openhab.binding.ebus.thing.EBusGenerator">
-   <implementation class="org.openhab.binding.ebus.thing.EBusGeneratorImpl"/>
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="org.openhab.binding.ebus.thing.EBusTypeProvider">
+   <implementation class="org.openhab.binding.ebus.thing.EBusTypeProviderImpl"/>
    <service>
-      <provide interface="org.openhab.binding.ebus.thing.EBusGenerator"/>
+      <provide interface="org.openhab.binding.ebus.thing.EBusTypeProvider"/>
       <provide interface="org.eclipse.smarthome.core.thing.binding.ThingTypeProvider"/>
       <provide interface="org.eclipse.smarthome.config.core.ConfigDescriptionProvider"/>
       <provide interface="org.eclipse.smarthome.core.thing.type.ChannelTypeProvider"/>
