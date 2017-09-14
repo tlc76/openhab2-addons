@@ -8,8 +8,6 @@
  */
 package org.openhab.binding.ebus.thing;
 
-import static org.openhab.binding.ebus.EBusBindingConstants.BINDING_ID;
-
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,7 +23,6 @@ import org.eclipse.smarthome.config.core.ConfigDescription;
 import org.eclipse.smarthome.config.core.ConfigDescriptionParameter;
 import org.eclipse.smarthome.config.core.ConfigDescriptionParameter.Type;
 import org.eclipse.smarthome.config.core.ConfigDescriptionParameterBuilder;
-import org.eclipse.smarthome.config.core.ParameterOption;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.thing.type.ChannelDefinition;
 import org.eclipse.smarthome.core.thing.type.ChannelGroupDefinition;
@@ -39,6 +36,7 @@ import org.eclipse.smarthome.core.types.EventDescription;
 import org.eclipse.smarthome.core.types.StateDescription;
 import org.eclipse.smarthome.core.types.StateOption;
 import org.openhab.binding.ebus.EBusBindingConstants;
+import org.openhab.binding.ebus.internal.EBusBindingUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,24 +58,88 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
 
     private final Logger logger = LoggerFactory.getLogger(EBusGeneratorImpl.class);
 
+    /*
+     * (non-Javadoc)
+     *
+     * @see org.openhab.binding.ebus.thing.EBusGenerator#clear()
+     */
+    @Override
+    public void clear() {
+        channelGroupTypes.clear();
+        channelTypes.clear();
+        configDescriptions.clear();
+        thingTypes.clear();
+    }
+
+    /**
+     * @param command
+     * @param mainChannel
+     * @param value
+     * @return
+     */
+    private ChannelDefinition createChannelDefinition(IEBusCommandMethod mainMethod, IEBusValue value) {
+
+        ChannelType channelType = createChannelType(value, mainMethod);
+
+        if (channelType != null) {
+
+            logger.info("Add channel {} for method {}", channelType.getUID(), mainMethod.getMethod());
+
+            // add to global list
+            channelTypes.put(channelType.getUID(), channelType);
+
+            // store command id
+            Map<String, String> properties = new HashMap<String, String>();
+            properties.put(EBusBindingConstants.COMMAND, mainMethod.getParent().getId());
+
+            return new ChannelDefinition(value.getName(), channelType.getUID(), properties, value.getLabel(), null);
+        }
+
+        return null;
+    }
+
+    /**
+     * @param command
+     * @param channelDefinitions
+     * @return
+     */
+    private ChannelGroupDefinition createChannelGroupDefinition(IEBusCommand command,
+            List<ChannelDefinition> channelDefinitions) {
+
+        ChannelGroupTypeUID groupTypeUID = EBusBindingUtils.generateChannelGroupTypeUID(command);
+
+        @SuppressWarnings("deprecation")
+        ChannelGroupType cgt = new ChannelGroupType(groupTypeUID, false, command.getLabel(), command.getId(),
+                channelDefinitions);
+
+        // add to global list
+        channelGroupTypes.put(cgt.getUID(), cgt);
+
+        String cgdid = EBusBindingUtils.generateChannelGroupID(command);
+
+        return new ChannelGroupDefinition(cgdid, groupTypeUID, command.getLabel(), command.getId());
+    }
+
     /**
      * @param value
      * @param mainChannel
      * @return
      */
-    private ChannelType createChannelType(IEBusValue value, IEBusCommandMethod mainChannel) {
+    private ChannelType createChannelType(IEBusValue value, IEBusCommandMethod mainMethod) {
 
-        if (StringUtils.isNotEmpty(value.getName()) && StringUtils.isNotEmpty(mainChannel.getParent().getId())
+        // only process valid entries
+        if (StringUtils.isNotEmpty(value.getName()) && StringUtils.isNotEmpty(mainMethod.getParent().getId())
                 && !value.getName().startsWith("_")) {
 
-            ChannelTypeUID uid = generateChannelTypeUID(mainChannel.getParent(), value);
+            ChannelTypeUID uid = EBusBindingUtils.generateChannelTypeUID(mainMethod.getParent(), value);
 
-            IEBusCommandMethod commandChannelSet = mainChannel.getParent()
+            IEBusCommandMethod commandChannelSet = mainMethod.getParent()
                     .getCommandMethod(IEBusCommandMethod.Method.SET);
 
             boolean readOnly = commandChannelSet == null;
-            boolean polling = mainChannel.getType().equals(IEBusCommandMethod.Type.MASTER_SLAVE);
+            boolean polling = mainMethod.getType().equals(IEBusCommandMethod.Type.MASTER_SLAVE);
 
+            // create a option list if mapping is used
             List<StateOption> options = null;
             if (value.getMapping() != null && !value.getMapping().isEmpty()) {
                 options = new ArrayList<StateOption>();
@@ -129,36 +191,51 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
     }
 
     /**
+     * @param collection
+     * @param channelDefinitions
+     * @param channelGroupDefinitions
+     * @return
+     */
+    private ThingType createThingType(EBusCommandCollection collection, ArrayList<ChannelDefinition> channelDefinitions,
+            List<ChannelGroupDefinition> channelGroupDefinitions) {
+
+        ThingTypeUID thingTypeUID = EBusBindingUtils.generateThingTypeUID(collection);
+
+        String label = collection.getLabel();
+        String description = collection.getDescription();
+
+        return new ThingType(thingTypeUID, supportedBridgeTypeUIDs, label, description, channelDefinitions,
+                channelGroupDefinitions, null, EBusBindingConstants.CONFIG_DESCRIPTION_URI_NODE);
+    }
+
+    /**
+     * Should be done in an xml file
+     *
      * @param collections
      */
+    @Deprecated
     public void initConfigDescriptions(List<EBusCommandCollection> collections) {
-
-        List<ParameterOption> options = new ArrayList<>();
-
-        // transform options
-        for (EBusCommandCollection collection : collections) {
-            options.add(new ParameterOption(collection.getId(), collection.getLabel()));
-        }
 
         List<ConfigDescriptionParameter> parameters = new ArrayList<>();
 
-        parameters.add(ConfigDescriptionParameterBuilder.create(EBusBindingConstants.CONFIG_MASTER_ADDRESS, Type.TEXT)
+        parameters.add(ConfigDescriptionParameterBuilder.create(EBusBindingConstants.MASTER_ADDRESS, Type.TEXT)
                 .withLabel("eBUS Master Address").withDescription("Master address of this node as HEX value")
                 .withRequired(false).build());
 
-        parameters.add(ConfigDescriptionParameterBuilder.create(EBusBindingConstants.CONFIG_SLAVE_ADDRESS, Type.TEXT)
+        parameters.add(ConfigDescriptionParameterBuilder.create(EBusBindingConstants.SLAVE_ADDRESS, Type.TEXT)
                 .withLabel("eBUS Slave Address").withDescription("Slave address of this node as HEX value")
                 .withRequired(false).build());
 
         ConfigDescription configDescription = new ConfigDescription(EBusBindingConstants.CONFIG_DESCRIPTION_URI_NODE,
                 parameters);
 
+        // add to global list
         configDescriptions.put(EBusBindingConstants.CONFIG_DESCRIPTION_URI_NODE, configDescription);
 
         // channel config
 
         parameters = new ArrayList<>();
-        parameters.add(ConfigDescriptionParameterBuilder.create(EBusBindingConstants.CONFIG_POLLING, Type.DECIMAL)
+        parameters.add(ConfigDescriptionParameterBuilder.create(EBusBindingConstants.POLLING, Type.DECIMAL)
                 .withUnit("s").withLabel("Polling")
                 .withDescription(
                         "Set to poll this channel every n seconds. <br />All channels that are part of this group will also be polled!")
@@ -167,7 +244,24 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
         configDescription = new ConfigDescription(EBusBindingConstants.CONFIG_DESCRIPTION_URI_POLLING_CHANNEL,
                 parameters);
 
+        // add to global list
         configDescriptions.put(EBusBindingConstants.CONFIG_DESCRIPTION_URI_POLLING_CHANNEL, configDescription);
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see org.openhab.binding.ebus.thing.EBusGenerator#update(java.util.List)
+     */
+    @Override
+    public void update(List<EBusCommandCollection> collections) {
+
+        initConfigDescriptions(collections);
+
+        for (EBusCommandCollection collection : collections) {
+            updateCollection(collection);
+        }
+
     }
 
     /**
@@ -184,25 +278,26 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
 
             Collection<IEBusCommandMethod.Method> commandChannelTypes = command.getCommandChannelMethods();
 
-            IEBusCommandMethod mainChannel = null;
+            IEBusCommandMethod mainMethod = null;
             if (commandChannelTypes.contains(IEBusCommandMethod.Method.GET)) {
-                mainChannel = command.getCommandMethod(IEBusCommandMethod.Method.GET);
+                mainMethod = command.getCommandMethod(IEBusCommandMethod.Method.GET);
 
             } else if (commandChannelTypes.contains(IEBusCommandMethod.Method.BROADCAST)) {
-                mainChannel = command.getCommandMethod(IEBusCommandMethod.Method.BROADCAST);
+                mainMethod = command.getCommandMethod(IEBusCommandMethod.Method.BROADCAST);
 
             } else {
                 logger.warn("eBUS command {} only contains a setter channel!", command.getId());
                 // mh ... not correct!
             }
 
-            if (mainChannel != null) {
+            if (mainMethod != null) {
 
-                if (mainChannel.getMasterTypes() != null && !mainChannel.getMasterTypes().isEmpty()) {
-                    list.addAll(mainChannel.getMasterTypes());
+                if (mainMethod.getMasterTypes() != null && !mainMethod.getMasterTypes().isEmpty()) {
+                    list.addAll(mainMethod.getMasterTypes());
                 }
-                if (mainChannel.getSlaveTypes() != null && !mainChannel.getSlaveTypes().isEmpty()) {
-                    list.addAll(mainChannel.getSlaveTypes());
+
+                if (mainMethod.getSlaveTypes() != null && !mainMethod.getSlaveTypes().isEmpty()) {
+                    list.addAll(mainMethod.getSlaveTypes());
                 }
 
                 // now check for nested values
@@ -214,78 +309,40 @@ public class EBusGeneratorImpl extends EBusGeneratorBase implements EBusGenerato
                 }
                 list.addAll(childList);
 
+                // *****************************************
+                // generate a channel for each ebus value
+                // *****************************************
+
                 for (IEBusValue value : list) {
                     if (StringUtils.isNotEmpty(value.getName())) {
 
-                        ChannelType channelType = createChannelType(value, mainChannel);
-
-                        if (channelType != null) {
-                            logger.info("Add channel {} for method {}", channelType.getUID(), mainChannel.getMethod());
-                            channelTypes.put(channelType.getUID(), channelType);
-
-                            Map<String, String> properties = new HashMap<String, String>();
-                            properties.put(EBusBindingConstants.PROPERTY_COMMAND, command.getId());
-
-                            ChannelDefinition cd = new ChannelDefinition(value.getName(), channelType.getUID(),
-                                    properties, value.getLabel(), null);
-
+                        ChannelDefinition channelDefinition = createChannelDefinition(mainMethod, value);
+                        if (channelDefinition != null) {
                             logger.info("Add channel definition {}", value.getName());
-                            channelDefinitions.add(cd);
+                            channelDefinitions.add(channelDefinition);
                         }
-
                     }
-
                 }
             }
+
+            // *****************************************
+            // create a channel group for each command
+            // *****************************************
+
             if (StringUtils.isNotEmpty(command.getId())) {
-                ChannelGroupTypeUID groupTypeUID = generateChannelGroupTypeUID(command);
-
-                @SuppressWarnings("deprecation")
-                ChannelGroupType cgt = new ChannelGroupType(groupTypeUID, false, command.getLabel(), command.getId(),
+                ChannelGroupDefinition channelGroupDefinition = createChannelGroupDefinition(command,
                         channelDefinitions);
-
-                channelGroupTypes.put(cgt.getUID(), cgt);
-
-                String cgdid = generateChannelGroupID(command);
-
-                ChannelGroupDefinition groupDefinition = new ChannelGroupDefinition(cgdid, groupTypeUID,
-                        command.getLabel(), command.getId());
-
-                channelGroupDefinitions.add(groupDefinition);
+                channelGroupDefinitions.add(channelGroupDefinition);
             }
 
         }
 
-        ThingTypeUID thingTypeUID = new ThingTypeUID(BINDING_ID, collection.getId());
+        // *****************************************
+        // generate a thing for this collection
+        // *****************************************
 
-        String label = collection.getLabel();
-        String description = collection.getDescription();
-
-        ArrayList<ChannelDefinition> channelDefinitions2 = new ArrayList<>();
-
-        ThingType thingType = new ThingType(thingTypeUID, supportedBridgeTypeUIDs, label, description,
-                channelDefinitions2, channelGroupDefinitions, null, EBusBindingConstants.CONFIG_DESCRIPTION_URI_NODE);
-
+        ThingType thingType = createThingType(collection, null, channelGroupDefinitions);
         thingTypes.put(thingType.getUID(), thingType);
-    }
-
-    @Override
-    public void update(List<EBusCommandCollection> collections) {
-
-        initConfigDescriptions(collections);
-
-        for (EBusCommandCollection collection : collections) {
-            updateCollection(collection);
-        }
-
-    }
-
-    @Override
-    public void clear() {
-        channelGroupTypes.clear();
-        channelTypes.clear();
-        configDescriptions.clear();
-        thingTypes.clear();
     }
 
 }

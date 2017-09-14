@@ -24,7 +24,6 @@ import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
 import org.eclipse.smarthome.core.types.Command;
-import org.openhab.binding.ebus.EBusBindingConstants;
 import org.openhab.binding.ebus.internal.EBusLibClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,28 +44,46 @@ public class EBusHandler extends BaseThingHandler {
 
     private Map<String, ScheduledFuture<?>> pollings = new HashMap<>();
 
+    /**
+     * @param thing
+     */
     public EBusHandler(@NonNull Thing thing) {
         super(thing);
     }
 
+    /*
+     * (non-Javadoc)
+     *
+     * @see
+     * org.eclipse.smarthome.core.thing.binding.ThingHandler#handleCommand(org.eclipse.smarthome.core.thing.ChannelUID,
+     * org.eclipse.smarthome.core.types.Command)
+     */
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
-        if (channelUID.getId().equals(CHANNEL_1)) {
-            // TODO: handle command
 
-            // Note: if communication with thing fails for some reason,
-            // indicate that by setting the status with detail information
-            // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
-            // "Could not control device at IP address x.x.x.x");
-        }
+        // if (channelUID.getId().equals(CHANNEL_1)) {
+        // // TODO: handle command
+        //
+        // // Note: if communication with thing fails for some reason,
+        // // indicate that by setting the status with detail information
+        // // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
+        // // "Could not control device at IP address x.x.x.x");
+        // }
     }
 
+    /*
+     * (non-Javadoc)
+     *
+     * @see org.eclipse.smarthome.core.thing.binding.BaseThingHandler#dispose()
+     */
     @Override
     public void dispose() {
         cancelPollingJobs();
-        // refreshJob.cancel(true);
     }
 
+    /**
+     *
+     */
     private void cancelPollingJobs() {
         for (ScheduledFuture<?> pollingJob : pollings.values()) {
             pollingJob.cancel(true);
@@ -74,6 +91,11 @@ public class EBusHandler extends BaseThingHandler {
         pollings.clear();
     }
 
+    /*
+     * (non-Javadoc)
+     *
+     * @see org.eclipse.smarthome.core.thing.binding.BaseThingHandler#initialize()
+     */
     @Override
     public void initialize() {
 
@@ -82,6 +104,9 @@ public class EBusHandler extends BaseThingHandler {
         initializePolling();
     }
 
+    /**
+     * @return
+     */
     private EBusLibClient getLibClient() {
 
         if (getBridge() == null) {
@@ -92,9 +117,16 @@ public class EBusHandler extends BaseThingHandler {
         if (handler != null) {
             return handler.getLibClient();
         }
+
         return null;
     }
 
+    /*
+     * (non-Javadoc)
+     *
+     * @see
+     * org.eclipse.smarthome.core.thing.binding.BaseThingHandler#thingUpdated(org.eclipse.smarthome.core.thing.Thing)
+     */
     @Override
     public void thingUpdated(final Thing thing) {
         super.thingUpdated(thing);
@@ -102,6 +134,9 @@ public class EBusHandler extends BaseThingHandler {
         initializePolling();
     }
 
+    /**
+     *
+     */
     private void initializePolling() {
         cancelPollingJobs();
 
@@ -109,9 +144,9 @@ public class EBusHandler extends BaseThingHandler {
 
         for (final Channel channel : thing.getChannels()) {
             Configuration configuration = channel.getConfiguration();
-            Object object = configuration.get(CONFIG_POLLING);
+            Object object = configuration.get(POLLING);
 
-            final String commandId = channel.getProperties().get(EBusBindingConstants.PROPERTY_COMMAND);
+            final String commandId = channel.getProperties().get(COMMAND);
 
             if (object instanceof Number) {
                 long pollingPeriod = ((Number) object).longValue();

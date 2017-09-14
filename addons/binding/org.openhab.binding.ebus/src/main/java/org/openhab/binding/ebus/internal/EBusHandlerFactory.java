@@ -53,6 +53,12 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory implements Manag
 
     private final Logger logger = LoggerFactory.getLogger(EBusHandlerFactory.class);
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.eclipse.smarthome.core.thing.binding.BaseThingHandlerFactory#activate(org.osgi.service.component.
+     * ComponentContext)
+     */
     @Override
     protected void activate(ComponentContext componentContext) {
         super.activate(componentContext);
@@ -61,6 +67,13 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory implements Manag
         updateConfiguration(componentContext.getProperties());
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.eclipse.smarthome.core.thing.binding.BaseThingHandlerFactory#createHandler(org.eclipse.smarthome.core.thing.
+     * Thing)
+     */
     @Override
     protected ThingHandler createHandler(Thing thing) {
         ThingTypeUID thingTypeUID = thing.getThingTypeUID();
@@ -74,12 +87,22 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory implements Manag
         return new EBusHandler(thing);
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.eclipse.smarthome.core.thing.binding.BaseThingHandlerFactory#deactivate(org.osgi.service.component.
+     * ComponentContext)
+     */
     @Override
     protected void deactivate(ComponentContext componentContext) {
         super.deactivate(componentContext);
         configuration.clear();
     }
 
+    /**
+     * @param configuration
+     * @param url
+     */
     private void loadConfigurationByUrl(EBusClientConfiguration configuration, String url) {
         try {
             configuration.loadConfiguration(new URL(url).openStream());
@@ -90,6 +113,9 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory implements Manag
         }
     }
 
+    /**
+     * @param bridgeHandler
+     */
     private synchronized void registerDiscoveryService(EBusBridgeHandler bridgeHandler) {
         EBusDiscovery discoveryService = new EBusDiscovery(bridgeHandler);
         discoveryService.activate();
@@ -98,6 +124,13 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory implements Manag
                 .registerService(DiscoveryService.class.getName(), discoveryService, new Hashtable<String, Object>()));
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.eclipse.smarthome.core.thing.binding.BaseThingHandlerFactory#removeHandler(org.eclipse.smarthome.core.thing.
+     * binding.ThingHandler)
+     */
     @Override
     protected synchronized void removeHandler(ThingHandler thingHandler) {
         if (thingHandler instanceof EBusBridgeHandler) {
@@ -115,20 +148,36 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory implements Manag
         }
     }
 
+    /**
+     * @param generator
+     */
     public void setGenerator(EBusGenerator generator) {
         this.generator = generator;
 
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.eclipse.smarthome.core.thing.binding.ThingHandlerFactory#supportsThingType(org.eclipse.smarthome.core.thing.
+     * ThingTypeUID)
+     */
     @Override
     public boolean supportsThingType(ThingTypeUID thingTypeUID) {
         return BINDING_ID.equals(thingTypeUID.getBindingId());
     }
 
+    /**
+     * @param generator
+     */
     public void unsetGenerator(EBusGenerator generator) {
         this.generator = null;
     }
 
+    /**
+     * @param properties
+     */
     private void updateConfiguration(Dictionary<String, ?> properties) {
 
         configuration.clear();
@@ -148,6 +197,11 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory implements Manag
         generator.update(configuration.getCollections());
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.osgi.service.cm.ManagedService#updated(java.util.Dictionary)
+     */
     @Override
     public void updated(Dictionary<String, ?> properties) throws ConfigurationException {
         if (properties != null) {

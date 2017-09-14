@@ -76,8 +76,8 @@ public class EBusDiscovery extends AbstractDiscoveryService implements EBusDevic
         ThingUID thingUID = new ThingUID(BINDING_ID, id);
 
         Map<String, Object> properties = new HashMap<>();
-        properties.put(EBusBindingConstants.CONFIG_MASTER_ADDRESS, masterAddress);
-        properties.put(EBusBindingConstants.CONFIG_SLAVE_ADDRESS, slaveAddress);
+        properties.put(EBusBindingConstants.MASTER_ADDRESS, masterAddress);
+        properties.put(EBusBindingConstants.SLAVE_ADDRESS, slaveAddress);
 
         if (device.getHardwareVersion() != null) {
             properties.put("hardwareVersion", device.getHardwareVersion().toPlainString());

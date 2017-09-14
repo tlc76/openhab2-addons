@@ -63,7 +63,7 @@ public class EBusLibClient {
     public ByteBuffer grrr(String commandId, IEBusCommandMethod.Method type, Thing targetThing)
             throws EBusTypeException {
 
-        String slaveAddress = (String) targetThing.getConfiguration().get(EBusBindingConstants.CONFIG_SLAVE_ADDRESS);
+        String slaveAddress = (String) targetThing.getConfiguration().get(EBusBindingConstants.SLAVE_ADDRESS);
 
         IEBusCommandMethod commandMethod = client.getConfigurationProvider().getConfigurationById(commandId, type);
 

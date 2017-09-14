@@ -4,7 +4,7 @@
     xmlns:thing="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0"
     xsi:schemaLocation="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0 http://eclipse.org/smarthome/schemas/thing-description-1.0.0.xsd">
 
-    <!-- Hue Bridge -->
+    <!-- eBUS Bridge -->
     <bridge-type id="bridge">
         <label>eBUS Bridge</label>
         <description>The eBUS bridge represents the eBus hardware interface.</description>
@@ -34,14 +34,14 @@
              
              <parameter name="port" type="integer" groupName="network">
                  <label>Network Port</label>
-                 <description>Serial port like COM1 or /ttyUSB1</description>
+                 <description>Port of the eBus bridge.</description>
                  <required>false</required>
              </parameter>
             
             <parameter name="serialPort" type="text" groupName="serial">
                 <label>Serial Port</label>
                 <description>
-                    Name of a registered hue bridge user, that allows to access the API.
+                    Serial port like COM1 or /ttyUSB1
                 </description>
                 <required>false</required>
             </parameter>
@@ -52,12 +52,6 @@
                 <description>Master address of this bridge as HEX</description>
                 <required>true</required>
                 <default>FF</default>
-            </parameter>
-            
-            <parameter name="customParsersUrl" type="text">
-                <advanced>true</advanced>
-                <label>Custom Parsers URL</label>
-                <description>Starts with file:// or http:// etc.., use comma as delimiter</description>
             </parameter>
             
         </config-description>

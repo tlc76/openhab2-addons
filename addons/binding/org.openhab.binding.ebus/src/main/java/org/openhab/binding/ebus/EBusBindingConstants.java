@@ -11,7 +11,7 @@ package org.openhab.binding.ebus;
 import java.net.URI;
 
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
-import org.openhab.binding.ebus.internal.EbusBindingUtils;
+import org.openhab.binding.ebus.internal.EBusBindingUtils;
 
 /**
  * The {@link EBusBindingConstants} class defines common constants, which are
@@ -23,23 +23,20 @@ public class EBusBindingConstants {
 
     public static final String BINDING_ID = "ebus";
 
-    // List of all Thing Type UIDs
+    // bridge
     public static final ThingTypeUID THING_TYPE_EBUS_BRIDGE = new ThingTypeUID(BINDING_ID, "bridge");
 
-    // List of all Channel ids
-    public static final String CHANNEL_1 = "channel1";
-
-    // List of configuration ids
-    public static final String CONFIG_DEVICE = "device";
-    public static final String CONFIG_USE_STANDARD_COMMANDS = "useStandardCommands";
-    public static final String CONFIG_MASTER_ADDRESS = "masterAddress";
-    public static final String CONFIG_SLAVE_ADDRESS = "slaveAddress";
-    public static final String CONFIG_POLLING = "polling";
-
-    public static final String PROPERTY_COMMAND = "command";
+    // ebus thing properties
+    public static final String MASTER_ADDRESS = "masterAddress";
+    public static final String SLAVE_ADDRESS = "slaveAddress";
+    public static final String POLLING = "polling";
+    public static final String COMMAND = "command";
+    public static final String IP_ADDRESS = "ipAddress";
+    public static final String PORT = "port";
+    public static final String SERIAL_PORT = "serialPort";
 
     // configuration uris
-    public static final URI CONFIG_DESCRIPTION_URI_NODE = EbusBindingUtils.getURI(BINDING_ID + ":nodeConfiguration");
-    public static final URI CONFIG_DESCRIPTION_URI_POLLING_CHANNEL = EbusBindingUtils
+    public static final URI CONFIG_DESCRIPTION_URI_NODE = EBusBindingUtils.getURI(BINDING_ID + ":nodeConfiguration");
+    public static final URI CONFIG_DESCRIPTION_URI_POLLING_CHANNEL = EBusBindingUtils
             .getURI(BINDING_ID + ":pollingChannel");
 }

@@ -8,7 +8,7 @@
  */
 package org.openhab.binding.ebus.thing;
 
-import static org.openhab.binding.ebus.EBusBindingConstants.*;
+import static org.openhab.binding.ebus.EBusBindingConstants.THING_TYPE_EBUS_BRIDGE;
 
 import java.net.URI;
 import java.util.Arrays;
@@ -28,9 +28,6 @@ import org.eclipse.smarthome.core.thing.type.ChannelType;
 import org.eclipse.smarthome.core.thing.type.ChannelTypeProvider;
 import org.eclipse.smarthome.core.thing.type.ChannelTypeUID;
 import org.eclipse.smarthome.core.thing.type.ThingType;
-
-import de.csdev.ebus.command.IEBusCommand;
-import de.csdev.ebus.command.IEBusValue;
 
 /**
  *
@@ -53,22 +50,22 @@ public class EBusGeneratorBase implements ThingTypeProvider, ChannelTypeProvider
         return channelGroupTypes.get(channelGroupTypeUID);
     }
 
-    protected ChannelTypeUID generateChannelTypeUID(IEBusCommand command, IEBusValue value) {
-        return new ChannelTypeUID(BINDING_ID + ":" + command.getId().replace('.', ':') + ":" + value.getName());
-    }
+    // protected ChannelTypeUID generateChannelTypeUID(IEBusCommand command, IEBusValue value) {
+    // return new ChannelTypeUID(BINDING_ID + ":" + command.getId().replace('.', ':') + ":" + value.getName());
+    // }
 
     @Override
     public Collection<ChannelGroupType> getChannelGroupTypes(Locale locale) {
         return channelGroupTypes.values();
     }
 
-    protected ChannelGroupTypeUID generateChannelGroupTypeUID(IEBusCommand command) {
-        return new ChannelGroupTypeUID(BINDING_ID + ":" + command.getId().replace('.', '-'));
-    }
-
-    protected String generateChannelGroupID(IEBusCommand command) {
-        return command.getId().replace('.', '-');
-    }
+    // protected ChannelGroupTypeUID generateChannelGroupTypeUID(IEBusCommand command) {
+    // return new ChannelGroupTypeUID(BINDING_ID + ":" + command.getId().replace('.', '-'));
+    // }
+    //
+    // protected String generateChannelGroupID(IEBusCommand command) {
+    // return command.getId().replace('.', '-');
+    // }
 
     @Override
     public ChannelType getChannelType(ChannelTypeUID channelTypeUID, Locale locale) {

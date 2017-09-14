@@ -8,12 +8,11 @@
  */
 package org.openhab.binding.ebus.handler;
 
-import static org.openhab.binding.ebus.EBusBindingConstants.CHANNEL_1;
+import static org.openhab.binding.ebus.EBusBindingConstants.*;
 
 import java.math.BigDecimal;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jdt.annotation.NonNull;
@@ -30,7 +29,6 @@ import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.thing.binding.BaseBridgeHandler;
 import org.eclipse.smarthome.core.types.Command;
-import org.openhab.binding.ebus.EBusBindingConstants;
 import org.openhab.binding.ebus.internal.EBusLibClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,56 +57,12 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
 
     public EBusBridgeHandler(@NonNull Bridge bridge, EBusClientConfiguration clientConfiguration) {
         super(bridge);
+
+        // reference configuration
         this.clientConfiguration = clientConfiguration;
 
         // initialize the ebus client wrapper
         libClient = new EBusLibClient(clientConfiguration);
-
-        // scheduler.schedule(new Runnable() {
-        //
-        // @Override
-        // public void run() {
-        // libClient.getClient().getController().
-        // // TODO Auto-generated method stub
-        //
-        // }
-        // }, 10, TimeUnit.SECONDS);
-    }
-
-    @Override
-    protected void updateConfiguration(Configuration configuration) {
-        // TODO Auto-generated method stub
-        logger.info("EBusBridgeHandler.updateConfiguration()");
-        super.updateConfiguration(configuration);
-
-    }
-
-    @Override
-    protected void updateProperties(Map<String, String> properties) {
-        // TODO Auto-generated method stub
-        logger.info("EBusBridgeHandler.updateProperties()");
-        super.updateProperties(properties);
-    }
-
-    @Override
-    protected void updateProperty(@NonNull String name, String value) {
-        // TODO Auto-generated method stub
-        logger.info("EBusBridgeHandler.updateProperty()");
-        super.updateProperty(name, value);
-    }
-
-    @Override
-    public void thingUpdated(@NonNull Thing thing) {
-        // TODO Auto-generated method stub
-        logger.info("EBusBridgeHandler.thingUpdated()");
-        super.thingUpdated(thing);
-    }
-
-    @Override
-    public void handleConfigurationUpdate(Map<String, Object> configurationParameters) {
-        // TODO Auto-generated method stub
-        logger.info("EBusBridgeHandler.handleConfigurationUpdate()");
-        super.handleConfigurationUpdate(configurationParameters);
     }
 
     public EBusLibClient getLibClient() {
@@ -117,20 +71,18 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
 
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
-        if (channelUID.getId().equals(CHANNEL_1)) {
-            // TODO: handle command
-
-            // Note: if communication with thing fails for some reason,
-            // indicate that by setting the status with detail information
-            // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
-            // "Could not control device at IP address x.x.x.x");
-        }
+        // if (channelUID.getId().equals(CHANNEL_1)) {
+        // // TODO: handle command
+        //
+        // // Note: if communication with thing fails for some reason,
+        // // indicate that by setting the status with detail information
+        // // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
+        // // "Could not control device at IP address x.x.x.x");
+        // }
     }
 
     @Override
     public void initialize() {
-
-        logger.info("xxxxxxxxx");
 
         // initialize the ebus client wrapper
         libClient = new EBusLibClient(clientConfiguration);
@@ -145,16 +97,16 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
         String serialPort = null;
 
         String masterAddressStr = null;
-        Byte masterAddress = (byte) 0x00;
+        Byte masterAddress = (byte) 0xFF;
 
-        // Thing.PROPERTY_VENDOR
         try {
-            ipAddress = (String) configuration.get("ipAddress");
-            port = (BigDecimal) configuration.get("port");
-            masterAddressStr = (String) configuration.get("masterAddress");
-            serialPort = (String) configuration.get("serialPort");
+            ipAddress = (String) configuration.get(IP_ADDRESS);
+            port = (BigDecimal) configuration.get(PORT);
+            masterAddressStr = (String) configuration.get(MASTER_ADDRESS);
+            serialPort = (String) configuration.get(SERIAL_PORT);
+
         } catch (Exception e) {
-            logger.debug("Cannot set network parameters.", e);
+            logger.debug("Cannot set parameters!", e);
         }
 
         if (StringUtils.isNotEmpty(masterAddressStr)) {
@@ -189,19 +141,6 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
         libClient.getClient().getController().addEBusEventListener(this);
         libClient.getClient().getResolverService().addEBusParserListener(this);
 
-        scheduler.schedule(new Runnable() {
-
-            @Override
-            public void run() {
-                try {
-                    // libClient.getClient().getDeviceTableService().startDeviceScan();
-                    libClient.getClient().getDeviceTableService().sendIdentificationRequest((byte) 0x76);
-                } catch (Exception e) {
-                    logger.error("error!", e);
-                }
-            }
-        }, 30, TimeUnit.SECONDS);
-
         // start eBus controller
         libClient.startClient();
     }
@@ -225,7 +164,6 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
 
         String sourceAddress = EBusUtils.toHexDumpString(receivedData[0]);
         String targetAddress = EBusUtils.toHexDumpString(receivedData[1]);
-        // Byte destinationAddress = command.getDestinationAddress();
 
         logger.info("Received telegram from master address {} with command {}", sourceAddress,
                 commandChannel.getParent().getId());
@@ -234,15 +172,11 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
 
             for (Thing thing : getThing().getThings()) {
 
-                String masterAddress = (String) thing.getConfiguration()
-                        .get(EBusBindingConstants.CONFIG_MASTER_ADDRESS);
+                String masterAddress = (String) thing.getConfiguration().get(MASTER_ADDRESS);
 
-                String slaveAddress = (String) thing.getConfiguration().get(EBusBindingConstants.CONFIG_SLAVE_ADDRESS);
+                String slaveAddress = (String) thing.getConfiguration().get(SLAVE_ADDRESS);
 
                 if (sourceAddress.equals(masterAddress) || targetAddress.equals(slaveAddress)) {
-
-                    // logger.info("Found thing with master address {} or slave address {} ...", masterAddress,
-                    // slaveAddress);
 
                     for (Entry<String, Object> resultEntry : result.entrySet()) {
 
@@ -252,43 +186,7 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
                         Channel channel = thing.getChannel(m.getId());
 
                         if (channel != null) {
-                            // logger.info("Found channel @ thing ...");
-
-                            if (channel.getAcceptedItemType().equals("Number")) {
-                                if (resultEntry.getValue() != null) {
-                                    if (resultEntry.getValue() instanceof BigDecimal) {
-                                        updateState(channel.getUID(),
-                                                new DecimalType((BigDecimal) resultEntry.getValue()));
-                                    } else {
-                                        logger.warn("Unexpected datatype {} for channel {} !",
-                                                resultEntry.getValue().getClass().getSimpleName(), m.getAsString());
-                                    }
-
-                                }
-
-                            } else if (channel.getAcceptedItemType().equals("String")) {
-                                if (resultEntry.getValue() instanceof String) {
-                                    updateState(channel.getUID(), new StringType((String) resultEntry.getValue()));
-                                } else if (resultEntry.getValue() instanceof byte[]) {
-                                    // show bytes as hex string
-                                    updateState(channel.getUID(), new StringType(
-                                            EBusUtils.toHexDumpString((byte[]) resultEntry.getValue()).toString()));
-                                }
-
-                            } else if (channel.getAcceptedItemType().equals("Switch")) {
-                                if (resultEntry.getValue() instanceof Boolean) {
-                                    boolean isOn = ((Boolean) resultEntry.getValue()).booleanValue();
-                                    updateState(channel.getUID(), isOn ? OnOffType.ON : OnOffType.OFF);
-                                }
-
-                            } else if (channel.getAcceptedItemType().equals("DateTime")) {
-                                if (resultEntry.getValue() instanceof EBusDateTime) {
-                                    this.updateState(channel.getUID(),
-                                            new DateTimeType(((EBusDateTime) resultEntry.getValue()).getCalendar()));
-                                }
-
-                            }
-
+                            xxx(channel, resultEntry.getValue());
                         }
 
                     }
@@ -299,29 +197,48 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
         }
     }
 
+    @SuppressWarnings("null")
+    private void xxx(@NonNull Channel channel, Object value) {
+
+        if (channel.getAcceptedItemType().equals("Number")) {
+            if (value != null) {
+                if (value instanceof BigDecimal) {
+                    updateState(channel.getUID(), new DecimalType((BigDecimal) value));
+                } else {
+                    logger.warn("Unexpected datatype {} for channel {} !", value.getClass().getSimpleName(),
+                            channel.getChannelTypeUID().getAsString());
+                }
+
+            }
+
+        } else if (channel.getAcceptedItemType().equals("String")) {
+            if (value instanceof String) {
+                updateState(channel.getUID(), new StringType((String) value));
+            } else if (value instanceof byte[]) {
+                // show bytes as hex string
+                updateState(channel.getUID(), new StringType(EBusUtils.toHexDumpString((byte[]) value).toString()));
+            }
+
+        } else if (channel.getAcceptedItemType().equals("Switch")) {
+            if (value instanceof Boolean) {
+                boolean isOn = ((Boolean) value).booleanValue();
+                updateState(channel.getUID(), isOn ? OnOffType.ON : OnOffType.OFF);
+            }
+
+        } else if (channel.getAcceptedItemType().equals("DateTime")) {
+            if (value instanceof EBusDateTime) {
+                this.updateState(channel.getUID(), new DateTimeType(((EBusDateTime) value).getCalendar()));
+            }
+
+        }
+    }
+
     @Override
     public void onTelegramReceived(byte[] receivedData, Integer sendQueueId) {
-        if (EBusBridgeHandler.this.getThing().getStatus().equals(ThingStatus.INITIALIZING)) {
+        if (!EBusBridgeHandler.this.getThing().getStatus().equals(ThingStatus.ONLINE)) {
             // set status to online if we are able to receive valid telegrams
             updateStatus(ThingStatus.ONLINE);
         }
-
-        // logger.error(EBusUtils.toHexDumpString(receivedData).toString());
-
-        // 6,7
-        // if (receivedData[2] == (byte) 0x50 && receivedData[3] == (byte) 0x22 && receivedData[6] == (byte) 0xFB
-        // && receivedData[7] == (byte) 0x02) {
-        // if (logger.isErrorEnabled()) {
-        // logger.error(EBusUtils.toHexDumpString(receivedData).toString());
-        // }
-        // }
-        //
-        // if (receivedData[2] == (byte) 0x07 && receivedData[3] == (byte) 0x00) {
-        // if (logger.isErrorEnabled()) {
-        // logger.error(EBusUtils.toHexDumpString(receivedData).toString());
-        // }
-        // }
-
     }
 
     @Override
