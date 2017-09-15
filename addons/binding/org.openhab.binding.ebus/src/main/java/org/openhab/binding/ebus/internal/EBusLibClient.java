@@ -16,10 +16,10 @@ import org.openhab.binding.ebus.EBusBindingConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.csdev.ebus.cfg.datatypes.EBusTypeException;
 import de.csdev.ebus.client.EBusClient;
 import de.csdev.ebus.client.EBusClientConfiguration;
 import de.csdev.ebus.command.IEBusCommandMethod;
+import de.csdev.ebus.command.datatypes.EBusTypeException;
 import de.csdev.ebus.core.EBusController;
 import de.csdev.ebus.core.connection.EBusSerialNRJavaSerialConnection;
 import de.csdev.ebus.core.connection.EBusTCPConnection;

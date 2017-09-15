@@ -28,8 +28,8 @@ import org.openhab.binding.ebus.internal.EBusLibClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.csdev.ebus.cfg.datatypes.EBusTypeException;
 import de.csdev.ebus.command.IEBusCommandMethod;
+import de.csdev.ebus.command.datatypes.EBusTypeException;
 import de.csdev.ebus.utils.EBusUtils;
 
 /**
@@ -78,6 +78,7 @@ public class EBusHandler extends BaseThingHandler {
      */
     @Override
     public void dispose() {
+        System.out.println("EBusHandler.dispose()");
         cancelPollingJobs();
     }
 
@@ -98,6 +99,8 @@ public class EBusHandler extends BaseThingHandler {
      */
     @Override
     public void initialize() {
+
+        System.out.println("EBusHandler.initialize()");
 
         updateStatus(ThingStatus.ONLINE);
 
@@ -130,6 +133,8 @@ public class EBusHandler extends BaseThingHandler {
     @Override
     public void thingUpdated(final Thing thing) {
         super.thingUpdated(thing);
+
+        System.out.println("EBusHandler.thingUpdated()");
 
         initializePolling();
     }
