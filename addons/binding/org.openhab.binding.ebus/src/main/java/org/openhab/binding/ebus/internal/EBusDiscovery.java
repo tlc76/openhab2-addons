@@ -62,7 +62,12 @@ public class EBusDiscovery extends AbstractDiscoveryService implements EBusDevic
     @Override
     public void deactivate() {
         removeOlderResults(new Date().getTime());
-        bridgeHandle.getLibClient().getClient().getDeviceTable().removeEBusDeviceTableListener(this);
+        try {
+            bridgeHandle.getLibClient().getClient().getDeviceTable().removeEBusDeviceTableListener(this);
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
     }
 
     private void x(IEBusDevice device, EBusCommandCollection collection) {

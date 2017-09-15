@@ -22,6 +22,7 @@ import org.eclipse.smarthome.core.thing.Channel;
 import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingStatus;
+import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
 import org.eclipse.smarthome.core.types.Command;
 import org.openhab.binding.ebus.internal.EBusLibClient;
@@ -78,7 +79,6 @@ public class EBusHandler extends BaseThingHandler {
      */
     @Override
     public void dispose() {
-        System.out.println("EBusHandler.dispose()");
         cancelPollingJobs();
     }
 
@@ -100,11 +100,17 @@ public class EBusHandler extends BaseThingHandler {
     @Override
     public void initialize() {
 
-        System.out.println("EBusHandler.initialize()");
+        if (getBridge() == null) {
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "No bridge defined!");
 
-        updateStatus(ThingStatus.ONLINE);
+        } else if (getBridge().getStatus() == ThingStatus.ONLINE) {
+            updateStatus(ThingStatus.ONLINE);
+            initializePolling();
 
-        initializePolling();
+        } else {
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.BRIDGE_OFFLINE);
+        }
+
     }
 
     /**

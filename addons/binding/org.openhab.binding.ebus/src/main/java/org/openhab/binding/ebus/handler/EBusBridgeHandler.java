@@ -11,8 +11,10 @@ package org.openhab.binding.ebus.handler;
 import static org.openhab.binding.ebus.EBusBindingConstants.*;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jdt.annotation.NonNull;
@@ -27,8 +29,10 @@ import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.ThingStatusDetail;
+import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.thing.binding.BaseBridgeHandler;
 import org.eclipse.smarthome.core.types.Command;
+import org.openhab.binding.ebus.EBusBindingConstants;
 import org.openhab.binding.ebus.internal.EBusLibClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,6 +55,9 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
 
     private final Logger logger = LoggerFactory.getLogger(EBusBridgeHandler.class);
 
+    public final static Set<ThingTypeUID> SUPPORTED_THING_TYPES = Collections
+            .singleton(EBusBindingConstants.THING_TYPE_EBUS_BRIDGE);
+
     private EBusLibClient libClient;
 
     private EBusClientConfiguration clientConfiguration;
@@ -69,18 +76,7 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
         return libClient;
     }
 
-    @Override
-    public void handleCommand(ChannelUID channelUID, Command command) {
-        // if (channelUID.getId().equals(CHANNEL_1)) {
-        // // TODO: handle command
-        //
-        // // Note: if communication with thing fails for some reason,
-        // // indicate that by setting the status with detail information
-        // // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
-        // // "Could not control device at IP address x.x.x.x");
-        // }
-    }
-
+    @SuppressWarnings("null")
     @Override
     public void initialize() {
 
@@ -118,10 +114,16 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
         }
 
         if (StringUtils.isNotEmpty(serialPort)) {
-            libClient.setSerialConnection(serialPort);
+            // create a dummy connection
+            if (serialPort.equals("dummy")) {
+                libClient.setMockupConnection(scheduler);
+            } else {
+                libClient.setSerialConnection(serialPort);
+            }
+
         }
 
-        if (!EBusUtils.isMasterAddress(masterAddress)) {
+        if (masterAddress != null && !EBusUtils.isMasterAddress(masterAddress)) {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
                     "eBUS master address is not a valid master address!");
 
@@ -186,7 +188,7 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
                         Channel channel = thing.getChannel(m.getId());
 
                         if (channel != null) {
-                            xxx(channel, resultEntry.getValue());
+                            assignValueToChannel(channel, resultEntry.getValue());
                         }
 
                     }
@@ -198,7 +200,7 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
     }
 
     @SuppressWarnings("null")
-    private void xxx(@NonNull Channel channel, Object value) {
+    private void assignValueToChannel(@NonNull Channel channel, Object value) {
 
         if (channel.getAcceptedItemType().equals("Number")) {
             if (value != null) {
@@ -243,13 +245,18 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
 
     @Override
     public void onTelegramException(EBusDataException exception, Integer sendQueueId) {
-        // if (logger.isErrorEnabled()) {
-        // logger.error("eBus telegram error; {}", exception.getLocalizedMessage());
-        // }
+        if (logger.isErrorEnabled()) {
+            logger.error("eBUS telegram error; {}", exception.getLocalizedMessage());
+        }
     }
 
     @Override
     public void onConnectionException(Exception e) {
         updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, e.getMessage());
+    }
+
+    @Override
+    public void handleCommand(@NonNull ChannelUID channelUID, Command command) {
+        // noop for bridge
     }
 }
