@@ -8,7 +8,7 @@
  */
 package org.openhab.binding.ebus.internal;
 
-import static org.openhab.binding.ebus.EBusBindingConstants.*;
+import static org.openhab.binding.ebus.EBusBindingConstants.BINDING_ID;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -76,15 +76,19 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory implements Manag
      */
     @Override
     protected ThingHandler createHandler(Thing thing) {
-        ThingTypeUID thingTypeUID = thing.getThingTypeUID();
 
-        if (thingTypeUID.equals(THING_TYPE_EBUS_BRIDGE)) {
+        if (EBusBridgeHandler.SUPPORTED_THING_TYPES.contains(thing.getThingTypeUID())) {
             EBusBridgeHandler handler = new EBusBridgeHandler((Bridge) thing, configuration);
             registerDiscoveryService(handler);
             return handler;
-        }
 
-        return new EBusHandler(thing);
+        } else if (BINDING_ID.equals(thing.getUID().getBindingId())) {
+            return new EBusHandler(thing);
+
+        } else {
+            return null;
+
+        }
     }
 
     /*
@@ -133,6 +137,7 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory implements Manag
      */
     @Override
     protected synchronized void removeHandler(ThingHandler thingHandler) {
+
         if (thingHandler instanceof EBusBridgeHandler) {
             ServiceRegistration<?> serviceReg = this.discoveryServiceRegs.get(thingHandler.getThing().getUID());
             if (serviceReg != null) {
