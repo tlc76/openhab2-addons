@@ -48,7 +48,7 @@
             
             <parameter name="masterAddress" type="text">
                 <advanced>true</advanced>
-                <label>eBus Master Address</label>
+                <label>eBUS Master Address</label>
                 <description>Master address of this bridge as HEX</description>
                 <required>true</required>
                 <default>FF</default>

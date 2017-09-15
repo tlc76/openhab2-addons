@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config-description:config-descriptions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:config-description="http://eclipse.org/smarthome/schemas/config-description/v1.0.0"
+    xsi:schemaLocation="http://eclipse.org/smarthome/schemas/config-description/v1.0.0
+        http://eclipse.org/smarthome/schemas/config-description-1.0.0.xsd">
+    
+    <config-description uri="thing-type:ebus:nodeConfig">
+    
+        <parameter name="masterAddress" type="text">
+            <label>eBUS Master Address 1</label>
+            <description>Master address of this node as HEX value</description>
+            <default></default>
+        </parameter>
+        
+        <parameter name="slaveAddress" type="text">
+            <label>eBUS Slave Address 1</label>
+            <description>Slave address of this node as HEX value</description>
+            <default></default>
+        </parameter>
+    </config-description>
+    
+    <config-description uri="channel-type:ebus:pollingChannel">
+    
+        <parameter name="polling" type="decimal" unit="s">
+            <label>Polling</label>
+            <description>Set to poll this channel every n seconds. All channels that are part of this group will also be polled!</description>
+            <unitLabel>Seconds</unitLabel>
+        </parameter>
+
+    </config-description>
+    
+</config-description:config-descriptions>

@@ -36,7 +36,8 @@ public class EBusBindingConstants {
     public static final String SERIAL_PORT = "serialPort";
 
     // configuration uris
-    public static final URI CONFIG_DESCRIPTION_URI_NODE = EBusBindingUtils.getURI(BINDING_ID + ":nodeConfiguration");
+    public static final URI CONFIG_DESCRIPTION_URI_NODE = EBusBindingUtils
+            .getURI("thing-type:" + BINDING_ID + ":nodeConfig");
     public static final URI CONFIG_DESCRIPTION_URI_POLLING_CHANNEL = EBusBindingUtils
-            .getURI(BINDING_ID + ":pollingChannel");
+            .getURI("channeltype:" + BINDING_ID + ":pollingChannel");
 }

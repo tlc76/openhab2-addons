@@ -19,10 +19,6 @@ import java.util.Set;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
-import org.eclipse.smarthome.config.core.ConfigDescription;
-import org.eclipse.smarthome.config.core.ConfigDescriptionParameter;
-import org.eclipse.smarthome.config.core.ConfigDescriptionParameter.Type;
-import org.eclipse.smarthome.config.core.ConfigDescriptionParameterBuilder;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.thing.type.ChannelDefinition;
 import org.eclipse.smarthome.core.thing.type.ChannelGroupDefinition;
@@ -40,15 +36,15 @@ import org.openhab.binding.ebus.internal.EBusBindingUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.csdev.ebus.cfg.datatypes.EBusTypeBit;
-import de.csdev.ebus.cfg.datatypes.ext.EBusTypeBytes;
-import de.csdev.ebus.cfg.datatypes.ext.EBusTypeDateTime;
-import de.csdev.ebus.cfg.datatypes.ext.EBusTypeString;
 import de.csdev.ebus.command.EBusCommandCollection;
 import de.csdev.ebus.command.IEBusCommand;
 import de.csdev.ebus.command.IEBusCommandMethod;
 import de.csdev.ebus.command.IEBusNestedValue;
 import de.csdev.ebus.command.IEBusValue;
+import de.csdev.ebus.command.datatypes.ext.EBusTypeBytes;
+import de.csdev.ebus.command.datatypes.ext.EBusTypeDateTime;
+import de.csdev.ebus.command.datatypes.ext.EBusTypeString;
+import de.csdev.ebus.command.datatypes.std.EBusTypeBit;
 
 /**
  *
@@ -67,7 +63,6 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
     public void clear() {
         channelGroupTypes.clear();
         channelTypes.clear();
-        configDescriptions.clear();
         thingTypes.clear();
     }
 
@@ -208,46 +203,6 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
                 channelGroupDefinitions, null, EBusBindingConstants.CONFIG_DESCRIPTION_URI_NODE);
     }
 
-    /**
-     * Should be done in an xml file
-     *
-     * @param collections
-     */
-    @Deprecated
-    public void initConfigDescriptions(List<EBusCommandCollection> collections) {
-
-        List<ConfigDescriptionParameter> parameters = new ArrayList<>();
-
-        parameters.add(ConfigDescriptionParameterBuilder.create(EBusBindingConstants.MASTER_ADDRESS, Type.TEXT)
-                .withLabel("eBUS Master Address").withDescription("Master address of this node as HEX value")
-                .withRequired(false).build());
-
-        parameters.add(ConfigDescriptionParameterBuilder.create(EBusBindingConstants.SLAVE_ADDRESS, Type.TEXT)
-                .withLabel("eBUS Slave Address").withDescription("Slave address of this node as HEX value")
-                .withRequired(false).build());
-
-        ConfigDescription configDescription = new ConfigDescription(EBusBindingConstants.CONFIG_DESCRIPTION_URI_NODE,
-                parameters);
-
-        // add to global list
-        configDescriptions.put(EBusBindingConstants.CONFIG_DESCRIPTION_URI_NODE, configDescription);
-
-        // channel config
-
-        parameters = new ArrayList<>();
-        parameters.add(ConfigDescriptionParameterBuilder.create(EBusBindingConstants.POLLING, Type.DECIMAL)
-                .withUnit("s").withLabel("Polling")
-                .withDescription(
-                        "Set to poll this channel every n seconds. <br />All channels that are part of this group will also be polled!")
-                .withUnitLabel("Seconds").build());
-
-        configDescription = new ConfigDescription(EBusBindingConstants.CONFIG_DESCRIPTION_URI_POLLING_CHANNEL,
-                parameters);
-
-        // add to global list
-        configDescriptions.put(EBusBindingConstants.CONFIG_DESCRIPTION_URI_POLLING_CHANNEL, configDescription);
-    }
-
     /*
      * (non-Javadoc)
      *
@@ -256,7 +211,7 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
     @Override
     public void update(List<EBusCommandCollection> collections) {
 
-        initConfigDescriptions(collections);
+        // initConfigDescriptions(collections);
 
         for (EBusCommandCollection collection : collections) {
             updateCollection(collection);
