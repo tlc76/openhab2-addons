@@ -78,7 +78,7 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
 
         if (channelType != null) {
 
-            logger.info("Add channel {} for method {}", channelType.getUID(), mainMethod.getMethod());
+            logger.trace("Add channel {} for method {}", channelType.getUID(), mainMethod.getMethod());
 
             // add to global list
             channelTypes.put(channelType.getUID(), channelType);
@@ -273,7 +273,7 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
 
                         ChannelDefinition channelDefinition = createChannelDefinition(mainMethod, value);
                         if (channelDefinition != null) {
-                            logger.info("Add channel definition {}", value.getName());
+                            logger.trace("Add channel definition {}", value.getName());
                             channelDefinitions.add(channelDefinition);
                         }
                     }
