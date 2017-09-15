@@ -39,5 +39,5 @@ public class EBusBindingConstants {
     public static final URI CONFIG_DESCRIPTION_URI_NODE = EBusBindingUtils
             .getURI("thing-type:" + BINDING_ID + ":nodeConfig");
     public static final URI CONFIG_DESCRIPTION_URI_POLLING_CHANNEL = EBusBindingUtils
-            .getURI("channeltype:" + BINDING_ID + ":pollingChannel");
+            .getURI("channel-type:" + BINDING_ID + ":pollingChannel");
 }
