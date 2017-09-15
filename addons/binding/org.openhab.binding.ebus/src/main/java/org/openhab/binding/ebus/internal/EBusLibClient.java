@@ -8,7 +8,11 @@
  */
 package org.openhab.binding.ebus.internal;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.smarthome.core.thing.Thing;
@@ -20,7 +24,9 @@ import de.csdev.ebus.client.EBusClient;
 import de.csdev.ebus.client.EBusClientConfiguration;
 import de.csdev.ebus.command.IEBusCommandMethod;
 import de.csdev.ebus.command.datatypes.EBusTypeException;
+import de.csdev.ebus.core.EBusConsts;
 import de.csdev.ebus.core.EBusController;
+import de.csdev.ebus.core.connection.EBusEmulatorConnection;
 import de.csdev.ebus.core.connection.EBusSerialNRJavaSerialConnection;
 import de.csdev.ebus.core.connection.EBusTCPConnection;
 import de.csdev.ebus.core.connection.IEBusConnection;
@@ -40,12 +46,46 @@ public class EBusLibClient {
 
     private IEBusConnection connection;
 
+    private ScheduledFuture<?> mockupSynJob;
+
     public EBusLibClient(EBusClientConfiguration configuration) {
         client = new EBusClient(configuration);
     }
 
     public void setTCPConnection(String hostname, int port) {
         connection = new EBusTCPConnection(hostname, port);
+    }
+
+    public void setMockupConnection(ScheduledExecutorService scheduler) {
+        connection = new EBusEmulatorConnection(null);
+
+        scheduler.schedule(new Runnable() {
+
+            @Override
+            public void run() {
+                byte[] byteArray = EBusUtils.toByteArray("AA 03 FE 05 03 08 01 00 40 FF 2C 17 30 0E 96 AA");
+                for (byte b : byteArray) {
+                    try {
+                        connection.writeByte(b);
+                    } catch (IOException e) {
+                        logger.error("error!", e);
+                    }
+                }
+
+            }
+        }, 10, TimeUnit.SECONDS);
+
+        mockupSynJob = scheduler.scheduleWithFixedDelay(new Runnable() {
+
+            @Override
+            public void run() {
+                try {
+                    connection.writeByte(EBusConsts.SYN);
+                } catch (IOException e) {
+                    logger.error("error!", e);
+                }
+            }
+        }, 20, 1, TimeUnit.SECONDS);
     }
 
     public void setSerialConnection(String serialPort) {
@@ -96,6 +136,12 @@ public class EBusLibClient {
     }
 
     public void stopClient() {
+
+        if (mockupSynJob != null) {
+            mockupSynJob.cancel(true);
+            mockupSynJob = null;
+        }
+
         if (controller != null && !controller.isInterrupted()) {
             controller.interrupt();
         }
