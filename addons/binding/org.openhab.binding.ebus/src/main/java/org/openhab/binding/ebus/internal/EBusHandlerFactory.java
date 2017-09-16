@@ -154,7 +154,7 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory implements Manag
     }
 
     /**
-     * @param generator
+     * @param typeProvider
      */
     public void setTypeProvider(EBusTypeProvider typeProvider) {
         this.typeProvider = typeProvider;
@@ -174,7 +174,7 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory implements Manag
     }
 
     /**
-     * @param generator
+     * @param typeProvider
      */
     public void unsetTypeProvider(EBusTypeProvider typeProvider) {
         this.typeProvider = null;

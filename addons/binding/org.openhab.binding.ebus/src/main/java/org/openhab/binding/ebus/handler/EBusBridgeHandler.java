@@ -13,18 +13,12 @@ import static org.openhab.binding.ebus.EBusBindingConstants.*;
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.smarthome.config.core.Configuration;
-import org.eclipse.smarthome.core.library.types.DateTimeType;
-import org.eclipse.smarthome.core.library.types.DecimalType;
-import org.eclipse.smarthome.core.library.types.OnOffType;
-import org.eclipse.smarthome.core.library.types.StringType;
 import org.eclipse.smarthome.core.thing.Bridge;
-import org.eclipse.smarthome.core.thing.Channel;
 import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingStatus;
@@ -42,7 +36,6 @@ import de.csdev.ebus.command.IEBusCommandMethod;
 import de.csdev.ebus.core.EBusConnectorEventListener;
 import de.csdev.ebus.core.EBusDataException;
 import de.csdev.ebus.service.parser.EBusParserListener;
-import de.csdev.ebus.utils.EBusDateTime;
 import de.csdev.ebus.utils.EBusUtils;
 
 /**
@@ -116,7 +109,7 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
         if (StringUtils.isNotEmpty(serialPort)) {
             // create a dummy connection
             if (serialPort.equals("dummy")) {
-                libClient.setMockupConnection(scheduler);
+                libClient.setDummyConnection(scheduler);
             } else {
                 libClient.setSerialConnection(serialPort);
             }
@@ -145,6 +138,8 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
 
         // start eBus controller
         libClient.startClient();
+
+        updateStatus(ThingStatus.ONLINE);
     }
 
     @Override
@@ -164,72 +159,18 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
     public void onTelegramResolved(IEBusCommandMethod commandChannel, Map<String, Object> result, byte[] receivedData,
             Integer sendQueueId) {
 
-        String sourceAddress = EBusUtils.toHexDumpString(receivedData[0]);
-        String targetAddress = EBusUtils.toHexDumpString(receivedData[1]);
-
-        logger.info("Received telegram from master address {} with command {}", sourceAddress,
-                commandChannel.getParent().getId());
-
         if (getThing().getThings() != null) {
 
+            // loop over all child nodes
             for (Thing thing : getThing().getThings()) {
 
-                String masterAddress = (String) thing.getConfiguration().get(MASTER_ADDRESS);
+                EBusHandler handler = (EBusHandler) thing.getHandler();
 
-                String slaveAddress = (String) thing.getConfiguration().get(SLAVE_ADDRESS);
-
-                if (sourceAddress.equals(masterAddress) || targetAddress.equals(slaveAddress)) {
-
-                    for (Entry<String, Object> resultEntry : result.entrySet()) {
-
-                        ChannelUID m = new ChannelUID(thing.getUID(),
-                                commandChannel.getParent().getId().replace('.', '-'), resultEntry.getKey());
-
-                        Channel channel = thing.getChannel(m.getId());
-
-                        if (channel != null) {
-                            assignValueToChannel(channel, resultEntry.getValue());
-                        }
-
+                if (handler != null) {
+                    if (handler.supportsTelegram(receivedData)) {
+                        handler.handleReceivedTelegram(commandChannel, result, receivedData, sendQueueId);
                     }
-
                 }
-            }
-
-        }
-    }
-
-    @SuppressWarnings("null")
-    private void assignValueToChannel(@NonNull Channel channel, Object value) {
-
-        if (channel.getAcceptedItemType().equals("Number")) {
-            if (value != null) {
-                if (value instanceof BigDecimal) {
-                    updateState(channel.getUID(), new DecimalType((BigDecimal) value));
-                } else {
-                    logger.warn("Unexpected datatype {} for channel {} !", value.getClass().getSimpleName(),
-                            channel.getChannelTypeUID().getAsString());
-                }
-
-            }
-
-        } else if (channel.getAcceptedItemType().equals("String")) {
-            if (value instanceof String) {
-                updateState(channel.getUID(), new StringType((String) value));
-            } else if (value instanceof byte[]) {
-                // show bytes as hex string
-                updateState(channel.getUID(), new StringType(EBusUtils.toHexDumpString((byte[]) value).toString()));
-            }
-
-        } else if (channel.getAcceptedItemType().equals("Switch")) {
-            if (value instanceof Boolean) {
-                boolean isOn = ((Boolean) value).booleanValue();
-                updateState(channel.getUID(), isOn ? OnOffType.ON : OnOffType.OFF);
-            }
-
-        } else if (channel.getAcceptedItemType().equals("DateTime")) {
-            if (value instanceof EBusDateTime) {
-                this.updateState(channel.getUID(), new DateTimeType(((EBusDateTime) value).getCalendar()));
             }
 
         }
@@ -237,10 +178,10 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
 
     @Override
     public void onTelegramReceived(byte[] receivedData, Integer sendQueueId) {
-        if (!EBusBridgeHandler.this.getThing().getStatus().equals(ThingStatus.ONLINE)) {
-            // set status to online if we are able to receive valid telegrams
-            updateStatus(ThingStatus.ONLINE);
-        }
+        // if (!EBusBridgeHandler.this.getThing().getStatus().equals(ThingStatus.ONLINE)) {
+        // // set status to online if we are able to receive valid telegrams
+        // updateStatus(ThingStatus.ONLINE);
+        // }
     }
 
     @Override

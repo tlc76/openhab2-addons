@@ -10,14 +10,20 @@ package org.openhab.binding.ebus.handler;
 
 import static org.openhab.binding.ebus.EBusBindingConstants.*;
 
+import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.smarthome.config.core.Configuration;
+import org.eclipse.smarthome.core.library.types.DateTimeType;
+import org.eclipse.smarthome.core.library.types.DecimalType;
+import org.eclipse.smarthome.core.library.types.OnOffType;
+import org.eclipse.smarthome.core.library.types.StringType;
 import org.eclipse.smarthome.core.thing.Channel;
 import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.Thing;
@@ -31,6 +37,8 @@ import org.slf4j.LoggerFactory;
 
 import de.csdev.ebus.command.IEBusCommandMethod;
 import de.csdev.ebus.command.datatypes.EBusTypeException;
+import de.csdev.ebus.core.EBusConsts;
+import de.csdev.ebus.utils.EBusDateTime;
 import de.csdev.ebus.utils.EBusUtils;
 
 /**
@@ -149,6 +157,8 @@ public class EBusHandler extends BaseThingHandler {
      *
      */
     private void initializePolling() {
+
+        // cancel all old pollings if available
         cancelPollingJobs();
 
         final EBusLibClient libClient = getLibClient();
@@ -178,6 +188,110 @@ public class EBusHandler extends BaseThingHandler {
                 }
 
             }
+        }
+    }
+
+    /**
+     * @param sourceAddress
+     * @param targetAddress
+     * @return
+     */
+    public boolean supportsTelegram(byte[] receivedData) {
+
+        Byte masterAddress = EBusUtils.toByte((String) getThing().getConfiguration().get(MASTER_ADDRESS));
+        Byte slaveAddress = EBusUtils.toByte((String) getThing().getConfiguration().get(SLAVE_ADDRESS));
+
+        // only interesting for broadcasts
+        Byte masterAddressComp = masterAddress == null ? EBusUtils.getMasterAddress(slaveAddress) : masterAddress;
+
+        boolean filterAcceptMaster = (boolean) getThing().getConfiguration().get(FILTER_ACCEPT_MASTER);
+        boolean filterAcceptSlave = (boolean) getThing().getConfiguration().get(FILTER_ACCEPT_SLAVE);
+        boolean filterAcceptBroadcast = (boolean) getThing().getConfiguration().get(FILTER_ACCEPT_BROADCAST);
+
+        if (filterAcceptBroadcast && receivedData[1] == EBusConsts.BROADCAST_ADDRESS) {
+            if (masterAddressComp != null && receivedData[0] == masterAddressComp) {
+                return true;
+            }
+        }
+
+        if (filterAcceptMaster && masterAddress != null) {
+            if (masterAddress == receivedData[0]) {
+                return true;
+            }
+        }
+
+        if (filterAcceptSlave && slaveAddress != null) {
+            if (slaveAddress == receivedData[1]) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param commandChannel
+     * @param result
+     * @param receivedData
+     * @param sendQueueId
+     */
+    public void handleReceivedTelegram(IEBusCommandMethod commandChannel, Map<String, Object> result,
+            byte[] receivedData, Integer sendQueueId) {
+
+        logger.info("Received telegram from master address {} with command {}",
+                EBusUtils.toHexDumpString(receivedData[0]), commandChannel.getParent().getId());
+
+        for (Entry<String, Object> resultEntry : result.entrySet()) {
+
+            ChannelUID channelUID = new ChannelUID(thing.getUID(), commandChannel.getParent().getId().replace('.', '-'),
+                    resultEntry.getKey());
+
+            Channel channel = thing.getChannel(channelUID.getId());
+
+            if (channel != null) {
+                assignValueToChannel(channel, resultEntry.getValue());
+            }
+
+        }
+    }
+
+    /**
+     * @param channel
+     * @param value
+     */
+    @SuppressWarnings("null")
+    private void assignValueToChannel(@NonNull Channel channel, Object value) {
+
+        if (channel.getAcceptedItemType().equals("Number")) {
+            if (value != null) {
+                if (value instanceof BigDecimal) {
+                    updateState(channel.getUID(), new DecimalType((BigDecimal) value));
+                } else {
+                    logger.warn("Unexpected datatype {} for channel {} !", value.getClass().getSimpleName(),
+                            channel.getChannelTypeUID().getAsString());
+                }
+
+            }
+
+        } else if (channel.getAcceptedItemType().equals("String")) {
+            if (value instanceof String) {
+                updateState(channel.getUID(), new StringType((String) value));
+            } else if (value instanceof byte[]) {
+                // show bytes as hex string
+                updateState(channel.getUID(), new StringType(EBusUtils.toHexDumpString((byte[]) value).toString()));
+            }
+
+        } else if (channel.getAcceptedItemType().equals("Switch")) {
+            if (value instanceof Boolean) {
+                boolean isOn = ((Boolean) value).booleanValue();
+                updateState(channel.getUID(), isOn ? OnOffType.ON : OnOffType.OFF);
+            }
+
+        } else if (channel.getAcceptedItemType().equals("DateTime")) {
+            if (value instanceof EBusDateTime) {
+                this.updateState(channel.getUID(), new DateTimeType(((EBusDateTime) value).getCalendar()));
+            }
+
         }
     }
 }

@@ -56,7 +56,7 @@ public class EBusLibClient {
         connection = new EBusTCPConnection(hostname, port);
     }
 
-    public void setMockupConnection(ScheduledExecutorService scheduler) {
+    public void setDummyConnection(ScheduledExecutorService scheduler) {
         connection = new EBusEmulatorConnection(null);
 
         scheduler.schedule(new Runnable() {

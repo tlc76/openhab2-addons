@@ -6,24 +6,55 @@
     
     <config-description uri="thing-type:ebus:nodeConfig">
     
-        <parameter name="masterAddress" type="text">
-            <label>eBUS Master Address 1</label>
-            <description>Master address of this node as HEX value</description>
-            <default></default>
+        <parameter-group name="addressGroup" >
+            <label>eBUS addresses</label>
+            <description>eBUS addresses</description>
+        </parameter-group>
+    
+        <parameter-group name="filterGroup" >
+            <label>Filter received telegrams</label>
+            <description>Filter received telegrams</description>
+        </parameter-group>
+        
+        <parameter name="slaveAddress" type="text" groupName="addressGroup">
+            <label>Slave Address</label>
+            <description>Slave address of this node as HEX value</description>
+        </parameter>
+
+        <parameter name="masterAddress" type="text" groupName="addressGroup">
+            <label>Master Address</label>
+            <description><![CDATA[Master address of this node as HEX value. <br />Normally computed by the slave address.]]></description>
+            <advanced>true</advanced>
+        </parameter>
+
+        <parameter name="filterAcceptMaster" type="boolean" groupName="filterGroup">
+            <label>Accept for master address</label>
+            <description>Accept telegrams for master address</description>
+            <default>false</default>
+            <advanced>true</advanced>
         </parameter>
         
-        <parameter name="slaveAddress" type="text">
-            <label>eBUS Slave Address 1</label>
-            <description>Slave address of this node as HEX value</description>
-            <default></default>
+        <parameter name="filterAcceptSlave" type="boolean" groupName="filterGroup">
+            <label>Accept for slave address</label>
+            <description>Accept telegrams for slave address</description>
+            <default>true</default>
+            <advanced>true</advanced>
         </parameter>
+
+        <parameter name="filterAcceptBroadcasts" type="boolean" groupName="filterGroup">
+            <label>Accept broadcasts</label>
+            <description>Accept broadcasts telegrams from master address</description>
+            <default>true</default>
+            <advanced>true</advanced>
+        </parameter>
+
     </config-description>
     
     <config-description uri="channel-type:ebus:pollingChannel">
     
         <parameter name="polling" type="decimal" unit="s">
             <label>Polling</label>
-            <description>Set to poll this channel every n seconds. All channels that are part of this group will also be polled!</description>
+            <description><![CDATA[Set to poll this channel every n seconds.<br />All channels that are part of this group will also be polled!]]></description>
             <unitLabel>Seconds</unitLabel>
         </parameter>
 

@@ -35,6 +35,10 @@ public class EBusBindingConstants {
     public static final String PORT = "port";
     public static final String SERIAL_PORT = "serialPort";
 
+    public static final String FILTER_ACCEPT_MASTER = "filterAcceptMaster";
+    public static final String FILTER_ACCEPT_SLAVE = "filterAcceptSlave";
+    public static final String FILTER_ACCEPT_BROADCAST = "filterAcceptBroadcasts";
+
     // configuration uris
     public static final URI CONFIG_DESCRIPTION_URI_NODE = EBusBindingUtils
             .getURI("thing-type:" + BINDING_ID + ":nodeConfig");
