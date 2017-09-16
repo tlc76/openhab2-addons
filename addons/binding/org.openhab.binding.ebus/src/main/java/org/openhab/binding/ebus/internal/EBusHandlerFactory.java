@@ -83,6 +83,7 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory implements Manag
             return handler;
 
         } else if (BINDING_ID.equals(thing.getUID().getBindingId())) {
+            System.out.println("EBusHandlerFactory.createHandler()" + thing.getUID());
             return new EBusHandler(thing);
 
         } else {
