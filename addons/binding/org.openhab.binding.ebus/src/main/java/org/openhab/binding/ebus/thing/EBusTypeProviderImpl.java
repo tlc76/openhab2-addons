@@ -72,9 +72,10 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
      * @param value
      * @return
      */
-    private ChannelDefinition createChannelDefinition(IEBusCommandMethod mainMethod, IEBusValue value) {
+    private ChannelDefinition createChannelDefinition(EBusCommandCollection collection, IEBusCommandMethod mainMethod,
+            IEBusValue value) {
 
-        ChannelType channelType = createChannelType(value, mainMethod);
+        ChannelType channelType = createChannelType(value, mainMethod, collection);
 
         if (channelType != null) {
 
@@ -99,10 +100,10 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
      * @param channelDefinitions
      * @return
      */
-    private ChannelGroupDefinition createChannelGroupDefinition(IEBusCommand command,
+    private ChannelGroupDefinition createChannelGroupDefinition(EBusCommandCollection collection, IEBusCommand command,
             List<ChannelDefinition> channelDefinitions) {
 
-        ChannelGroupTypeUID groupTypeUID = EBusBindingUtils.generateChannelGroupTypeUID(command);
+        ChannelGroupTypeUID groupTypeUID = EBusBindingUtils.generateChannelGroupTypeUID(collection, command);
 
         @SuppressWarnings("deprecation")
         ChannelGroupType cgt = new ChannelGroupType(groupTypeUID, false, command.getLabel(), command.getId(),
@@ -111,7 +112,7 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
         // add to global list
         channelGroupTypes.put(cgt.getUID(), cgt);
 
-        String cgdid = EBusBindingUtils.generateChannelGroupID(command);
+        String cgdid = EBusBindingUtils.generateChannelGroupID(collection, command);
 
         return new ChannelGroupDefinition(cgdid, groupTypeUID, command.getLabel(), command.getId());
     }
@@ -121,13 +122,14 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
      * @param mainChannel
      * @return
      */
-    private ChannelType createChannelType(IEBusValue value, IEBusCommandMethod mainMethod) {
+    private ChannelType createChannelType(IEBusValue value, IEBusCommandMethod mainMethod,
+            EBusCommandCollection collection) {
 
         // only process valid entries
         if (StringUtils.isNotEmpty(value.getName()) && StringUtils.isNotEmpty(mainMethod.getParent().getId())
                 && !value.getName().startsWith("_")) {
 
-            ChannelTypeUID uid = EBusBindingUtils.generateChannelTypeUID(mainMethod.getParent(), value);
+            ChannelTypeUID uid = EBusBindingUtils.generateChannelTypeUID(collection, mainMethod.getParent(), value);
 
             IEBusCommandMethod commandChannelSet = mainMethod.getParent()
                     .getCommandMethod(IEBusCommandMethod.Method.SET);
@@ -272,7 +274,7 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
                 for (IEBusValue value : list) {
                     if (StringUtils.isNotEmpty(value.getName())) {
 
-                        ChannelDefinition channelDefinition = createChannelDefinition(mainMethod, value);
+                        ChannelDefinition channelDefinition = createChannelDefinition(collection, mainMethod, value);
                         if (channelDefinition != null) {
                             logger.trace("Add channel definition {}", value.getName());
                             channelDefinitions.add(channelDefinition);
@@ -286,7 +288,7 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
             // *****************************************
 
             if (StringUtils.isNotEmpty(command.getId())) {
-                ChannelGroupDefinition channelGroupDefinition = createChannelGroupDefinition(command,
+                ChannelGroupDefinition channelGroupDefinition = createChannelGroupDefinition(collection, command,
                         channelDefinitions);
                 channelGroupDefinitions.add(channelGroupDefinition);
             }

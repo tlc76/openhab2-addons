@@ -42,20 +42,26 @@ public class EBusBindingUtils {
         return null;
     }
 
-    public static ChannelTypeUID generateChannelTypeUID(IEBusCommand command, IEBusValue value) {
-        return new ChannelTypeUID(BINDING_ID + ":" + command.getId().replace('.', ':') + ":" + value.getName());
+    public static ChannelTypeUID generateChannelTypeUID(EBusCommandCollection collection, IEBusCommand command,
+            IEBusValue value) {
+        return new ChannelTypeUID(BINDING_ID + ":" + collection.getId() + ":" + command.getId().replace('.', ':') + ":"
+                + value.getName());
+        // return new ChannelTypeUID(
+        // BINDING_ID + ":" + generateChannelGroupID(collection, command) + "-" + value.getName());
     }
 
-    public static ChannelUID generateChannelUID(IEBusCommand command, IEBusValue value) {
-        return new ChannelUID(BINDING_ID + ":" + generateChannelGroupID(command) + ":" + value.getName());
+    public static ChannelUID generateChannelUID(EBusCommandCollection collection, IEBusCommand command,
+            IEBusValue value) {
+        return new ChannelUID(BINDING_ID + ":" + generateChannelGroupID(collection, command) + ":" + value.getName());
     }
 
-    public static String generateChannelGroupID(IEBusCommand command) {
-        return command.getId().replace('.', '-');
+    public static String generateChannelGroupID(EBusCommandCollection collection, IEBusCommand command) {
+        return collection.getId() + "-" + command.getId().replace('.', '-');
     }
 
-    public static ChannelGroupTypeUID generateChannelGroupTypeUID(IEBusCommand command) {
-        return new ChannelGroupTypeUID(BINDING_ID, generateChannelGroupID(command));
+    public static ChannelGroupTypeUID generateChannelGroupTypeUID(EBusCommandCollection collection,
+            IEBusCommand command) {
+        return new ChannelGroupTypeUID(BINDING_ID, generateChannelGroupID(collection, command));
     }
 
     public static ThingTypeUID generateThingTypeUID(EBusCommandCollection collection) {
