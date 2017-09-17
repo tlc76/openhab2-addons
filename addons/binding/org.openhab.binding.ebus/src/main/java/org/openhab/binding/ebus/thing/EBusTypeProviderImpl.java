@@ -83,9 +83,10 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
             // add to global list
             channelTypes.put(channelType.getUID(), channelType);
 
-            // store command id
+            // store command id and value name
             Map<String, String> properties = new HashMap<String, String>();
             properties.put(EBusBindingConstants.COMMAND, mainMethod.getParent().getId());
+            properties.put(EBusBindingConstants.VALUE_NAME, value.getName());
 
             return new ChannelDefinition(value.getName(), channelType.getUID(), properties, value.getLabel(), null);
         }

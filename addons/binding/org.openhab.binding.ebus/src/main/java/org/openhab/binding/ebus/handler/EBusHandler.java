@@ -31,6 +31,7 @@ import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
 import org.eclipse.smarthome.core.types.Command;
+import org.eclipse.smarthome.core.types.RefreshType;
 import org.openhab.binding.ebus.internal.EBusLibClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,14 +71,21 @@ public class EBusHandler extends BaseThingHandler {
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
 
-        // if (channelUID.getId().equals(CHANNEL_1)) {
-        // // TODO: handle command
-        //
-        // // Note: if communication with thing fails for some reason,
-        // // indicate that by setting the status with detail information
-        // // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
-        // // "Could not control device at IP address x.x.x.x");
-        // }
+        if (!(command instanceof RefreshType)) {
+            Channel channel = thing.getChannel(channelUID.getId());
+
+            if (channel != null) {
+                try {
+                    ByteBuffer telegram = getLibClient().generateSetterTelegram(thing, channel, command);
+                    if (telegram != null) {
+                        getLibClient().sendTelegram(telegram);
+                    }
+                } catch (EBusTypeException e) {
+                    logger.error("error!", e);
+                }
+
+            }
+        }
     }
 
     /*
@@ -172,7 +180,8 @@ public class EBusHandler extends BaseThingHandler {
             if (object instanceof Number) {
                 long pollingPeriod = ((Number) object).longValue();
                 try {
-                    final ByteBuffer telegram = libClient.grrr(commandId, IEBusCommandMethod.Method.GET, thing);
+                    final ByteBuffer telegram = libClient.generatePollingTelegram(commandId,
+                            IEBusCommandMethod.Method.GET, thing);
                     if (telegram != null) {
                         pollings.put(channel.getUID().getId(), scheduler.scheduleAtFixedRate(() -> {
                             logger.info("Poll command {} with {} ...", channel.getUID(),

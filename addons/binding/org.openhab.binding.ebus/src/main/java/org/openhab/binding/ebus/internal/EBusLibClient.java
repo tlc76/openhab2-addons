@@ -8,14 +8,21 @@
  */
 package org.openhab.binding.ebus.internal;
 
+import static org.openhab.binding.ebus.EBusBindingConstants.*;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang.StringUtils;
+import org.eclipse.smarthome.core.library.types.DecimalType;
+import org.eclipse.smarthome.core.thing.Channel;
 import org.eclipse.smarthome.core.thing.Thing;
+import org.eclipse.smarthome.core.types.Command;
+import org.eclipse.smarthome.core.types.State;
 import org.openhab.binding.ebus.EBusBindingConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +30,7 @@ import org.slf4j.LoggerFactory;
 import de.csdev.ebus.client.EBusClient;
 import de.csdev.ebus.client.EBusClientConfiguration;
 import de.csdev.ebus.command.IEBusCommandMethod;
+import de.csdev.ebus.command.IEBusCommandMethod.Method;
 import de.csdev.ebus.command.datatypes.EBusTypeException;
 import de.csdev.ebus.core.EBusConsts;
 import de.csdev.ebus.core.EBusController;
@@ -100,7 +108,45 @@ public class EBusLibClient {
         return connection != null;
     }
 
-    public ByteBuffer grrr(String commandId, IEBusCommandMethod.Method type, Thing targetThing)
+    public Integer sendTelegram(ByteBuffer telegram) {
+        return client.getController().addToSendQueue(telegram);
+    }
+
+    public ByteBuffer generateSetterTelegram(Thing thing, Channel channel, Command command) throws EBusTypeException {
+
+        String slaveAddress = (String) thing.getConfiguration().get(EBusBindingConstants.SLAVE_ADDRESS);
+        String commandId = channel.getProperties().get(COMMAND);
+        String valueName = channel.getProperties().get(VALUE_NAME);
+
+        if (StringUtils.isEmpty(commandId) || StringUtils.isEmpty(valueName)) {
+            logger.error("Channel has no additional eBUS information!");
+            return null;
+        }
+
+        IEBusCommandMethod commandMethod = client.getConfigurationProvider().getConfigurationById(commandId,
+                Method.SET);
+
+        if (commandMethod == null) {
+            logger.error("Unable to find setter command with id {}", commandId);
+            return null;
+        }
+
+        HashMap<String, Object> values = new HashMap<>();
+
+        if (command instanceof State) {
+            State state = (State) command;
+            DecimalType decimalValue = (DecimalType) state.as(DecimalType.class);
+
+            if (decimalValue != null) {
+                values.put(valueName, decimalValue.toBigDecimal());
+            }
+        }
+
+        byte target = EBusUtils.toByte(slaveAddress);
+        return client.buildTelegram(commandMethod, target, values);
+    }
+
+    public ByteBuffer generatePollingTelegram(String commandId, IEBusCommandMethod.Method type, Thing targetThing)
             throws EBusTypeException {
 
         String slaveAddress = (String) targetThing.getConfiguration().get(EBusBindingConstants.SLAVE_ADDRESS);
@@ -119,7 +165,7 @@ public class EBusLibClient {
 
         byte target = EBusUtils.toByte(slaveAddress);
 
-        return client.buildPollingTelegram(commandMethod, target);
+        return client.buildTelegram(commandMethod, target, null);
     }
 
     public void initClient(Byte masterAddress) {
