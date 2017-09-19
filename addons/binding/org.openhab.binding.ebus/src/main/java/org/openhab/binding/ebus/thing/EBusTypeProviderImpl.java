@@ -59,7 +59,7 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
     }
 
     public void dispose() {
-        logger.info("Stop eBUS Type Provider ...");
+        logger.info("Stopping eBUS Type Provider ...");
         clear();
     }
 
@@ -81,8 +81,7 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
      * @param value
      * @return
      */
-    private ChannelDefinition createChannelDefinition(IEBusCommandCollection collection, IEBusCommandMethod mainMethod,
-            IEBusValue value) {
+    private ChannelDefinition createChannelDefinition(IEBusCommandMethod mainMethod, IEBusValue value) {
 
         ChannelType channelType = createChannelType(value, mainMethod);
 
@@ -95,6 +94,7 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
 
             // store command id and value name
             Map<String, String> properties = new HashMap<String, String>();
+            properties.put(EBusBindingConstants.COLLECTION, mainMethod.getParent().getParentCollection().getId());
             properties.put(EBusBindingConstants.COMMAND, mainMethod.getParent().getId());
             properties.put(EBusBindingConstants.VALUE_NAME, value.getName());
 
@@ -284,7 +284,7 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
                 for (IEBusValue value : list) {
                     if (StringUtils.isNotEmpty(value.getName())) {
 
-                        ChannelDefinition channelDefinition = createChannelDefinition(collection, mainMethod, value);
+                        ChannelDefinition channelDefinition = createChannelDefinition(mainMethod, value);
                         if (channelDefinition != null) {
                             logger.trace("Add channel definition {}", value.getName());
                             channelDefinitions.add(channelDefinition);

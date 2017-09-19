@@ -31,14 +31,16 @@ public class EBusBindingConstants {
     public static final String SLAVE_ADDRESS = "slaveAddress";
     public static final String POLLING = "polling";
 
+    // properties for ebus connection
+    public static final String SERIAL_PORT = "serialPort";
     public static final String IP_ADDRESS = "ipAddress";
     public static final String PORT = "port";
-    public static final String SERIAL_PORT = "serialPort";
 
-    // properties
-    public static final String COMMAND = "command";
-    public static final String VALUE_NAME = "valueName";
+    // properties to map ebus core configurations
     public static final String COLLECTION = "collection";
+    public static final String COMMAND = "command";
+    public static final String METHOD = "method";
+    public static final String VALUE_NAME = "valueName";
 
     public static final String FILTER_ACCEPT_MASTER = "filterAcceptMaster";
     public static final String FILTER_ACCEPT_SLAVE = "filterAcceptSlave";
