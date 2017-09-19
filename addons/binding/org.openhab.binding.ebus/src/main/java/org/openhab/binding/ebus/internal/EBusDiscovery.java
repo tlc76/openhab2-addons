@@ -46,13 +46,11 @@ public class EBusDiscovery extends AbstractDiscoveryService implements EBusDevic
 
         this.bridgeHandle = bridgeHandle;
         bridgeHandle.getLibClient().getClient().getDeviceTable().addEBusDeviceTableListener(this);
-
-        System.err.println("EBusDiscovery.EBusDiscovery()");
     }
 
     @Override
     protected void startScan() {
-        System.err.println("EBusDiscovery.startScan()");
+        logger.debug("Starting eBUS discovery scan ...");
     }
 
     protected void activate() {
@@ -61,6 +59,9 @@ public class EBusDiscovery extends AbstractDiscoveryService implements EBusDevic
 
     @Override
     public void deactivate() {
+
+        logger.debug("Stopping eBUS discovery service ...");
+
         removeOlderResults(new Date().getTime());
         try {
             bridgeHandle.getLibClient().getClient().getDeviceTable().removeEBusDeviceTableListener(this);
@@ -106,10 +107,11 @@ public class EBusDiscovery extends AbstractDiscoveryService implements EBusDevic
 
         if (!type.equals(TYPE.UPDATE_ACTIVITY)) {
 
+            logger.warn("EBusDiscovery.onEBusDeviceUpdate()");
+
             EBusClient client = bridgeHandle.getLibClient().getClient();
             Collection<IEBusCommandCollection> commandCollections = client.getConfigurationProvider()
                     .getCommandCollections();
-            logger.warn("EBusDiscovery.onEBusDeviceUpdate()");
 
             x(device, client.getConfigurationProvider().getCommandCollection("common"));
 

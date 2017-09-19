@@ -159,6 +159,9 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
     public void onTelegramResolved(IEBusCommandMethod commandChannel, Map<String, Object> result, byte[] receivedData,
             Integer sendQueueId) {
 
+        logger.info("Received telegram from master address {} with command {}",
+                EBusUtils.toHexDumpString(receivedData[0]), commandChannel.getParent().getId());
+
         if (getThing().getThings() != null) {
 
             // loop over all child nodes
@@ -187,7 +190,7 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
     @Override
     public void onTelegramException(EBusDataException exception, Integer sendQueueId) {
         if (logger.isErrorEnabled()) {
-            logger.error("eBUS telegram error; {}", exception.getLocalizedMessage());
+            logger.debug("eBUS telegram error; {}", exception.getLocalizedMessage());
         }
     }
 
