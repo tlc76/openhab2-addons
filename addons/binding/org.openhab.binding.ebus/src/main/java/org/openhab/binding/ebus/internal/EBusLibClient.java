@@ -64,6 +64,11 @@ public class EBusLibClient {
         connection = new EBusTCPConnection(hostname, port);
     }
 
+    private void sendRawData(long sleepBefore, String data) {
+        byte[] byteArray = EBusUtils.toByteArray(data);
+        ((EBusEmulatorConnection) connection).writeBytesDelayed(byteArray, sleepBefore);
+    }
+
     public void setDummyConnection(ScheduledExecutorService scheduler) {
         connection = new EBusEmulatorConnection(null);
 
@@ -71,14 +76,19 @@ public class EBusLibClient {
 
             @Override
             public void run() {
-                byte[] byteArray = EBusUtils.toByteArray("AA 03 FE 05 03 08 01 00 40 FF 2C 17 30 0E 96 AA");
-                for (byte b : byteArray) {
-                    try {
-                        connection.writeByte(b);
-                    } catch (IOException e) {
-                        logger.error("error!", e);
-                    }
-                }
+
+                // wolf solar e1
+                EBusLibClient.this.sendRawData(0, "AA 03 FE 05 03 08 01 00 40 FF 2C 17 30 0E 96 AA");
+
+                // wolf solar a
+                EBusLibClient.this.sendRawData(5000, "AA 71 FE 50 18 0E 00 00 D0 01 05 00 E2 03 0F 01 01 00 00 00 18");
+
+                // wolf solar b
+                EBusLibClient.this.sendRawData(10000,
+                        "AA 71 FE 50 17 10 08 91 05 01 CA 01 00 80 00 80 00 80 00 80 00 80 9B");
+
+                // auto stroker
+                EBusLibClient.this.sendRawData(15000, "03 FE 05 03 08 01 00 40 FF 2C 17 30 0E 96 AA");
 
             }
         }, 10, TimeUnit.SECONDS);

@@ -10,7 +10,7 @@ package org.openhab.binding.ebus.thing;
 
 import java.util.List;
 
-import de.csdev.ebus.command.EBusCommandCollection;
+import de.csdev.ebus.command.IEBusCommandCollection;
 
 /**
  *
@@ -20,6 +20,6 @@ public interface EBusTypeProvider {
 
     public void clear();
 
-    public void update(List<EBusCommandCollection> collections);
+    public void update(List<IEBusCommandCollection> collections);
 
 }

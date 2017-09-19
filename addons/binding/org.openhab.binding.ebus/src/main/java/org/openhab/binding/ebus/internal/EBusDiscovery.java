@@ -26,7 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.csdev.ebus.client.EBusClient;
-import de.csdev.ebus.command.EBusCommandCollection;
+import de.csdev.ebus.command.IEBusCommandCollection;
 import de.csdev.ebus.service.device.EBusDeviceTableListener;
 import de.csdev.ebus.service.device.IEBusDevice;
 import de.csdev.ebus.utils.EBusUtils;
@@ -65,12 +65,11 @@ public class EBusDiscovery extends AbstractDiscoveryService implements EBusDevic
         try {
             bridgeHandle.getLibClient().getClient().getDeviceTable().removeEBusDeviceTableListener(this);
         } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            // okay, maybe not set
         }
     }
 
-    private void x(IEBusDevice device, EBusCommandCollection collection) {
+    private void x(IEBusDevice device, IEBusCommandCollection collection) {
 
         String masterAddress = EBusUtils.toHexDumpString(device.getMasterAddress());
         String slaveAddress = EBusUtils.toHexDumpString(device.getSlaveAddress());
@@ -108,14 +107,14 @@ public class EBusDiscovery extends AbstractDiscoveryService implements EBusDevic
         if (!type.equals(TYPE.UPDATE_ACTIVITY)) {
 
             EBusClient client = bridgeHandle.getLibClient().getClient();
-            Collection<EBusCommandCollection> commandCollections = client.getConfigurationProvider()
+            Collection<IEBusCommandCollection> commandCollections = client.getConfigurationProvider()
                     .getCommandCollections();
             logger.warn("EBusDiscovery.onEBusDeviceUpdate()");
 
             x(device, client.getConfigurationProvider().getCommandCollection("common"));
 
             String deviceStr = EBusUtils.toHexDumpString(device.getDeviceId()).toString();
-            for (final EBusCommandCollection collection : commandCollections) {
+            for (final IEBusCommandCollection collection : commandCollections) {
 
                 if (collection.getIdentification().contains(deviceStr)) {
                     // if (deviceStr.equals(collection.getIdentification())) {

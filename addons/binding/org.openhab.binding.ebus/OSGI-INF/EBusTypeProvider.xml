@@ -6,7 +6,7 @@
     which accompanies this distribution, and is available at
     http://www.eclipse.org/legal/epl-v10.html
 -->
-<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="org.openhab.binding.ebus.thing.EBusTypeProvider">
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" activate="activate" deactivate="dispose" immediate="true" name="org.openhab.binding.ebus.thing.EBusTypeProvider">
    <implementation class="org.openhab.binding.ebus.thing.EBusTypeProviderImpl"/>
    <service>
       <provide interface="org.openhab.binding.ebus.thing.EBusTypeProvider"/>

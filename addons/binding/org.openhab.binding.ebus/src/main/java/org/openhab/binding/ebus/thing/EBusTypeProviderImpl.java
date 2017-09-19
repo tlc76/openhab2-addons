@@ -36,8 +36,8 @@ import org.openhab.binding.ebus.internal.EBusBindingUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.csdev.ebus.command.EBusCommandCollection;
 import de.csdev.ebus.command.IEBusCommand;
+import de.csdev.ebus.command.IEBusCommandCollection;
 import de.csdev.ebus.command.IEBusCommandMethod;
 import de.csdev.ebus.command.IEBusNestedValue;
 import de.csdev.ebus.command.IEBusValue;
@@ -53,6 +53,15 @@ import de.csdev.ebus.command.datatypes.std.EBusTypeBit;
 public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTypeProvider {
 
     private final Logger logger = LoggerFactory.getLogger(EBusTypeProviderImpl.class);
+
+    public void activate() {
+        logger.info("Loading eBUS Type Provider ...");
+    }
+
+    public void dispose() {
+        logger.info("Stop eBUS Type Provider ...");
+        clear();
+    }
 
     /*
      * (non-Javadoc)
@@ -72,10 +81,10 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
      * @param value
      * @return
      */
-    private ChannelDefinition createChannelDefinition(EBusCommandCollection collection, IEBusCommandMethod mainMethod,
+    private ChannelDefinition createChannelDefinition(IEBusCommandCollection collection, IEBusCommandMethod mainMethod,
             IEBusValue value) {
 
-        ChannelType channelType = createChannelType(value, mainMethod, collection);
+        ChannelType channelType = createChannelType(value, mainMethod);
 
         if (channelType != null) {
 
@@ -100,10 +109,10 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
      * @param channelDefinitions
      * @return
      */
-    private ChannelGroupDefinition createChannelGroupDefinition(EBusCommandCollection collection, IEBusCommand command,
+    private ChannelGroupDefinition createChannelGroupDefinition(IEBusCommand command,
             List<ChannelDefinition> channelDefinitions) {
 
-        ChannelGroupTypeUID groupTypeUID = EBusBindingUtils.generateChannelGroupTypeUID(collection, command);
+        ChannelGroupTypeUID groupTypeUID = EBusBindingUtils.generateChannelGroupTypeUID(command);
 
         @SuppressWarnings("deprecation")
         ChannelGroupType cgt = new ChannelGroupType(groupTypeUID, false, command.getLabel(), command.getId(),
@@ -112,7 +121,7 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
         // add to global list
         channelGroupTypes.put(cgt.getUID(), cgt);
 
-        String cgdid = EBusBindingUtils.generateChannelGroupID(collection, command);
+        String cgdid = EBusBindingUtils.generateChannelGroupID(command);
 
         return new ChannelGroupDefinition(cgdid, groupTypeUID, command.getLabel(), command.getId());
     }
@@ -122,14 +131,13 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
      * @param mainChannel
      * @return
      */
-    private ChannelType createChannelType(IEBusValue value, IEBusCommandMethod mainMethod,
-            EBusCommandCollection collection) {
+    private ChannelType createChannelType(IEBusValue value, IEBusCommandMethod mainMethod) {
 
         // only process valid entries
         if (StringUtils.isNotEmpty(value.getName()) && StringUtils.isNotEmpty(mainMethod.getParent().getId())
                 && !value.getName().startsWith("_")) {
 
-            ChannelTypeUID uid = EBusBindingUtils.generateChannelTypeUID(collection, mainMethod.getParent(), value);
+            ChannelTypeUID uid = EBusBindingUtils.generateChannelTypeUID(value);
 
             IEBusCommandMethod commandChannelSet = mainMethod.getParent()
                     .getCommandMethod(IEBusCommandMethod.Method.SET);
@@ -194,8 +202,8 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
      * @param channelGroupDefinitions
      * @return
      */
-    private ThingType createThingType(EBusCommandCollection collection, ArrayList<ChannelDefinition> channelDefinitions,
-            List<ChannelGroupDefinition> channelGroupDefinitions) {
+    private ThingType createThingType(IEBusCommandCollection collection,
+            ArrayList<ChannelDefinition> channelDefinitions, List<ChannelGroupDefinition> channelGroupDefinitions) {
 
         ThingTypeUID thingTypeUID = EBusBindingUtils.generateThingTypeUID(collection);
 
@@ -212,20 +220,18 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
      * @see org.openhab.binding.ebus.thing.EBusGenerator#update(java.util.List)
      */
     @Override
-    public void update(List<EBusCommandCollection> collections) {
+    public void update(List<IEBusCommandCollection> collections) {
 
-        // initConfigDescriptions(collections);
-
-        for (EBusCommandCollection collection : collections) {
+        for (IEBusCommandCollection collection : collections) {
             updateCollection(collection);
         }
-
+        logger.info("Generated all eBUS command collections ...");
     }
 
     /**
      * @param collection
      */
-    private void updateCollection(EBusCommandCollection collection) {
+    private void updateCollection(IEBusCommandCollection collection) {
 
         List<ChannelGroupDefinition> channelGroupDefinitions = new ArrayList<>();
 
@@ -288,7 +294,7 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
             // *****************************************
 
             if (StringUtils.isNotEmpty(command.getId())) {
-                ChannelGroupDefinition channelGroupDefinition = createChannelGroupDefinition(collection, command,
+                ChannelGroupDefinition channelGroupDefinition = createChannelGroupDefinition(command,
                         channelDefinitions);
                 channelGroupDefinitions.add(channelGroupDefinition);
             }

@@ -32,11 +32,13 @@ import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
 import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.RefreshType;
+import org.openhab.binding.ebus.internal.EBusBindingUtils;
 import org.openhab.binding.ebus.internal.EBusLibClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.csdev.ebus.command.IEBusCommandMethod;
+import de.csdev.ebus.command.IEBusValue;
 import de.csdev.ebus.command.datatypes.EBusTypeException;
 import de.csdev.ebus.core.EBusConsts;
 import de.csdev.ebus.utils.EBusDateTime;
@@ -252,8 +254,14 @@ public class EBusHandler extends BaseThingHandler {
 
         for (Entry<String, Object> resultEntry : result.entrySet()) {
 
-            ChannelUID channelUID = new ChannelUID(thing.getUID(), commandChannel.getParent().getId().replace('.', '-'),
-                    resultEntry.getKey());
+            IEBusValue commandValue = commandChannel.findType(resultEntry.getKey());
+
+            if (commandValue == null) {
+                logger.debug("Unable to find ebus command value with name {}", resultEntry.getKey());
+                return;
+            }
+
+            ChannelUID channelUID = EBusBindingUtils.generateChannelUID(commandValue, thing.getUID());
 
             Channel channel = thing.getChannel(channelUID.getId());
 

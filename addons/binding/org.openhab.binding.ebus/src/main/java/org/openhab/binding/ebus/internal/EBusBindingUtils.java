@@ -15,14 +15,16 @@ import java.net.URISyntaxException;
 
 import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
+import org.eclipse.smarthome.core.thing.ThingUID;
 import org.eclipse.smarthome.core.thing.type.ChannelGroupTypeUID;
 import org.eclipse.smarthome.core.thing.type.ChannelTypeUID;
 import org.openhab.binding.ebus.EBusBindingConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.csdev.ebus.command.EBusCommandCollection;
 import de.csdev.ebus.command.IEBusCommand;
+import de.csdev.ebus.command.IEBusCommandCollection;
+import de.csdev.ebus.command.IEBusCommandMethod;
 import de.csdev.ebus.command.IEBusValue;
 
 /**
@@ -42,29 +44,36 @@ public class EBusBindingUtils {
         return null;
     }
 
-    public static ChannelTypeUID generateChannelTypeUID(EBusCommandCollection collection, IEBusCommand command,
-            IEBusValue value) {
-        return new ChannelTypeUID(BINDING_ID + ":" + collection.getId() + ":" + command.getId().replace('.', ':') + ":"
-                + value.getName());
-        // return new ChannelTypeUID(
-        // BINDING_ID + ":" + generateChannelGroupID(collection, command) + "-" + value.getName());
+    public static ChannelTypeUID generateChannelTypeUID(IEBusValue value) {
+        String id = generateValueId(value);
+        return new ChannelTypeUID(BINDING_ID, id);
     }
 
-    public static ChannelUID generateChannelUID(EBusCommandCollection collection, IEBusCommand command,
-            IEBusValue value) {
-        return new ChannelUID(BINDING_ID + ":" + generateChannelGroupID(collection, command) + ":" + value.getName());
+    public static ChannelUID generateChannelUID(IEBusValue value, ThingUID thingUID) {
+        String id = generateValueId(value);
+        return new ChannelUID(thingUID, id);
     }
 
-    public static String generateChannelGroupID(EBusCommandCollection collection, IEBusCommand command) {
-        return collection.getId() + "-" + command.getId().replace('.', '-');
+    public static ChannelGroupTypeUID generateChannelGroupTypeUID(IEBusCommand command) {
+        return new ChannelGroupTypeUID(BINDING_ID, generateChannelGroupID(command));
     }
 
-    public static ChannelGroupTypeUID generateChannelGroupTypeUID(EBusCommandCollection collection,
-            IEBusCommand command) {
-        return new ChannelGroupTypeUID(BINDING_ID, generateChannelGroupID(collection, command));
-    }
-
-    public static ThingTypeUID generateThingTypeUID(EBusCommandCollection collection) {
+    public static ThingTypeUID generateThingTypeUID(IEBusCommandCollection collection) {
         return new ThingTypeUID(BINDING_ID, collection.getId());
+    }
+
+    public static String generateChannelGroupID(IEBusCommand command) {
+        IEBusCommandCollection parentCollection = command.getParentCollection();
+        return String.format("%s_%s", parentCollection.getId(), formatId(command.getId()));
+    }
+
+    private static String generateValueId(IEBusValue value) {
+        IEBusCommandMethod method = value.getParent();
+        IEBusCommand command = method.getParent();
+        return String.format("%s_%s", generateChannelGroupID(command), formatId(value.getName()));
+    }
+
+    private static String formatId(String x) {
+        return x.replace('_', '-').replace('.', '_');
     }
 }
