@@ -27,6 +27,7 @@ import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.thing.binding.BaseBridgeHandler;
 import org.eclipse.smarthome.core.types.Command;
 import org.openhab.binding.ebus.EBusBindingConstants;
+import org.openhab.binding.ebus.internal.EBusHandlerFactory;
 import org.openhab.binding.ebus.internal.EBusLibClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,14 +56,20 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
 
     private EBusClientConfiguration clientConfiguration;
 
-    public EBusBridgeHandler(@NonNull Bridge bridge, EBusClientConfiguration clientConfiguration) {
+    private EBusHandlerFactory handlerFactory;
+
+    public EBusBridgeHandler(@NonNull Bridge bridge, EBusClientConfiguration clientConfiguration,
+            EBusHandlerFactory handlerFactory) {
         super(bridge);
 
         // reference configuration
         this.clientConfiguration = clientConfiguration;
+        this.handlerFactory = handlerFactory;
 
         // initialize the ebus client wrapper
         libClient = new EBusLibClient(clientConfiguration);
+
+        // discoveryService = new EBusDiscovery(this);
     }
 
     public EBusLibClient getLibClient() {
@@ -75,6 +82,10 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
 
         // initialize the ebus client wrapper
         libClient = new EBusLibClient(clientConfiguration);
+
+        // add the discovery service
+        handlerFactory.disposeDiscoveryService(this);
+        handlerFactory.registerDiscoveryService(this);
 
         // libClient = new EBusLibClient();
         Configuration configuration = getThing().getConfiguration();
@@ -144,6 +155,10 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
 
     @Override
     public void dispose() {
+
+        // remove discovery service
+        handlerFactory.disposeDiscoveryService(this);
+
         if (libClient != null) {
 
             // remove listeners
@@ -170,7 +185,11 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
                 EBusHandler handler = (EBusHandler) thing.getHandler();
 
                 if (handler != null) {
-                    if (handler.supportsTelegram(receivedData)) {
+
+                    // check if this handler can process this telegram
+                    if (handler.supportsTelegram(receivedData, commandChannel)) {
+
+                        // process
                         handler.handleReceivedTelegram(commandChannel, result, receivedData, sendQueueId);
                     }
                 }

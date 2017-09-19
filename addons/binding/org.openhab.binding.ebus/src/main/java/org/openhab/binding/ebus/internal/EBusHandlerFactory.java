@@ -45,13 +45,13 @@ import de.csdev.ebus.client.EBusClientConfiguration;
  */
 public class EBusHandlerFactory extends BaseThingHandlerFactory implements ManagedService {
 
+    private final Logger logger = LoggerFactory.getLogger(EBusHandlerFactory.class);
+
     private EBusClientConfiguration configuration;
 
     private Map<ThingUID, ServiceRegistration<?>> discoveryServiceRegs = new HashMap<>();
 
     private EBusTypeProvider typeProvider;
-
-    private final Logger logger = LoggerFactory.getLogger(EBusHandlerFactory.class);
 
     /*
      * (non-Javadoc)
@@ -78,9 +78,7 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory implements Manag
     protected ThingHandler createHandler(Thing thing) {
 
         if (EBusBridgeHandler.SUPPORTED_THING_TYPES.contains(thing.getThingTypeUID())) {
-            EBusBridgeHandler handler = new EBusBridgeHandler((Bridge) thing, configuration);
-            registerDiscoveryService(handler);
-            return handler;
+            return new EBusBridgeHandler((Bridge) thing, configuration, this);
 
         } else if (BINDING_ID.equals(thing.getUID().getBindingId())) {
             return new EBusHandler(thing);
@@ -117,15 +115,42 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory implements Manag
         }
     }
 
+    // private synchronized void registerDiscoveryService(EBusDiscovery discoveryService) {
+    // discoveryService.activate();
+    //
+    // this.discoveryServiceRegs.put(bridgeHandler.getThing().getUID(), bundleContext
+    // .registerService(DiscoveryService.class.getName(), discoveryService, new Hashtable<String, Object>()));
+    // }
+
     /**
      * @param bridgeHandler
      */
-    private synchronized void registerDiscoveryService(EBusBridgeHandler bridgeHandler) {
+    public synchronized void registerDiscoveryService(EBusBridgeHandler bridgeHandler) {
         EBusDiscovery discoveryService = new EBusDiscovery(bridgeHandler);
         discoveryService.activate();
 
-        this.discoveryServiceRegs.put(bridgeHandler.getThing().getUID(), bundleContext
-                .registerService(DiscoveryService.class.getName(), discoveryService, new Hashtable<String, Object>()));
+        ServiceRegistration<?> service = bundleContext.registerService(DiscoveryService.class.getName(),
+                discoveryService, new Hashtable<String, Object>());
+
+        this.discoveryServiceRegs.put(bridgeHandler.getThing().getUID(), service);
+    }
+
+    public synchronized void disposeDiscoveryService(EBusBridgeHandler bridgeHandler) {
+
+        ServiceRegistration<?> serviceReg = this.discoveryServiceRegs.get(bridgeHandler.getThing().getUID());
+
+        if (serviceReg != null) {
+
+            // remove discovery service
+            EBusDiscovery service = (EBusDiscovery) bundleContext.getService(serviceReg.getReference());
+
+            if (service != null) {
+                service.deactivate();
+            }
+
+            serviceReg.unregister();
+            discoveryServiceRegs.remove(bridgeHandler.getThing().getUID());
+        }
     }
 
     /*
@@ -137,19 +162,8 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory implements Manag
      */
     @Override
     protected synchronized void removeHandler(ThingHandler thingHandler) {
-
         if (thingHandler instanceof EBusBridgeHandler) {
-            ServiceRegistration<?> serviceReg = this.discoveryServiceRegs.get(thingHandler.getThing().getUID());
-            if (serviceReg != null) {
-                // remove discovery service, if bridge handler is removed
-                EBusDiscovery service = (EBusDiscovery) bundleContext.getService(serviceReg.getReference());
-                if (service != null) {
-                    service.deactivate();
-                }
-
-                serviceReg.unregister();
-                discoveryServiceRegs.remove(thingHandler.getThing().getUID());
-            }
+            disposeDiscoveryService((EBusBridgeHandler) thingHandler);
         }
     }
 
