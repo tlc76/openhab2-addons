@@ -119,7 +119,7 @@ public class EBusLibClient {
     }
 
     public Integer sendTelegram(ByteBuffer telegram) {
-        return client.getController().addToSendQueue(telegram);
+        return client.getController().addToSendQueue(EBusUtils.toByteArray(telegram));
     }
 
     public ByteBuffer generateSetterTelegram(Thing thing, Channel channel, Command command) throws EBusTypeException {

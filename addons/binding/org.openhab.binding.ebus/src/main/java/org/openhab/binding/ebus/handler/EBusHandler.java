@@ -15,6 +15,7 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Random;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -38,7 +39,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.csdev.ebus.command.IEBusCommandMethod;
-import de.csdev.ebus.command.IEBusValue;
 import de.csdev.ebus.command.datatypes.EBusTypeException;
 import de.csdev.ebus.core.EBusConsts;
 import de.csdev.ebus.utils.EBusDateTime;
@@ -55,6 +55,8 @@ public class EBusHandler extends BaseThingHandler {
     private final Logger logger = LoggerFactory.getLogger(EBusHandler.class);
 
     private Map<String, ScheduledFuture<?>> pollings = new HashMap<>();
+
+    private Random random = new Random(12);
 
     /**
      * @param thing
@@ -157,9 +159,6 @@ public class EBusHandler extends BaseThingHandler {
     @Override
     public void thingUpdated(final Thing thing) {
         super.thingUpdated(thing);
-
-        System.out.println("EBusHandler.thingUpdated()");
-
         initializePolling();
     }
 
@@ -174,24 +173,35 @@ public class EBusHandler extends BaseThingHandler {
         final EBusLibClient libClient = getLibClient();
 
         for (final Channel channel : thing.getChannels()) {
+
             Configuration configuration = channel.getConfiguration();
             Object object = configuration.get(POLLING);
 
             final String commandId = channel.getProperties().get(COMMAND);
 
+            // a valid value for polling
             if (object instanceof Number) {
                 long pollingPeriod = ((Number) object).longValue();
                 try {
+                    // compose the telegram
                     final ByteBuffer telegram = libClient.generatePollingTelegram(commandId,
                             IEBusCommandMethod.Method.GET, thing);
                     if (telegram != null) {
-                        pollings.put(channel.getUID().getId(), scheduler.scheduleAtFixedRate(() -> {
+
+                        // random execution delay to prevent too many pollings at the same time (0-30s)
+                        int firstExecutionDelay = random.nextInt(30000);
+
+                        // create a job to send this raw telegram every n seconds
+                        ScheduledFuture<?> job = scheduler.scheduleAtFixedRate(() -> {
                             logger.info("Poll command {} with {} ...", channel.getUID(),
                                     EBusUtils.toHexDumpString(telegram).toString());
 
-                            libClient.getClient().getController().addToSendQueue(telegram);
+                            libClient.getClient().getController().addToSendQueue(EBusUtils.toByteArray(telegram));
 
-                        }, 0, pollingPeriod, TimeUnit.SECONDS));
+                        }, firstExecutionDelay, pollingPeriod, TimeUnit.SECONDS);
+
+                        // add this job to global list, so we can stop all later on.
+                        pollings.put(channel.getUID().getId(), job);
                     }
 
                 } catch (EBusTypeException e) {
@@ -249,26 +259,21 @@ public class EBusHandler extends BaseThingHandler {
     public void handleReceivedTelegram(IEBusCommandMethod commandChannel, Map<String, Object> result,
             byte[] receivedData, Integer sendQueueId) {
 
-        logger.info("Received telegram from master address {} with command {}",
-                EBusUtils.toHexDumpString(receivedData[0]), commandChannel.getParent().getId());
+        logger.info("Handle received command by thing {} with id {} ...", thing.getLabel(), thing.getUID());
 
         for (Entry<String, Object> resultEntry : result.entrySet()) {
 
-            IEBusValue commandValue = commandChannel.findType(resultEntry.getKey());
-
-            if (commandValue == null) {
-                logger.debug("Unable to find ebus command value with name {}", resultEntry.getKey());
-                return;
-            }
-
-            ChannelUID channelUID = EBusBindingUtils.generateChannelUID(commandValue, thing.getUID());
+            ChannelUID channelUID = EBusBindingUtils.generateChannelUID(commandChannel.getParent(),
+                    resultEntry.getKey(), thing.getUID());
 
             Channel channel = thing.getChannel(channelUID.getId());
 
-            if (channel != null) {
-                assignValueToChannel(channel, resultEntry.getValue());
+            if (channel == null) {
+                logger.debug("Unable to find the channel with channelUID {}", channelUID.getId());
+                return;
             }
 
+            assignValueToChannel(channel, resultEntry.getValue());
         }
     }
 

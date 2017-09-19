@@ -98,7 +98,8 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
             properties.put(EBusBindingConstants.COMMAND, mainMethod.getParent().getId());
             properties.put(EBusBindingConstants.VALUE_NAME, value.getName());
 
-            return new ChannelDefinition(value.getName(), channelType.getUID(), properties, value.getLabel(), null);
+            return new ChannelDefinition(EBusBindingUtils.formatId(value.getName()), channelType.getUID(), properties,
+                    value.getLabel(), null);
         }
 
         return null;

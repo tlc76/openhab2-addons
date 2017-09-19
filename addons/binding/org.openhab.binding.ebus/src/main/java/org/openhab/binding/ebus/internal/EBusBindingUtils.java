@@ -50,8 +50,13 @@ public class EBusBindingUtils {
     }
 
     public static ChannelUID generateChannelUID(IEBusValue value, ThingUID thingUID) {
-        String id = generateValueId(value);
-        return new ChannelUID(thingUID, id);
+        IEBusCommandMethod method = value.getParent();
+        IEBusCommand command = method.getParent();
+        return new ChannelUID(thingUID, generateChannelGroupID(command), formatId(value.getName()));
+    }
+
+    public static ChannelUID generateChannelUID(IEBusCommand command, String valueName, ThingUID thingUID) {
+        return new ChannelUID(thingUID, generateChannelGroupID(command), formatId(valueName));
     }
 
     public static ChannelGroupTypeUID generateChannelGroupTypeUID(IEBusCommand command) {
@@ -67,13 +72,13 @@ public class EBusBindingUtils {
         return String.format("%s_%s", parentCollection.getId(), formatId(command.getId()));
     }
 
-    private static String generateValueId(IEBusValue value) {
+    public static String generateValueId(IEBusValue value) {
         IEBusCommandMethod method = value.getParent();
         IEBusCommand command = method.getParent();
         return String.format("%s_%s", generateChannelGroupID(command), formatId(value.getName()));
     }
 
-    private static String formatId(String x) {
-        return x.replace('_', '-').replace('.', '_');
+    public static String formatId(String id) {
+        return id.replace('_', '-').replace('.', '_');
     }
 }
