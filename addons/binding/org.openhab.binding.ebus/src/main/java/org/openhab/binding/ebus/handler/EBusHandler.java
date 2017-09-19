@@ -213,11 +213,12 @@ public class EBusHandler extends BaseThingHandler {
     }
 
     /**
+     * @param commandMethod
      * @param sourceAddress
      * @param targetAddress
      * @return
      */
-    public boolean supportsTelegram(byte[] receivedData) {
+    public boolean supportsTelegram(byte[] receivedData, IEBusCommandMethod commandMethod) {
 
         Byte masterAddress = EBusUtils.toByte((String) getThing().getConfiguration().get(MASTER_ADDRESS));
         Byte slaveAddress = EBusUtils.toByte((String) getThing().getConfiguration().get(SLAVE_ADDRESS));
@@ -228,6 +229,13 @@ public class EBusHandler extends BaseThingHandler {
         boolean filterAcceptMaster = (boolean) getThing().getConfiguration().get(FILTER_ACCEPT_MASTER);
         boolean filterAcceptSlave = (boolean) getThing().getConfiguration().get(FILTER_ACCEPT_SLAVE);
         boolean filterAcceptBroadcast = (boolean) getThing().getConfiguration().get(FILTER_ACCEPT_BROADCAST);
+
+        String collectionId = thing.getProperties().get(COLLECTION);
+
+        if (!commandMethod.getParent().getParentCollection().getId().equals(collectionId)) {
+            logger.trace("eBUS node handler doesn't support this collection id ...");
+            return false;
+        }
 
         if (filterAcceptBroadcast && receivedData[1] == EBusConsts.BROADCAST_ADDRESS) {
             if (masterAddressComp != null && receivedData[0] == masterAddressComp) {

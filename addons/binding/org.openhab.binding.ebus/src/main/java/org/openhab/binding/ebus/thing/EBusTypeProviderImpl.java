@@ -211,8 +211,11 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
         String label = collection.getLabel();
         String description = collection.getDescription();
 
+        Map<String, String> properties = new HashMap<String, String>();
+        properties.put(EBusBindingConstants.COLLECTION, collection.getId());
+
         return new ThingType(thingTypeUID, supportedBridgeTypeUIDs, label, description, channelDefinitions,
-                channelGroupDefinitions, null, EBusBindingConstants.CONFIG_DESCRIPTION_URI_NODE);
+                channelGroupDefinitions, properties, EBusBindingConstants.CONFIG_DESCRIPTION_URI_NODE);
     }
 
     /*
