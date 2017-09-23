@@ -208,7 +208,7 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
 
     @Override
     public void onTelegramException(EBusDataException exception, Integer sendQueueId) {
-        if (logger.isErrorEnabled()) {
+        if (logger.isDebugEnabled()) {
             logger.debug("eBUS telegram error; {}", exception.getLocalizedMessage());
         }
     }

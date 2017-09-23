@@ -167,6 +167,8 @@ public class EBusHandler extends BaseThingHandler {
      */
     private void initializePolling() {
 
+        logger.info("Initialize eBUS pollings ...");
+
         // cancel all old pollings if available
         cancelPollingJobs();
 
@@ -175,33 +177,41 @@ public class EBusHandler extends BaseThingHandler {
         for (final Channel channel : thing.getChannels()) {
 
             Configuration configuration = channel.getConfiguration();
-            Object object = configuration.get(POLLING);
+            Object pollingObj = configuration.get(POLLING);
 
+            final String collectionId = channel.getProperties().get(COLLECTION);
             final String commandId = channel.getProperties().get(COMMAND);
 
             // a valid value for polling
-            if (object instanceof Number) {
-                long pollingPeriod = ((Number) object).longValue();
+            if (pollingObj instanceof Number) {
+
+                long pollingPeriod = ((Number) pollingObj).longValue();
+
                 try {
                     // compose the telegram
-                    final ByteBuffer telegram = libClient.generatePollingTelegram(commandId,
+                    final ByteBuffer telegram = libClient.generatePollingTelegram(collectionId, commandId,
                             IEBusCommandMethod.Method.GET, thing);
                     if (telegram != null) {
 
                         // random execution delay to prevent too many pollings at the same time (0-30s)
-                        int firstExecutionDelay = random.nextInt(30000);
+                        int firstExecutionDelay = random.nextInt(30);
 
                         // create a job to send this raw telegram every n seconds
                         ScheduledFuture<?> job = scheduler.scheduleAtFixedRate(() -> {
-                            logger.info("Poll command {} with {} ...", channel.getUID(),
+                            logger.info("Poll command \"{}\" with \"{}\" ...", channel.getUID(),
                                     EBusUtils.toHexDumpString(telegram).toString());
 
-                            libClient.getClient().getController().addToSendQueue(EBusUtils.toByteArray(telegram));
+                            libClient.getClient().getController().addToSendQueue(EBusUtils.toByteArray(telegram), 2);
 
                         }, firstExecutionDelay, pollingPeriod, TimeUnit.SECONDS);
 
                         // add this job to global list, so we can stop all later on.
                         pollings.put(channel.getUID().getId(), job);
+
+                        logger.info("Register polling for \"{}\" every {} sec. (initil delay {} sec.)", commandId,
+                                pollingPeriod, firstExecutionDelay);
+                    } else {
+                        logger.info("Unable to create raw polling telegram for \"{}\" !", commandId);
                     }
 
                 } catch (EBusTypeException e) {
