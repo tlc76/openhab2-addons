@@ -125,6 +125,7 @@ public class EBusLibClient {
     public ByteBuffer generateSetterTelegram(Thing thing, Channel channel, Command command) throws EBusTypeException {
 
         String slaveAddress = (String) thing.getConfiguration().get(EBusBindingConstants.SLAVE_ADDRESS);
+        String collectionId = channel.getProperties().get(COLLECTION);
         String commandId = channel.getProperties().get(COMMAND);
         String valueName = channel.getProperties().get(VALUE_NAME);
 
@@ -133,8 +134,8 @@ public class EBusLibClient {
             return null;
         }
 
-        IEBusCommandMethod commandMethod = client.getConfigurationProvider().getConfigurationById(commandId,
-                Method.SET);
+        IEBusCommandMethod commandMethod = client.getConfigurationProvider().getConfigurationById(collectionId,
+                commandId, Method.SET);
 
         if (commandMethod == null) {
             logger.error("Unable to find setter command with id {}", commandId);
@@ -156,12 +157,13 @@ public class EBusLibClient {
         return client.buildTelegram(commandMethod, target, values);
     }
 
-    public ByteBuffer generatePollingTelegram(String commandId, IEBusCommandMethod.Method type, Thing targetThing)
-            throws EBusTypeException {
+    public ByteBuffer generatePollingTelegram(String collectionId, String commandId, IEBusCommandMethod.Method type,
+            Thing targetThing) throws EBusTypeException {
 
         String slaveAddress = (String) targetThing.getConfiguration().get(EBusBindingConstants.SLAVE_ADDRESS);
 
-        IEBusCommandMethod commandMethod = client.getConfigurationProvider().getConfigurationById(commandId, type);
+        IEBusCommandMethod commandMethod = client.getConfigurationProvider().getConfigurationById(collectionId,
+                commandId, type);
 
         if (!commandMethod.getType().equals(IEBusCommandMethod.Type.MASTER_SLAVE)) {
             logger.warn("Polling is only available for master-slave commands!");
