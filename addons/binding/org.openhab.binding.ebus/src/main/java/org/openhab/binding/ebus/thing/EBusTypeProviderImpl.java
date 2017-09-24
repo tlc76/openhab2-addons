@@ -165,10 +165,10 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
                 itemType = "DateTime";
 
             } else if (ArrayUtils.contains(value.getType().getSupportedTypes(), EBusTypeString.STRING)) {
-                itemType = "Text";
+                itemType = "String";
 
             } else if (ArrayUtils.contains(value.getType().getSupportedTypes(), EBusTypeBytes.BYTES)) {
-                itemType = "Text";
+                itemType = "String";
 
             } else if (options != null) {
                 itemType = "Number";
