@@ -56,19 +56,34 @@ public class EBusLibClient {
 
     private ScheduledFuture<?> mockupSynJob;
 
+    /**
+     * @param configuration
+     */
     public EBusLibClient(EBusClientConfiguration configuration) {
         client = new EBusClient(configuration);
     }
 
+    /**
+     * @param hostname
+     * @param port
+     */
     public void setTCPConnection(String hostname, int port) {
         connection = new EBusTCPConnection(hostname, port);
     }
 
+    /**
+     * @param sleepBefore
+     * @param data
+     */
+    @SuppressWarnings("unused")
     private void sendRawData(long sleepBefore, String data) {
         byte[] byteArray = EBusUtils.toByteArray(data);
         ((EBusEmulatorConnection) connection).writeBytesDelayed(byteArray, sleepBefore);
     }
 
+    /**
+     * @param scheduler
+     */
     public void setDummyConnection(ScheduledExecutorService scheduler) {
         connection = new EBusEmulatorConnection(null);
 
@@ -77,21 +92,26 @@ public class EBusLibClient {
             @Override
             public void run() {
 
-                // wolf solar e1
-                EBusLibClient.this.sendRawData(0, "AA 03 FE 05 03 08 01 00 40 FF 2C 17 30 0E 96 AA");
-
-                // wolf solar a
-                EBusLibClient.this.sendRawData(5000, "AA 71 FE 50 18 0E 00 00 D0 01 05 00 E2 03 0F 01 01 00 00 00 18");
-
-                // wolf solar b
-                EBusLibClient.this.sendRawData(10000,
-                        "AA 71 FE 50 17 10 08 91 05 01 CA 01 00 80 00 80 00 80 00 80 00 80 9B");
-
-                // auto stroker
-                EBusLibClient.this.sendRawData(15000, "03 FE 05 03 08 01 00 40 FF 2C 17 30 0E 96 AA");
+                // // wolf solar e1
+                // EBusLibClient.this.sendRawData(0, "AA 03 FE 05 03 08 01 00 40 FF 2C 17 30 0E 96 AA");
+                //
+                // // wolf solar a
+                // EBusLibClient.this.sendRawData(500, "AA 71 FE 50 18 0E 00 00 D0 01 05 00 E2 03 0F 01 01 00 00 00
+                // 18");
+                //
+                // // wolf solar b
+                // EBusLibClient.this.sendRawData(100,
+                // "AA 71 FE 50 17 10 08 91 05 01 CA 01 00 80 00 80 00 80 00 80 00 80 9B");
+                //
+                // // auto stroker
+                // EBusLibClient.this.sendRawData(1500, "03 FE 05 03 08 01 00 40 FF 2C 17 30 0E 96 AA");
+                //
+                // // number with option
+                // logger.info("RUN ..............");
+                // EBusLibClient.this.sendRawData(100, "AA FF 08 50 22 03 11 74 27 2C 00 02 00 80 AC 00 AA");
 
             }
-        }, 10, TimeUnit.SECONDS);
+        }, 5, TimeUnit.SECONDS);
 
         mockupSynJob = scheduler.scheduleWithFixedDelay(new Runnable() {
 
@@ -103,25 +123,45 @@ public class EBusLibClient {
                     logger.error("error!", e);
                 }
             }
-        }, 20, 1, TimeUnit.SECONDS);
+        }, 10, 1, TimeUnit.SECONDS);
     }
 
+    /**
+     * @param serialPort
+     */
     public void setSerialConnection(String serialPort) {
         connection = new EBusSerialNRJavaSerialConnection(serialPort);
     }
 
+    /**
+     * @return
+     */
     public EBusClient getClient() {
         return client;
     }
 
+    /**
+     * @return
+     */
     public boolean isConnectionValid() {
         return connection != null;
     }
 
+    /**
+     * @param telegram
+     * @return
+     */
     public Integer sendTelegram(ByteBuffer telegram) {
-        return client.getController().addToSendQueue(EBusUtils.toByteArray(telegram));
+        return client.addToSendQueue(EBusUtils.toByteArray(telegram));
     }
 
+    /**
+     * @param thing
+     * @param channel
+     * @param command
+     * @return
+     * @throws EBusTypeException
+     */
     public ByteBuffer generateSetterTelegram(Thing thing, Channel channel, Command command) throws EBusTypeException {
 
         String slaveAddress = (String) thing.getConfiguration().get(EBusBindingConstants.SLAVE_ADDRESS);
@@ -157,6 +197,14 @@ public class EBusLibClient {
         return client.buildTelegram(commandMethod, target, values);
     }
 
+    /**
+     * @param collectionId
+     * @param commandId
+     * @param type
+     * @param targetThing
+     * @return
+     * @throws EBusTypeException
+     */
     public ByteBuffer generatePollingTelegram(String collectionId, String commandId, IEBusCommandMethod.Method type,
             Thing targetThing) throws EBusTypeException {
 
@@ -180,6 +228,9 @@ public class EBusLibClient {
         return client.buildTelegram(commandMethod, target, null);
     }
 
+    /**
+     * @param masterAddress
+     */
     public void initClient(Byte masterAddress) {
 
         // load the eBus core element
@@ -189,10 +240,16 @@ public class EBusLibClient {
         client.connect(controller, masterAddress);
     }
 
+    /**
+     *
+     */
     public void startClient() {
         controller.start();
     }
 
+    /**
+     *
+     */
     public void stopClient() {
 
         if (mockupSynJob != null) {

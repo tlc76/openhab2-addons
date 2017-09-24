@@ -27,15 +27,15 @@ import org.slf4j.LoggerFactory;
 
 import de.csdev.ebus.client.EBusClient;
 import de.csdev.ebus.command.IEBusCommandCollection;
-import de.csdev.ebus.service.device.EBusDeviceTableListener;
 import de.csdev.ebus.service.device.IEBusDevice;
+import de.csdev.ebus.service.device.IEBusDeviceTableListener;
 import de.csdev.ebus.utils.EBusUtils;
 
 /**
  *
  * @author Christian Sowada - Initial contribution
  */
-public class EBusDiscovery extends AbstractDiscoveryService implements EBusDeviceTableListener {
+public class EBusDiscovery extends AbstractDiscoveryService implements IEBusDeviceTableListener {
 
     private final Logger logger = LoggerFactory.getLogger(EBusDiscovery.class);
 
@@ -45,12 +45,16 @@ public class EBusDiscovery extends AbstractDiscoveryService implements EBusDevic
         super(60);
 
         this.bridgeHandle = bridgeHandle;
-        bridgeHandle.getLibClient().getClient().getDeviceTable().addEBusDeviceTableListener(this);
+        bridgeHandle.getLibClient().getClient().addEBusDeviceTableListener(this);
     }
 
     @Override
     protected void startScan() {
         logger.debug("Starting eBUS discovery scan ...");
+        //
+        // EBusClient client = bridgeHandle.getLibClient().getClient();
+        // client.getDeviceTableService().startDeviceScan();
+
     }
 
     protected void activate() {
@@ -64,13 +68,13 @@ public class EBusDiscovery extends AbstractDiscoveryService implements EBusDevic
 
         removeOlderResults(new Date().getTime());
         try {
-            bridgeHandle.getLibClient().getClient().getDeviceTable().removeEBusDeviceTableListener(this);
+            bridgeHandle.getLibClient().getClient().removeEBusDeviceTableListener(this);
         } catch (Exception e) {
             // okay, maybe not set
         }
     }
 
-    private void x(IEBusDevice device, IEBusCommandCollection collection) {
+    private void updateDiscoveredThing(IEBusDevice device, IEBusCommandCollection collection) {
 
         String masterAddress = EBusUtils.toHexDumpString(device.getMasterAddress());
         String slaveAddress = EBusUtils.toHexDumpString(device.getSlaveAddress());
@@ -110,81 +114,21 @@ public class EBusDiscovery extends AbstractDiscoveryService implements EBusDevic
             logger.warn("EBusDiscovery.onEBusDeviceUpdate()");
 
             EBusClient client = bridgeHandle.getLibClient().getClient();
-            Collection<IEBusCommandCollection> commandCollections = client.getConfigurationProvider()
-                    .getCommandCollections();
 
-            x(device, client.getConfigurationProvider().getCommandCollection("common"));
+            Collection<IEBusCommandCollection> commandCollections = client.getCommandCollections();
+            IEBusCommandCollection commonCollection = client.getCommandCollection("common");
 
+            // update common thing
+            updateDiscoveredThing(device, commonCollection);
+
+            // search for collection with device id
             String deviceStr = EBusUtils.toHexDumpString(device.getDeviceId()).toString();
             for (final IEBusCommandCollection collection : commandCollections) {
-
                 if (collection.getIdentification().contains(deviceStr)) {
-                    // if (deviceStr.equals(collection.getIdentification())) {
                     logger.info("Discovered device {} ...", collection.getId());
-                    x(device, collection);
+                    updateDiscoveredThing(device, collection);
                 }
             }
-
-            //
-            // String masterAddress = EBusUtils.toHexDumpString(device.getMasterAddress());
-            // String slaveAddress = EBusUtils.toHexDumpString(device.getSlaveAddress());
-            //
-            // String id = "common" + "_" + masterAddress + "_" + slaveAddress;
-            //
-            // ThingTypeUID thingTypeUID = new ThingTypeUID(BINDING_ID, "common");
-            // ThingUID thingUID = new ThingUID(BINDING_ID, id);
-            //
-            // Map<String, Object> properties = new HashMap<>();
-            //
-            // properties.put(EBusBindingConstants.CONFIG_MASTER_ADDRESS, masterAddress);
-            // properties.put(EBusBindingConstants.CONFIG_SLAVE_ADDRESS, slaveAddress);
-            //
-            // properties.put("vendor", "Wolf");
-            // properties.put("hardwareVersion", device.getHardwareVersion().toPlainString());
-            // properties.put("softwareVersion", device.getSoftwareVersion().toPlainString());
-            //
-            // if (device.getDeviceId() != null) {
-            // String deviceStr = EBusUtils.toHexDumpString(device.getDeviceId()).toString();
-            // List<EBusCommandCollection> commandCollections = client.getConfigurationProvider()
-            // .getCommandCollections();
-            //
-            // for (EBusCommandCollection collection : commandCollections) {
-            // if (deviceStr.equals(collection.getIdentification())) {
-            // logger.info("Discovered device {} ...", collection.getId());
-            //
-            // String xid = "common" + "_" + masterAddress + "_" + slaveAddress;
-            //
-            // DiscoveryResult discoveryResult = DiscoveryResultBuilder.create(thingUID)
-            // .withThingType(thingTypeUID).withProperties(properties)
-            // .withBridge(bridgeHandle.getThing().getUID())
-            // .withRepresentationProperty("eBUS Standard " + masterAddress + " " + slaveAddress)
-            // .withLabel("eBUS Standard " + masterAddress + " " + slaveAddress).build();
-            //
-            // thingRemoved(thingUID);
-            // thingDiscovered(discoveryResult);
-            //
-            // }
-            // }
-            // }
-            //
-            // // device.getManufacturer()
-            //
-            // // properties.put("", value)
-            // // device.getMasterAddress()
-            //
-            // // if (type.equals(TYPE.NEW)) {
-            //
-            // DiscoveryResult discoveryResult = DiscoveryResultBuilder.create(thingUID).withThingType(thingTypeUID)
-            // .withProperties(properties).withBridge(bridgeHandle.getThing().getUID())
-            // .withRepresentationProperty("eBUS Standard " + masterAddress + " " + slaveAddress)
-            // .withLabel("eBUS Standard " + masterAddress + " " + slaveAddress).build();
-            //
-            // thingRemoved(thingUID);
-            // thingDiscovered(discoveryResult);
-            //
-            // // }
         }
-
     }
-
 }

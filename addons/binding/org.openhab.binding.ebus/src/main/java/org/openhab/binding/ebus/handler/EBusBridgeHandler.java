@@ -34,9 +34,9 @@ import org.slf4j.LoggerFactory;
 
 import de.csdev.ebus.client.EBusClientConfiguration;
 import de.csdev.ebus.command.IEBusCommandMethod;
-import de.csdev.ebus.core.EBusConnectorEventListener;
 import de.csdev.ebus.core.EBusDataException;
-import de.csdev.ebus.service.parser.EBusParserListener;
+import de.csdev.ebus.core.IEBusConnectorEventListener;
+import de.csdev.ebus.service.parser.IEBusParserListener;
 import de.csdev.ebus.utils.EBusUtils;
 
 /**
@@ -45,7 +45,7 @@ import de.csdev.ebus.utils.EBusUtils;
  *
  * @author Christian Sowada - Initial contribution
  */
-public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserListener, EBusConnectorEventListener {
+public class EBusBridgeHandler extends BaseBridgeHandler implements IEBusParserListener, IEBusConnectorEventListener {
 
     private final Logger logger = LoggerFactory.getLogger(EBusBridgeHandler.class);
 
@@ -60,18 +60,17 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
 
     public EBusBridgeHandler(@NonNull Bridge bridge, EBusClientConfiguration clientConfiguration,
             EBusHandlerFactory handlerFactory) {
+
         super(bridge);
 
         // reference configuration
         this.clientConfiguration = clientConfiguration;
         this.handlerFactory = handlerFactory;
-
-        // initialize the ebus client wrapper
-        libClient = new EBusLibClient(clientConfiguration);
-
-        // discoveryService = new EBusDiscovery(this);
     }
 
+    /**
+     * @return
+     */
     public EBusLibClient getLibClient() {
         return libClient;
     }
@@ -144,8 +143,8 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
         libClient.initClient(masterAddress);
 
         // add listeners
-        libClient.getClient().getController().addEBusEventListener(this);
-        libClient.getClient().getResolverService().addEBusParserListener(this);
+        libClient.getClient().addEBusEventListener(this);
+        libClient.getClient().addEBusParserListener(this);
 
         // start eBus controller
         libClient.startClient();
@@ -161,11 +160,9 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
 
         if (libClient != null) {
 
-            // remove listeners
-            libClient.getClient().getController().removeEBusEventListener(this);
-            libClient.getClient().getResolverService().removeEBusParserListener(this);
-
             libClient.stopClient();
+            libClient.getClient().dispose();
+
             libClient = null;
         }
     }
@@ -199,14 +196,6 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
     }
 
     @Override
-    public void onTelegramReceived(byte[] receivedData, Integer sendQueueId) {
-        // if (!EBusBridgeHandler.this.getThing().getStatus().equals(ThingStatus.ONLINE)) {
-        // // set status to online if we are able to receive valid telegrams
-        // updateStatus(ThingStatus.ONLINE);
-        // }
-    }
-
-    @Override
     public void onTelegramException(EBusDataException exception, Integer sendQueueId) {
         if (logger.isDebugEnabled()) {
             logger.debug("eBUS telegram error; {}", exception.getLocalizedMessage());
@@ -221,5 +210,10 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements EBusParserLi
     @Override
     public void handleCommand(@NonNull ChannelUID channelUID, Command command) {
         // noop for bridge
+    }
+
+    @Override
+    public void onTelegramReceived(byte[] receivedData, Integer sendQueueId) {
+        // noop
     }
 }

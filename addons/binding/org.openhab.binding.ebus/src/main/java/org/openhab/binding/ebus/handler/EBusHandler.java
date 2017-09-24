@@ -167,7 +167,7 @@ public class EBusHandler extends BaseThingHandler {
      */
     private void initializePolling() {
 
-        logger.info("Initialize eBUS pollings ...");
+        logger.info("Initialize eBUS pollings for {} ...", thing.getUID());
 
         // cancel all old pollings if available
         cancelPollingJobs();
@@ -201,7 +201,7 @@ public class EBusHandler extends BaseThingHandler {
                             logger.info("Poll command \"{}\" with \"{}\" ...", channel.getUID(),
                                     EBusUtils.toHexDumpString(telegram).toString());
 
-                            libClient.getClient().getController().addToSendQueue(EBusUtils.toByteArray(telegram), 2);
+                            libClient.getClient().addToSendQueue(EBusUtils.toByteArray(telegram), 2);
 
                         }, firstExecutionDelay, pollingPeriod, TimeUnit.SECONDS);
 
@@ -281,6 +281,8 @@ public class EBusHandler extends BaseThingHandler {
 
         for (Entry<String, Object> resultEntry : result.entrySet()) {
 
+            logger.debug("Value {} {}", resultEntry.getKey(), resultEntry.getValue());
+
             ChannelUID channelUID = EBusBindingUtils.generateChannelUID(commandChannel.getParent(),
                     resultEntry.getKey(), thing.getUID());
 
@@ -314,7 +316,9 @@ public class EBusHandler extends BaseThingHandler {
             }
 
         } else if (channel.getAcceptedItemType().equals("String")) {
-            if (value instanceof String) {
+            if (value instanceof BigDecimal) {
+                updateState(channel.getUID(), new StringType(((BigDecimal) value).toString()));
+            } else if (value instanceof String) {
                 updateState(channel.getUID(), new StringType((String) value));
             } else if (value instanceof byte[]) {
                 // show bytes as hex string
