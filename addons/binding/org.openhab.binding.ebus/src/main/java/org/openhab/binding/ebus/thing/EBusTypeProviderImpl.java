@@ -135,15 +135,13 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
     private ChannelType createChannelType(IEBusValue value, IEBusCommandMethod mainMethod) {
 
         // only process valid entries
-        if (StringUtils.isNotEmpty(value.getName()) && StringUtils.isNotEmpty(mainMethod.getParent().getId())
-                && !value.getName().startsWith("_")) {
+        if (StringUtils.isNotEmpty(value.getName()) && StringUtils.isNotEmpty(mainMethod.getParent().getId())) {
 
             ChannelTypeUID uid = EBusBindingUtils.generateChannelTypeUID(value);
 
-            IEBusCommandMethod commandChannelSet = mainMethod.getParent()
-                    .getCommandMethod(IEBusCommandMethod.Method.SET);
+            IEBusCommandMethod commandSetter = mainMethod.getParent().getCommandMethod(IEBusCommandMethod.Method.SET);
 
-            boolean readOnly = commandChannelSet == null;
+            boolean readOnly = commandSetter == null;
             boolean polling = mainMethod.getType().equals(IEBusCommandMethod.Type.MASTER_SLAVE);
 
             // create a option list if mapping is used
@@ -175,7 +173,7 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
 
             }
 
-            boolean advanced = false;
+            boolean advanced = value.getName().startsWith("_");
             ChannelKind kind = ChannelKind.STATE;
             String label = StringUtils.defaultIfEmpty(value.getLabel(), value.getName());
             String pattern = value.getFormat();

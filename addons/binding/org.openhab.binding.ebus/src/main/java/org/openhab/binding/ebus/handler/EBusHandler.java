@@ -316,22 +316,27 @@ public class EBusHandler extends BaseThingHandler {
             }
 
         } else if (channel.getAcceptedItemType().equals("String")) {
+
             if (value instanceof BigDecimal) {
                 updateState(channel.getUID(), new StringType(((BigDecimal) value).toString()));
+
             } else if (value instanceof String) {
                 updateState(channel.getUID(), new StringType((String) value));
+
             } else if (value instanceof byte[]) {
                 // show bytes as hex string
                 updateState(channel.getUID(), new StringType(EBusUtils.toHexDumpString((byte[]) value).toString()));
             }
 
         } else if (channel.getAcceptedItemType().equals("Switch")) {
+
             if (value instanceof Boolean) {
                 boolean isOn = ((Boolean) value).booleanValue();
                 updateState(channel.getUID(), isOn ? OnOffType.ON : OnOffType.OFF);
             }
 
         } else if (channel.getAcceptedItemType().equals("DateTime")) {
+
             if (value instanceof EBusDateTime) {
                 this.updateState(channel.getUID(), new DateTimeType(((EBusDateTime) value).getCalendar()));
             }

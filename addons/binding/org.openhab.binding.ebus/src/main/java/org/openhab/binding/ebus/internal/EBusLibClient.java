@@ -92,23 +92,22 @@ public class EBusLibClient {
             @Override
             public void run() {
 
-                // // wolf solar e1
-                // EBusLibClient.this.sendRawData(0, "AA 03 FE 05 03 08 01 00 40 FF 2C 17 30 0E 96 AA");
-                //
-                // // wolf solar a
-                // EBusLibClient.this.sendRawData(500, "AA 71 FE 50 18 0E 00 00 D0 01 05 00 E2 03 0F 01 01 00 00 00
-                // 18");
-                //
-                // // wolf solar b
-                // EBusLibClient.this.sendRawData(100,
-                // "AA 71 FE 50 17 10 08 91 05 01 CA 01 00 80 00 80 00 80 00 80 00 80 9B");
-                //
-                // // auto stroker
-                // EBusLibClient.this.sendRawData(1500, "03 FE 05 03 08 01 00 40 FF 2C 17 30 0E 96 AA");
-                //
-                // // number with option
-                // logger.info("RUN ..............");
-                // EBusLibClient.this.sendRawData(100, "AA FF 08 50 22 03 11 74 27 2C 00 02 00 80 AC 00 AA");
+                // wolf solar e1
+                EBusLibClient.this.sendRawData(0, "AA 03 FE 05 03 08 01 00 40 FF 2C 17 30 0E 96 AA");
+
+                // wolf solar a
+                EBusLibClient.this.sendRawData(500, "AA 71 FE 50 18 0E 00 00 D0 01 05 00 E2 03 0F 01 01 00 00 00 18");
+
+                // wolf solar b
+                EBusLibClient.this.sendRawData(100,
+                        "AA 71 FE 50 17 10 08 91 05 01 CA 01 00 80 00 80 00 80 00 80 00 80 9B");
+
+                // auto stroker
+                EBusLibClient.this.sendRawData(1500, "03 FE 05 03 08 01 00 40 FF 2C 17 30 0E 96 AA");
+
+                // number with option
+                logger.info("RUN ..............");
+                EBusLibClient.this.sendRawData(100, "AA FF 08 50 22 03 11 74 27 2C 00 02 00 80 AC 00 AA");
 
             }
         }, 5, TimeUnit.SECONDS);

@@ -18,6 +18,7 @@ import java.util.Map;
 import org.eclipse.smarthome.config.discovery.AbstractDiscoveryService;
 import org.eclipse.smarthome.config.discovery.DiscoveryResult;
 import org.eclipse.smarthome.config.discovery.DiscoveryResultBuilder;
+import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.thing.ThingUID;
 import org.openhab.binding.ebus.EBusBindingConstants;
@@ -27,6 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import de.csdev.ebus.client.EBusClient;
 import de.csdev.ebus.command.IEBusCommandCollection;
+import de.csdev.ebus.core.EBusConsts;
 import de.csdev.ebus.service.device.IEBusDevice;
 import de.csdev.ebus.service.device.IEBusDeviceTableListener;
 import de.csdev.ebus.utils.EBusUtils;
@@ -79,7 +81,7 @@ public class EBusDiscovery extends AbstractDiscoveryService implements IEBusDevi
         String masterAddress = EBusUtils.toHexDumpString(device.getMasterAddress());
         String slaveAddress = EBusUtils.toHexDumpString(device.getSlaveAddress());
 
-        String id = collection.getId() + "_" + masterAddress + "_" + slaveAddress;
+        String id = collection.getId() + "_" + slaveAddress;
 
         ThingTypeUID thingTypeUID = new ThingTypeUID(BINDING_ID, collection.getId());
         ThingUID thingUID = new ThingUID(BINDING_ID, id);
@@ -88,22 +90,17 @@ public class EBusDiscovery extends AbstractDiscoveryService implements IEBusDevi
         properties.put(EBusBindingConstants.MASTER_ADDRESS, masterAddress);
         properties.put(EBusBindingConstants.SLAVE_ADDRESS, slaveAddress);
 
-        if (device.getHardwareVersion() != null) {
-            properties.put("hardwareVersion", device.getHardwareVersion().toPlainString());
-        }
-
-        if (device.getSoftwareVersion() != null) {
-            properties.put("softwareVersion", device.getSoftwareVersion().toPlainString());
-        }
+        // not nice from the api, one time Map<String, String> another time <String, Object>
+        Map<String, String> deviceProperties = new HashMap<>();
+        updateThingProperties(device, deviceProperties);
+        properties.putAll(deviceProperties);
 
         DiscoveryResult discoveryResult = DiscoveryResultBuilder.create(thingUID).withThingType(thingTypeUID)
                 .withProperties(properties).withBridge(bridgeHandle.getThing().getUID())
-                .withRepresentationProperty(collection.getLabel() + " " + masterAddress + " " + slaveAddress)
-                .withLabel(collection.getLabel() + " " + masterAddress + " " + slaveAddress).build();
+                .withRepresentationProperty(collection.getLabel() + " " + slaveAddress)
+                .withLabel(collection.getLabel() + " " + slaveAddress).build();
 
-        thingRemoved(thingUID);
         thingDiscovered(discoveryResult);
-
     }
 
     @Override
@@ -116,7 +113,7 @@ public class EBusDiscovery extends AbstractDiscoveryService implements IEBusDevi
             EBusClient client = bridgeHandle.getLibClient().getClient();
 
             Collection<IEBusCommandCollection> commandCollections = client.getCommandCollections();
-            IEBusCommandCollection commonCollection = client.getCommandCollection("common");
+            IEBusCommandCollection commonCollection = client.getCommandCollection(EBusConsts.COLLECTION_STD);
 
             // update common thing
             updateDiscoveredThing(device, commonCollection);
@@ -129,6 +126,69 @@ public class EBusDiscovery extends AbstractDiscoveryService implements IEBusDevi
                     updateDiscoveredThing(device, collection);
                 }
             }
+
+            // update already initialized eBUS nodes
+            updateInitializedThings(device);
         }
     }
+
+    /**
+     * Update already initialized things
+     *
+     * @param type
+     * @param device
+     */
+    private void updateInitializedThings(IEBusDevice device) {
+
+        if (bridgeHandle == null || bridgeHandle.getThing() == null || bridgeHandle.getThing().getThings() == null) {
+            logger.debug("No things available ...");
+            return;
+        }
+
+        String deviceSlaveAddress = EBusUtils.toHexDumpString(device.getSlaveAddress());
+
+        for (Thing thing : bridgeHandle.getThing().getThings()) {
+            String slaveAddress = (String) thing.getConfiguration().get(EBusBindingConstants.SLAVE_ADDRESS);
+
+            if (deviceSlaveAddress.equals(slaveAddress)) {
+
+                Map<String, String> properties = new HashMap<>();
+                properties.putAll(thing.getProperties());
+                updateThingProperties(device, properties);
+                thing.setProperties(properties);
+            }
+        }
+    }
+
+    /**
+     * @param device
+     * @param properties
+     */
+    private void updateThingProperties(IEBusDevice device, Map<String, String> properties) {
+
+        if (device.getDeviceId() != null && device.getDeviceId().length == 5) {
+            properties.put(Thing.PROPERTY_MODEL_ID, EBusUtils.toHexDumpString(device.getDeviceId()).toString());
+        } else {
+            properties.remove(Thing.PROPERTY_MODEL_ID);
+        }
+
+        if (device.getHardwareVersion() != null) {
+            properties.put(Thing.PROPERTY_HARDWARE_VERSION, device.getHardwareVersion().toPlainString());
+        } else {
+            properties.remove(Thing.PROPERTY_HARDWARE_VERSION);
+        }
+
+        if (device.getSoftwareVersion() != null) {
+            properties.put(Thing.PROPERTY_FIRMWARE_VERSION, device.getSoftwareVersion().toPlainString());
+        } else {
+            properties.remove(Thing.PROPERTY_FIRMWARE_VERSION);
+        }
+
+        if (device.getManufacturerName() != null) {
+            properties.put(Thing.PROPERTY_VENDOR, device.getManufacturerName());
+        } else {
+            properties.remove(Thing.PROPERTY_VENDOR);
+        }
+    }
+
 }

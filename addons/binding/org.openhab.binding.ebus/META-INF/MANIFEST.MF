@@ -6,7 +6,7 @@ Bundle-Vendor: openHAB
 Bundle-Version: 2.2.0.qualifier
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ClassPath: .,
- lib/de.csdev.ebus.core-0.6.0_20170924124302.jar
+ lib/de.csdev.ebus.core-0.6.0_20170927191146.jar
 Import-Package: 
  com.google.gson,
  com.google.gson.annotations,
@@ -57,3 +57,4 @@ Export-Package: de.csdev.ebus.cfg,
  org.openhab.binding.ebus,
  org.openhab.binding.ebus.handler,
  org.openhab.binding.ebus.thing
+Bundle-ActivationPolicy: lazy

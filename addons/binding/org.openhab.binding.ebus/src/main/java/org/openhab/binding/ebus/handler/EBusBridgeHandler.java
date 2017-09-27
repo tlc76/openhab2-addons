@@ -89,10 +89,8 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements IEBusParserL
         // libClient = new EBusLibClient();
         Configuration configuration = getThing().getConfiguration();
 
-        // IEBusConnection connection = null;
         String ipAddress = null;
         BigDecimal port = null;
-
         String serialPort = null;
 
         String masterAddressStr = null;
