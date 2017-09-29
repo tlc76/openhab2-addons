@@ -1,6 +1,8 @@
 # eBUS Binding
 
-The eBUS binding allows you to control your heating system. The eBUS protocol is used by heating system vendors like Wolf, Vaillant, Kromschröder etc. You can read temperatures, pump performance, gas consumption etc.
+The eBUS binding allows you to control your heating system. The eBUS protocol is
+used by heating system vendors like Wolf, Vaillant, Kromschröder etc. You can
+read temperatures, pump performance, gas consumption etc.
 
      ┌────────┐                       serial/usb (rs232) ┌──────┐
      │        │  serial (eBUS)  ┌───┐ or ethernet        │ ──── │
@@ -11,14 +13,18 @@ The eBUS binding allows you to control your heating system. The eBUS protocol is
 
 ## Supported Bridge
 
-The bridge connects openHAB to an eBUS interface via serial interface or Ethernet. You can buy a ready interface or solder your own circuit (examples: [eBUS Wiki *german*](http://ebus-wiki.org/doku.php/ebus/ebuskonverter)). A simple read-only interface can be build with an Arduino device.
+The bridge connects openHAB to an eBUS interface via serial interface or
+Ethernet. You can buy a ready interface or solder your own circuit
+(examples: [eBUS Wiki *german*](http://ebus-wiki.org/doku.php/ebus/ebuskonverter)).
+A simple read-only interface can be build with an Arduino device.
 
 ### List of working devices
 
 - eBus Koppler USB (commercial)
 - eBUS Koppler Ethernet (commercial)
 
-You can use Linux tools like ``ser2net`` or ``socat`` to connect your serial eBUS interface to Ethernet.
+You can use Linux tools like ``ser2net`` or ``socat`` to connect your serial
+eBUS interface to Ethernet.
 
 ### Example
 
@@ -27,7 +33,8 @@ You can use Linux tools like ``ser2net`` or ``socat`` to connect your serial eBU
 ## Supported Things
 
 The build-in things are listed below.  
-_We need your help to support more devices!_ See [eBUS Configuration](#ebus-configuration) for more Information.
+_We need your help to support more devices!_ See 
+[eBUS Configuration](#ebus-configuration) for more Information.
 
 - **eBUS Standard**  
 eBUS Standard commands
@@ -49,11 +56,14 @@ Solar Module Wolf CGB-2
 
 ## Discovery
 
-All devices connected to a eBUS gateway. All required openHAB metadata are generated during device discovery. 
+All devices connected to a eBUS gateway. All required openHAB metadata are 
+generated during device discovery. 
 
 ## Binding Configuration
 
-You can add up to three custom configuration files. This allows you to add new eBUS devices without to update this binding. You must use the URL syntax. For more information see [URL](https://en.wikipedia.org/wiki/URL) on wikipedia.
+You can add up to three custom configuration files. This allows you to add new 
+eBUS devices without to update this binding. You must use the URL syntax. 
+For more information see [URL](https://en.wikipedia.org/wiki/URL) on wikipedia.
 
 There are several settings for a binding:
 
@@ -73,7 +83,8 @@ Define a third URL to load external configuration files
 
 ## Bridge Configuration
 
-The bridge is the central communication gateway to your heating system. It is mandatory to set the network or serial port parameters.
+The bridge is the central communication gateway to your heating system. It is 
+mandatory to set the network or serial port parameters.
 
 There are several settings for a bridge:
 
@@ -102,7 +113,8 @@ Slave address of this node as HEX value like ``FF``
 Advanced settings:
 
 - **masterAddress**  
-Master address of this node as HEX value like ``FF``. Usually does not have to be set. Calculated on the basis of the slave address.
+Master address of this node as HEX value like ``FF``. Usually does not have to 
+be set. Calculated on the basis of the slave address.
 
 - **filterAcceptMaster**  
 Accept telegrams for master address, default is ``false``
@@ -122,8 +134,51 @@ A channel group a eBUS command with its values. This can be one or more.
 There are several settings for a channel:
 
 - **polling** (required)  
-Poll a getter command every n seconds from a eBUS slave. All channels of a channel group will be refreshed by one polling. Polling is not available on broadcast commands.
+Poll a getter command every n seconds from a eBUS slave. All channels of a 
+channel group will be refreshed by one polling. Polling is not available on 
+broadcast commands.
 
+## Issues
+
+* If receive an error like
+  ``java.lang.NoClassDefFoundError: gnu/io/SerialPortEventListener``. You can call
+  the command below to install the missing serial library.
+
+```
+feature:install openhab-transport-serial
+```
+
+* Binding stops working, console shows
+  ``Send queue is full! The eBUS service will reset the queue to ensure proper operation.``
+
+This is maybe a hardware fault by your USB/Serial Converter. Specially cheap
+adapters with FTDI chips are fakes. You can try to reduce the USB speed on 
+Linux, see [here](https://github.com/raspberrypi/linux/issues/1187).
+
+## Logging
+
+If you want to see what's going on in the binding, switch the loglevel to DEBUG
+in the Karaf console
+
+```
+log:set DEBUG org.openhab.binding.ebus
+```
+
+If you want to see even more, switch to TRACE to also see the gateway
+request/response data
+
+```
+log:set TRACE org.openhab.binding.ebus
+```
+
+Set the logging back to normal
+
+```
+log:set INFO org.openhab.binding.ebus
+```
+
+You can also set the logging for the core library. In that case use
+``de.csdev.ebus``
 
 # eBUS Configuration
 
