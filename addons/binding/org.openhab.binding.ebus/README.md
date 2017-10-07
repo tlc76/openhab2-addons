@@ -293,21 +293,21 @@ command   |          | The value list for slave data, see value block below
 }
 ```
 
-Key      | Required | Description
----      | ---      | ---
-name     | x        | The unique name within this command.<br />Use underscore ``_`` for multiple-word names
-type     | x        | The data type of this value
-label    |          | The label of this value
-format   |          | Formatter for this value,   see String.format
-min      |          | A minimal allowed value
-max      |          | A maximal allowed value
-factor   |          | Multiply the raw value with this factor
-step     |          | The allowed step size for this value
-length   |          | The length for variable data types like ``bytes``, ``string`` and ``mword``
-children |          | sub values for type ``byte``
-variant  |          | Currently used by ``datetime``
-pow      |          | Currently used by ``mword``
-default  |          | A default value, usually as hex string
+Key              | Required | Description
+---              | ---      | ---
+name             | x        | The unique name within this command.<br />Use underscore ``_`` for multiple-word names
+type             | x        | The data type of this value
+label            |          | The label of this value
+format           |          | Formatter for this value,   see String.format
+min              |          | A minimal allowed value
+max              |          | A maximal allowed value
+factor           |          | Multiply the raw value with this factor
+step             |          | The allowed step size for this value
+length           |          | The length for variable data types like ``bytes``, ``string`` and ``mword``
+children         |          | sub values for type ``byte``
+variant          |          | Currently used by ``datetime``
+default          |          | A default value, usually as hex string
+reverseByteOrder |          | Reverse the byte order of some datatypes
 
 ## Data types
 
@@ -333,7 +333,7 @@ Key      | Alias | Len   | Add. Param              | Description
 bytes    |       | len   | ``length``              | Byte Array, requires ``length``
 datetime |       | 3,4,7 | ``variant``             | A DateTime value (variants: ``datetime`` (default), ``date`` and ``time``
 kw-crc   |       | 1     |                         | Kromschröder/Wolf CRC, often seen as ``0xCC``
-mword    |       | len*2 | ``length``, ``variant`` | Multiple word, requires ``length`` and allows to set ``pow`` (default: 1000)
+mword    |       | len*2 | ``length``, ``variant`` | Multiple word, requires ``length`` and allows to set ``factor`` (default: 1000)
 string   |       | len   | ``length``              | ASCII String, requires ``length``
 static   |       | len   | ``default``             | A static byte array with the value of ``default``
 template |       |       | ``name``                | Adds the value with the given ``name`` from the template block

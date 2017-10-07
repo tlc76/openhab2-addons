@@ -108,8 +108,6 @@ public class EBusDiscovery extends AbstractDiscoveryService implements IEBusDevi
 
         if (!type.equals(TYPE.UPDATE_ACTIVITY)) {
 
-            logger.warn("EBusDiscovery.onEBusDeviceUpdate()");
-
             EBusClient client = bridgeHandle.getLibClient().getClient();
 
             Collection<IEBusCommandCollection> commandCollections = client.getCommandCollections();

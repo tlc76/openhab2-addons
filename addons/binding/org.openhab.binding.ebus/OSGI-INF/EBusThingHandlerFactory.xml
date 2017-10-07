@@ -12,12 +12,12 @@
 <scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" immediate="true" name="org.openhab.binding.ebus.internal.EBusHandlerFactory">
 
 	<implementation class="org.openhab.binding.ebus.internal.EBusHandlerFactory"/>
-
+    <reference bind="setTypeProvider" cardinality="1..1" interface="org.openhab.binding.ebus.thing.EBusTypeProvider" name="EBusTypeProvider" policy="static" unbind="unsetTypeProvider"/>
 	<service>
 		<provide interface="org.eclipse.smarthome.core.thing.binding.ThingHandlerFactory"/>
 		<provide interface="org.osgi.service.cm.ManagedService"/>
 	</service>
+
     <property name="service.pid" value="org.openhab.ebus" />
-    <reference bind="setTypeProvider" cardinality="1..1" interface="org.openhab.binding.ebus.thing.EBusTypeProvider" name="EBusTypeProvider" policy="static" unbind="unsetTypeProvider"/>
 
 </scr:component>

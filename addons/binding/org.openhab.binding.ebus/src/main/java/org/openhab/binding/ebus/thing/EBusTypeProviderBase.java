@@ -18,11 +18,9 @@ import java.util.Locale;
 import java.util.Map;
 
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
-import org.eclipse.smarthome.core.thing.binding.ThingTypeProvider;
 import org.eclipse.smarthome.core.thing.type.ChannelGroupType;
 import org.eclipse.smarthome.core.thing.type.ChannelGroupTypeUID;
 import org.eclipse.smarthome.core.thing.type.ChannelType;
-import org.eclipse.smarthome.core.thing.type.ChannelTypeProvider;
 import org.eclipse.smarthome.core.thing.type.ChannelTypeUID;
 import org.eclipse.smarthome.core.thing.type.ThingType;
 
@@ -30,13 +28,13 @@ import org.eclipse.smarthome.core.thing.type.ThingType;
  *
  * @author Christian Sowada - Initial contribution
  */
-public class EBusTypeProviderBase implements ThingTypeProvider, ChannelTypeProvider {
+public abstract class EBusTypeProviderBase implements EBusTypeProvider {
+
+    protected final List<String> supportedBridgeTypeUIDs = Arrays.asList(THING_TYPE_EBUS_BRIDGE.getAsString());
 
     protected Map<ChannelGroupTypeUID, ChannelGroupType> channelGroupTypes = new HashMap<>();
 
     protected Map<ChannelTypeUID, ChannelType> channelTypes = new HashMap<>();
-
-    protected final List<String> supportedBridgeTypeUIDs = Arrays.asList(THING_TYPE_EBUS_BRIDGE.getAsString());
 
     protected Map<ThingTypeUID, ThingType> thingTypes = new HashMap<>();
 

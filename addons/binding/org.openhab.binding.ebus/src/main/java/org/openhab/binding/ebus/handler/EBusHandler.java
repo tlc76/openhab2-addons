@@ -19,6 +19,7 @@ import java.util.Random;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.lang.StringUtils;
 import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.smarthome.config.core.Configuration;
 import org.eclipse.smarthome.core.library.types.DateTimeType;
@@ -33,11 +34,13 @@ import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
 import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.RefreshType;
+import org.openhab.binding.ebus.EBusBindingConstants;
 import org.openhab.binding.ebus.internal.EBusBindingUtils;
 import org.openhab.binding.ebus.internal.EBusLibClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.csdev.ebus.command.IEBusCommandCollection;
 import de.csdev.ebus.command.IEBusCommandMethod;
 import de.csdev.ebus.command.datatypes.EBusTypeException;
 import de.csdev.ebus.core.EBusConsts;
@@ -64,6 +67,73 @@ public class EBusHandler extends BaseThingHandler {
     public EBusHandler(@NonNull Thing thing) {
         super(thing);
     }
+
+    public void refreshThingConfiguration() {
+
+        EBusLibClient libClient = getLibClient();
+
+        Map<@NonNull String, String> properties = thing.getProperties();
+        String oldHash = properties.get("collectionHash");
+        String collectionId = properties.get(EBusBindingConstants.COLLECTION);
+        IEBusCommandCollection collection = libClient.getClient().getCommandCollection(collectionId);
+
+        if (StringUtils.isEmpty(collectionId)) {
+            logger.error("Property \"collectionId\" not set for thing {}. Please re-create this thing.",
+                    thing.getUID());
+            return;
+        }
+
+        if (collection == null) {
+            logger.error(
+                    "Unable to find configuration collection with id {}. It is possible that this collection has been renamed or removed from eBUS binding!",
+                    collectionId);
+            return;
+        }
+
+        // new hash
+        String newHash = EBusUtils.toHexDumpString(collection.getSourceHash()).toString();
+
+        // check both hashs
+        if (!StringUtils.equals(oldHash, newHash)) {
+            logger.warn("eBUS configuration \"{}\"  has changed, update thing {} ...", collection.getId(),
+                    thing.getUID());
+
+            try {
+                // just update the thing
+                this.changeThingType(this.thing.getThingTypeUID(), this.thing.getConfiguration());
+
+                // add the new hash
+                this.updateProperty("collectionHash", newHash);
+
+            } catch (RuntimeException e) { // NOPMD - this surely will never happen
+                logger.warn(e.getMessage()); // NOPMD - this surely will never happen
+            }
+        }
+    }
+
+    // public synchronized boolean updateThingConfiguration(EBusTypeProvider typeProvider) {
+    //
+    // logger.info("updateThingConfiguration...");
+    //
+    // ThingType thingType = typeProvider.getThingType(thing.getThingTypeUID(), null);
+    // if (thingType != null) {
+    // logger.info("Found channel type {} ...", thingType);
+    // } else {
+    // logger.warn("Unable to find thing type {} !", thing.getThingTypeUID());
+    // }
+    //
+    // for (Channel channel : thing.getChannels()) {
+    // ChannelType channelType = typeProvider.getChannelType(channel.getChannelTypeUID(), null);
+    // if (channelType != null) {
+    // logger.info("Found channel type {} ...", channelType);
+    // } else {
+    // logger.warn("Unable to find channel type {} !", channel.getChannelTypeUID());
+    // }
+    //
+    // }
+    //
+    // return false;
+    // }
 
     /*
      * (non-Javadoc)
@@ -125,6 +195,9 @@ public class EBusHandler extends BaseThingHandler {
 
         } else if (getBridge().getStatus() == ThingStatus.ONLINE) {
             updateStatus(ThingStatus.ONLINE);
+
+            refreshThingConfiguration();
+
             initializePolling();
 
         } else {
@@ -150,17 +223,22 @@ public class EBusHandler extends BaseThingHandler {
         return null;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * org.eclipse.smarthome.core.thing.binding.BaseThingHandler#thingUpdated(org.eclipse.smarthome.core.thing.Thing)
-     */
-    @Override
-    public void thingUpdated(final Thing thing) {
-        super.thingUpdated(thing);
-        initializePolling();
-    }
+    // /*
+    // * (non-Javadoc)
+    // *
+    // * @see
+    // * org.eclipse.smarthome.core.thing.binding.BaseThingHandler#thingUpdated(org.eclipse.smarthome.core.thing.Thing)
+    // */
+    // @Override
+    // public void thingUpdated(final Thing thing) {
+    // super.thingUpdated(thing);
+    //
+    // // reinizialized pollings
+    // initializePolling();
+    //
+    // refreshThingConfiguration();
+    //
+    // }
 
     /**
      *
@@ -230,14 +308,19 @@ public class EBusHandler extends BaseThingHandler {
      */
     public boolean supportsTelegram(byte[] receivedData, IEBusCommandMethod commandMethod) {
 
-        Byte masterAddress = EBusUtils.toByte((String) getThing().getConfiguration().get(MASTER_ADDRESS));
-        Byte slaveAddress = EBusUtils.toByte((String) getThing().getConfiguration().get(SLAVE_ADDRESS));
+        Configuration configuration = getThing().getConfiguration();
+
+        byte sourceAddress = receivedData[0];
+        byte destinationAddress = receivedData[1];
+
+        Byte masterAddress = EBusUtils.toByte((String) configuration.get(MASTER_ADDRESS));
+        Byte slaveAddress = EBusUtils.toByte((String) configuration.get(SLAVE_ADDRESS));
 
         // only interesting for broadcasts
         Byte masterAddressComp = masterAddress == null ? EBusUtils.getMasterAddress(slaveAddress) : masterAddress;
 
-        boolean filterAcceptMaster = (boolean) getThing().getConfiguration().get(FILTER_ACCEPT_MASTER);
-        boolean filterAcceptSlave = (boolean) getThing().getConfiguration().get(FILTER_ACCEPT_SLAVE);
+        boolean filterAcceptSource = (boolean) getThing().getConfiguration().get(FILTER_ACCEPT_MASTER);
+        boolean filterAcceptDestination = (boolean) getThing().getConfiguration().get(FILTER_ACCEPT_SLAVE);
         boolean filterAcceptBroadcast = (boolean) getThing().getConfiguration().get(FILTER_ACCEPT_BROADCAST);
 
         String collectionId = thing.getProperties().get(COLLECTION);
@@ -247,20 +330,29 @@ public class EBusHandler extends BaseThingHandler {
             return false;
         }
 
-        if (filterAcceptBroadcast && receivedData[1] == EBusConsts.BROADCAST_ADDRESS) {
-            if (masterAddressComp != null && receivedData[0] == masterAddressComp) {
+        // check if broadcast filter is set (default true)
+        if (filterAcceptBroadcast && destinationAddress == EBusConsts.BROADCAST_ADDRESS) {
+            if (masterAddressComp != null && sourceAddress == masterAddressComp) {
                 return true;
             }
         }
 
-        if (filterAcceptMaster && masterAddress != null) {
-            if (masterAddress == receivedData[0]) {
+        // check if source address filter is set
+        if (filterAcceptSource && masterAddress != null) {
+            if (masterAddress == sourceAddress) {
                 return true;
             }
         }
 
-        if (filterAcceptSlave && slaveAddress != null) {
-            if (slaveAddress == receivedData[1]) {
+        // check if destination address filter is set (default true)
+        if (filterAcceptDestination && slaveAddress != null) {
+
+            if (EBusUtils.isMasterAddress(destinationAddress) && masterAddressComp != null
+                    && destinationAddress == masterAddressComp) {
+                // master-master telegram
+                return true;
+            } else if (slaveAddress == destinationAddress) {
+                // master-slave telegram
                 return true;
             }
         }

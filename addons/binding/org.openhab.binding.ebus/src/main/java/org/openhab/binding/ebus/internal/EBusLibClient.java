@@ -10,11 +10,9 @@ package org.openhab.binding.ebus.internal;
 
 import static org.openhab.binding.ebus.EBusBindingConstants.*;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang.StringUtils;
@@ -32,7 +30,6 @@ import de.csdev.ebus.client.EBusClientConfiguration;
 import de.csdev.ebus.command.IEBusCommandMethod;
 import de.csdev.ebus.command.IEBusCommandMethod.Method;
 import de.csdev.ebus.command.datatypes.EBusTypeException;
-import de.csdev.ebus.core.EBusConsts;
 import de.csdev.ebus.core.EBusController;
 import de.csdev.ebus.core.connection.EBusEmulatorConnection;
 import de.csdev.ebus.core.connection.EBusSerialNRJavaSerialConnection;
@@ -54,7 +51,7 @@ public class EBusLibClient {
 
     private IEBusConnection connection;
 
-    private ScheduledFuture<?> mockupSynJob;
+    // private ScheduledFuture<?> mockupSynJob;
 
     /**
      * @param configuration
@@ -75,7 +72,6 @@ public class EBusLibClient {
      * @param sleepBefore
      * @param data
      */
-    @SuppressWarnings("unused")
     private void sendRawData(long sleepBefore, String data) {
         byte[] byteArray = EBusUtils.toByteArray(data);
         ((EBusEmulatorConnection) connection).writeBytesDelayed(byteArray, sleepBefore);
@@ -85,12 +81,14 @@ public class EBusLibClient {
      * @param scheduler
      */
     public void setDummyConnection(ScheduledExecutorService scheduler) {
-        connection = new EBusEmulatorConnection(null);
+        connection = new EBusEmulatorConnection();
 
         scheduler.schedule(new Runnable() {
 
             @Override
             public void run() {
+
+                EBusLibClient.this.sendRawData(200, "FF 35 07 04 00 E4 00 0A 19 00 20 00 00 C0 02 04 00 00 DB 00");
 
                 // wolf solar e1
                 EBusLibClient.this.sendRawData(0, "AA 03 FE 05 03 08 01 00 40 FF 2C 17 30 0E 96 AA");
@@ -109,20 +107,22 @@ public class EBusLibClient {
                 logger.info("RUN ..............");
                 EBusLibClient.this.sendRawData(100, "AA FF 08 50 22 03 11 74 27 2C 00 02 00 80 AC 00 AA");
 
+                EBusLibClient.this.sendRawData(100, "AA FF 08 B5 09 03 0D 28 00 EA 00 02 FE 0E C2 00 AA");
+
             }
         }, 5, TimeUnit.SECONDS);
 
-        mockupSynJob = scheduler.scheduleWithFixedDelay(new Runnable() {
-
-            @Override
-            public void run() {
-                try {
-                    connection.writeByte(EBusConsts.SYN);
-                } catch (IOException e) {
-                    logger.error("error!", e);
-                }
-            }
-        }, 10, 1, TimeUnit.SECONDS);
+        // mockupSynJob = scheduler.scheduleWithFixedDelay(new Runnable() {
+        //
+        // @Override
+        // public void run() {
+        // try {
+        // connection.writeByte(EBusConsts.SYN);
+        // } catch (IOException e) {
+        // logger.error("error!", e);
+        // }
+        // }
+        // }, 10, 1, TimeUnit.SECONDS);
     }
 
     /**
@@ -152,6 +152,14 @@ public class EBusLibClient {
      */
     public Integer sendTelegram(ByteBuffer telegram) {
         return client.addToSendQueue(EBusUtils.toByteArray(telegram));
+    }
+
+    /**
+     * @param telegram
+     * @return
+     */
+    public Integer sendTelegram(byte[] telegram) {
+        return client.addToSendQueue(telegram);
     }
 
     /**
@@ -250,11 +258,11 @@ public class EBusLibClient {
      *
      */
     public void stopClient() {
-
-        if (mockupSynJob != null) {
-            mockupSynJob.cancel(true);
-            mockupSynJob = null;
-        }
+        //
+        // if (mockupSynJob != null) {
+        // mockupSynJob.cancel(true);
+        // mockupSynJob = null;
+        // }
 
         if (controller != null && !controller.isInterrupted()) {
             controller.interrupt();

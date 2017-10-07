@@ -105,22 +105,18 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory implements Manag
      * @param configuration
      * @param url
      */
-    private void loadConfigurationByUrl(EBusClientConfiguration configuration, String url) {
+    private boolean loadConfigurationByUrl(EBusClientConfiguration configuration, String url) {
         try {
             configuration.loadConfiguration(new URL(url).openStream());
+            return true;
+
         } catch (MalformedURLException e) {
             logger.error("error!", e);
         } catch (IOException e) {
             logger.error("error!", e);
         }
+        return false;
     }
-
-    // private synchronized void registerDiscoveryService(EBusDiscovery discoveryService) {
-    // discoveryService.activate();
-    //
-    // this.discoveryServiceRegs.put(bridgeHandler.getThing().getUID(), bundleContext
-    // .registerService(DiscoveryService.class.getName(), discoveryService, new Hashtable<String, Object>()));
-    // }
 
     /**
      * @param bridgeHandler
@@ -204,16 +200,22 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory implements Manag
         configuration.loadInternalConfigurations();
 
         if (properties.get("configurationUrl") instanceof String) {
+            logger.info("Load custom configuration file '{}' ...", properties.get("configurationUrl"));
             loadConfigurationByUrl(configuration, (String) properties.get("configurationUrl"));
         }
+
         if (properties.get("configurationUrl1") instanceof String) {
+            logger.info("Load custom configuration file '{}' ...", properties.get("configurationUrl1"));
             loadConfigurationByUrl(configuration, (String) properties.get("configurationUrl1"));
         }
+
         if (properties.get("configurationUrl2") instanceof String) {
+            logger.info("Load custom configuration file '{}' ...", properties.get("configurationUrl2"));
             loadConfigurationByUrl(configuration, (String) properties.get("configurationUrl2"));
         }
 
         typeProvider.update(configuration.getCollections());
+
     }
 
     /*
