@@ -156,13 +156,13 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
             // default
             String itemType = "Number";
 
-            if (ArrayUtils.contains(value.getType().getSupportedTypes(), EBusTypeBit.BIT)) {
+            if (ArrayUtils.contains(value.getType().getSupportedTypes(), EBusTypeBit.TYPE_BIT)) {
                 itemType = "Switch";
 
-            } else if (ArrayUtils.contains(value.getType().getSupportedTypes(), EBusTypeDateTime.DATETIME)) {
+            } else if (ArrayUtils.contains(value.getType().getSupportedTypes(), EBusTypeDateTime.TYPE_DATETIME)) {
                 itemType = "DateTime";
 
-            } else if (ArrayUtils.contains(value.getType().getSupportedTypes(), EBusTypeString.STRING)) {
+            } else if (ArrayUtils.contains(value.getType().getSupportedTypes(), EBusTypeString.TYPE_STRING)) {
                 itemType = "String";
 
             } else if (ArrayUtils.contains(value.getType().getSupportedTypes(), EBusTypeBytes.BYTES)) {

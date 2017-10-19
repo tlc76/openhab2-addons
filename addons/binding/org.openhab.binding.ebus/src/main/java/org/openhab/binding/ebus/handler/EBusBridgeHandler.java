@@ -48,6 +48,7 @@ import de.csdev.ebus.utils.EBusUtils;
 public class EBusBridgeHandler extends BaseBridgeHandler implements IEBusParserListener, IEBusConnectorEventListener {
 
     private final Logger logger = LoggerFactory.getLogger(EBusBridgeHandler.class);
+    private final Logger loggerExt = LoggerFactory.getLogger("org.openhab.ebus-ext");
 
     public final static Set<ThingTypeUID> SUPPORTED_THING_TYPES = Collections
             .singleton(EBusBindingConstants.THING_TYPE_EBUS_BRIDGE);
@@ -169,8 +170,12 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements IEBusParserL
     public void onTelegramResolved(IEBusCommandMethod commandChannel, Map<String, Object> result, byte[] receivedData,
             Integer sendQueueId) {
 
-        logger.info("Received telegram from address {} to {} with command {}",
-                EBusUtils.toHexDumpString(receivedData[0]), EBusUtils.toHexDumpString(receivedData[1]),
+        boolean noHandler = true;
+
+        String source = EBusUtils.toHexDumpString(receivedData[0]);
+        String destination = EBusUtils.toHexDumpString(receivedData[1]);
+
+        logger.info("Received telegram from address {} to {} with command {}", source, destination,
                 commandChannel.getParent().getId());
 
         if (getThing().getThings() != null) {
@@ -187,10 +192,15 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements IEBusParserL
 
                         // process
                         handler.handleReceivedTelegram(commandChannel, result, receivedData, sendQueueId);
+                        noHandler = false;
                     }
                 }
             }
+        }
 
+        if (noHandler) {
+            logger.info("No handler has accepted the command {} from {} to {} ...", commandChannel.getParent().getId(),
+                    source, destination);
         }
     }
 
@@ -214,5 +224,12 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements IEBusParserL
     @Override
     public void onTelegramReceived(byte[] receivedData, Integer sendQueueId) {
         // noop
+    }
+
+    @Override
+    public void onTelegramResolveFailed(byte[] receivedData, Integer sendQueueId) {
+        if (loggerExt.isDebugEnabled()) {
+            loggerExt.debug("Unknown telegram {}", EBusUtils.toHexDumpString(receivedData));
+        }
     }
 }

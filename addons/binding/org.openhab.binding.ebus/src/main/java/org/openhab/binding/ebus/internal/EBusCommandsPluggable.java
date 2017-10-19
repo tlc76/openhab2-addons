@@ -8,7 +8,9 @@
  */
 package org.openhab.binding.ebus.internal;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -27,11 +29,14 @@ import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.csdev.ebus.client.EBusClient;
 import de.csdev.ebus.command.EBusCommandUtils;
+import de.csdev.ebus.command.IEBusCommandCollection;
 import de.csdev.ebus.command.IEBusCommandMethod;
 import de.csdev.ebus.command.datatypes.EBusTypeException;
 import de.csdev.ebus.core.connection.EBusEmulatorConnection;
 import de.csdev.ebus.core.connection.IEBusConnection;
+import de.csdev.ebus.service.device.EBusDeviceTable;
 import de.csdev.ebus.utils.EBusUtils;
 
 /**
@@ -40,7 +45,6 @@ import de.csdev.ebus.utils.EBusUtils;
  */
 public class EBusCommandsPluggable implements ConsoleCommandExtension {
 
-    @SuppressWarnings("unused")
     private final Logger logger = LoggerFactory.getLogger(EBusCommandsPluggable.class);
 
     private static final String CMD = "ebus";
@@ -48,6 +52,10 @@ public class EBusCommandsPluggable implements ConsoleCommandExtension {
     private static final String SUBCMD_LIST = "list";
 
     private static final String SUBCMD_SEND = "send";
+
+    private static final String SUBCMD_DEVICES = "devices";
+
+    private static final String SUBCMD_RESOLVE = "resolve";
 
     @SuppressWarnings("unused")
     private ManagedThingProvider managedThingProvider;
@@ -60,15 +68,14 @@ public class EBusCommandsPluggable implements ConsoleCommandExtension {
      * @param componentContext
      */
     protected void activate(ComponentContext componentContext) {
-        // super.initialize(componentContext.getBundleContext());
-        // logger.error("************************+ Command started!");
+        // noop
     }
 
     /**
      * Deactivating this component - called from DS.
      */
     protected void deactivate(ComponentContext componentContext) {
-        // super.dispose();
+        // noop
     }
 
     @Reference
@@ -96,7 +103,19 @@ public class EBusCommandsPluggable implements ConsoleCommandExtension {
 
     @Override
     public String getDescription() {
-        return "eBUS";
+        return "eBUS commands";
+    }
+
+    private Collection<EBusBridgeHandler> getAllEBusBridgeHandlers() {
+        Collection<EBusBridgeHandler> result = new ArrayList<EBusBridgeHandler>();
+        for (Thing thing : thingRegistry.getAll()) {
+
+            if (thing.getHandler() instanceof EBusBridgeHandler) {
+                result.add((EBusBridgeHandler) thing.getHandler());
+            }
+        }
+
+        return result;
     }
 
     private void list(String[] args, Console console) {
@@ -112,6 +131,7 @@ public class EBusCommandsPluggable implements ConsoleCommandExtension {
 
                 if (thing.getHandler() instanceof EBusBridgeHandler) {
                     EBusBridgeHandler bridge = (EBusBridgeHandler) thing.getHandler();
+                    @SuppressWarnings("null")
                     IEBusConnection connection = bridge.getLibClient().getClient().getController().getConnection();
 
                     if (connection instanceof EBusEmulatorConnection) {
@@ -126,11 +146,73 @@ public class EBusCommandsPluggable implements ConsoleCommandExtension {
         }
     }
 
+    private void devices(String[] args, Console console, EBusBridgeHandler bridge) {
+
+        if (bridge == null) {
+
+            for (EBusBridgeHandler handler : getAllEBusBridgeHandlers()) {
+
+                EBusClient client = handler.getLibClient().getClient();
+                EBusDeviceTable deviceTable = client.getDeviceTable();
+                Collection<IEBusCommandCollection> collections = client.getCommandCollections();
+
+                console.print(deviceTable.getDeviceTableInformation(collections));
+            }
+
+        } else {
+
+            EBusClient client = bridge.getLibClient().getClient();
+            EBusDeviceTable deviceTable = client.getDeviceTable();
+            Collection<IEBusCommandCollection> collections = client.getCommandCollections();
+
+            console.print(deviceTable.getDeviceTableInformation(collections));
+
+        }
+    }
+
+    private void resolve(byte[] data, Console console, EBusBridgeHandler bridge) {
+
+        List<IEBusCommandMethod> methods = bridge.getLibClient().getClient().getConfigurationProvider().find(data);
+
+        console.println(String.format("Found %s command methods for this telegram.", methods.size()));
+
+        for (IEBusCommandMethod method : methods) {
+            try {
+                Map<String, Object> result = EBusCommandUtils.decodeTelegram(method, data);
+
+                console.println(String.format("Decode command %s with method %s.", method.getParent().getId(),
+                        method.getMethod()));
+                for (Entry<String, Object> entry : result.entrySet()) {
+                    console.println(String.format("  %-20s = %s", entry.getKey(), entry.getValue()));
+                }
+
+            } catch (EBusTypeException e) {
+                logger.error("error!", e);
+            }
+        }
+    }
+
     @Override
     public void execute(String[] args, Console console) {
 
+        if (args.length == 0) {
+            list(args, console);
+            return;
+        }
+
         if (StringUtils.equals(args[0], SUBCMD_LIST)) {
             list(args, console);
+            return;
+        }
+
+        if (StringUtils.equals(args[0], SUBCMD_DEVICES)) {
+
+            if (args.length == 2) {
+                devices(args, console, getBridge(args[1], console));
+            } else {
+                devices(args, console, null);
+            }
+
             return;
         }
 
@@ -144,28 +226,8 @@ public class EBusCommandsPluggable implements ConsoleCommandExtension {
         if (StringUtils.equals(args[0], SUBCMD_SEND)) {
             bridge.getLibClient().sendTelegram(data);
 
-        } else if (StringUtils.equals(args[0], "resolve")) {
-
-            List<IEBusCommandMethod> methods = bridge.getLibClient().getClient().getConfigurationProvider()
-                    .find(EBusUtils.toByteArray(args[2]));
-
-            console.println(String.format("Found %s command methods for this telegram.", methods.size()));
-
-            for (IEBusCommandMethod method : methods) {
-                try {
-                    Map<String, Object> result = EBusCommandUtils.decodeTelegram(method, data);
-
-                    console.println(String.format("Decode command %s with method %s.", method.getParent().getId(),
-                            method.getMethod()));
-                    for (Entry<String, Object> entry : result.entrySet()) {
-                        console.println(String.format("  %-20s = %s", entry.getKey(), entry.getValue()));
-                    }
-
-                } catch (EBusTypeException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-            }
+        } else if (StringUtils.equals(args[0], SUBCMD_RESOLVE)) {
+            resolve(data, console, bridge);
 
         }
 

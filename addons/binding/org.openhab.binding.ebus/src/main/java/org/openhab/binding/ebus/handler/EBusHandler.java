@@ -326,7 +326,8 @@ public class EBusHandler extends BaseThingHandler {
         String collectionId = thing.getProperties().get(COLLECTION);
 
         if (!commandMethod.getParent().getParentCollection().getId().equals(collectionId)) {
-            logger.trace("eBUS node handler doesn't support this collection id ...");
+            logger.trace("eBUS node handler {} use collectionId {}, not {} ...", thing.getUID(), collectionId,
+                    commandMethod.getParent().getParentCollection().getId());
             return false;
         }
 
@@ -350,6 +351,7 @@ public class EBusHandler extends BaseThingHandler {
             if (EBusUtils.isMasterAddress(destinationAddress) && masterAddressComp != null
                     && destinationAddress == masterAddressComp) {
                 // master-master telegram
+
                 return true;
             } else if (slaveAddress == destinationAddress) {
                 // master-slave telegram
@@ -373,7 +375,7 @@ public class EBusHandler extends BaseThingHandler {
 
         for (Entry<String, Object> resultEntry : result.entrySet()) {
 
-            logger.debug("Value {} {}", resultEntry.getKey(), resultEntry.getValue());
+            logger.debug("Key {} with value {}", resultEntry.getKey(), resultEntry.getValue());
 
             ChannelUID channelUID = EBusBindingUtils.generateChannelUID(commandChannel.getParent(),
                     resultEntry.getKey(), thing.getUID());
