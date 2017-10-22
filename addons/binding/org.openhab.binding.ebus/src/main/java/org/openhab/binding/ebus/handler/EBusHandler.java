@@ -105,35 +105,11 @@ public class EBusHandler extends BaseThingHandler {
                 // add the new hash
                 this.updateProperty("collectionHash", newHash);
 
-            } catch (RuntimeException e) { // NOPMD - this surely will never happen
-                logger.warn(e.getMessage()); // NOPMD - this surely will never happen
+            } catch (RuntimeException e) { // NOPMD - used in the openHAB core
+                logger.error("Error: {}", e.getMessage());
             }
         }
     }
-
-    // public synchronized boolean updateThingConfiguration(EBusTypeProvider typeProvider) {
-    //
-    // logger.info("updateThingConfiguration...");
-    //
-    // ThingType thingType = typeProvider.getThingType(thing.getThingTypeUID(), null);
-    // if (thingType != null) {
-    // logger.info("Found channel type {} ...", thingType);
-    // } else {
-    // logger.warn("Unable to find thing type {} !", thing.getThingTypeUID());
-    // }
-    //
-    // for (Channel channel : thing.getChannels()) {
-    // ChannelType channelType = typeProvider.getChannelType(channel.getChannelTypeUID(), null);
-    // if (channelType != null) {
-    // logger.info("Found channel type {} ...", channelType);
-    // } else {
-    // logger.warn("Unable to find channel type {} !", channel.getChannelTypeUID());
-    // }
-    //
-    // }
-    //
-    // return false;
-    // }
 
     /*
      * (non-Javadoc)
@@ -143,7 +119,7 @@ public class EBusHandler extends BaseThingHandler {
      * org.eclipse.smarthome.core.types.Command)
      */
     @Override
-    public void handleCommand(ChannelUID channelUID, Command command) {
+    public void handleCommand(@NonNull ChannelUID channelUID, Command command) {
 
         if (!(command instanceof RefreshType)) {
             Channel channel = thing.getChannel(channelUID.getId());
@@ -222,23 +198,6 @@ public class EBusHandler extends BaseThingHandler {
 
         return null;
     }
-
-    // /*
-    // * (non-Javadoc)
-    // *
-    // * @see
-    // * org.eclipse.smarthome.core.thing.binding.BaseThingHandler#thingUpdated(org.eclipse.smarthome.core.thing.Thing)
-    // */
-    // @Override
-    // public void thingUpdated(final Thing thing) {
-    // super.thingUpdated(thing);
-    //
-    // // reinizialized pollings
-    // initializePolling();
-    //
-    // refreshThingConfiguration();
-    //
-    // }
 
     /**
      *

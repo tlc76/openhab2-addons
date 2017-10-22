@@ -340,6 +340,7 @@ template |       |       | ``name``                | Adds the value with the giv
 template-block | |       |                         | Adds the complete template block on this position
 
 ## Example
+
 ```javascript
 {
     "id":           "common",

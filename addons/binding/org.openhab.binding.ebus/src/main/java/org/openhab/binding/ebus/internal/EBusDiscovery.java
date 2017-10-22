@@ -15,6 +15,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.smarthome.config.discovery.AbstractDiscoveryService;
 import org.eclipse.smarthome.config.discovery.DiscoveryResult;
 import org.eclipse.smarthome.config.discovery.DiscoveryResultBuilder;
@@ -43,7 +44,7 @@ public class EBusDiscovery extends AbstractDiscoveryService implements IEBusDevi
 
     private EBusBridgeHandler bridgeHandle;
 
-    public EBusDiscovery(EBusBridgeHandler bridgeHandle) throws IllegalArgumentException {
+    public EBusDiscovery(@NonNull EBusBridgeHandler bridgeHandle) throws IllegalArgumentException {
         super(60);
 
         this.bridgeHandle = bridgeHandle;

@@ -88,6 +88,8 @@ public class EBusLibClient {
             @Override
             public void run() {
 
+                EBusLibClient.this.sendRawData(200, "30 03 05 07 09 00 03 50 00 00 80 FF 14 FF CF 00 AA");
+
                 EBusLibClient.this.sendRawData(200, "FF 35 07 04 00 E4 00 0A 19 00 20 00 00 C0 02 04 00 00 DB 00");
 
                 // wolf solar e1
@@ -181,7 +183,7 @@ public class EBusLibClient {
             return null;
         }
 
-        IEBusCommandMethod commandMethod = client.getConfigurationProvider().getConfigurationById(collectionId,
+        IEBusCommandMethod commandMethod = client.getConfigurationProvider().getCommandMethodById(collectionId,
                 commandId, Method.SET);
 
         if (commandMethod == null) {
@@ -217,7 +219,7 @@ public class EBusLibClient {
 
         String slaveAddress = (String) targetThing.getConfiguration().get(EBusBindingConstants.SLAVE_ADDRESS);
 
-        IEBusCommandMethod commandMethod = client.getConfigurationProvider().getConfigurationById(collectionId,
+        IEBusCommandMethod commandMethod = client.getConfigurationProvider().getCommandMethodById(collectionId,
                 commandId, type);
 
         if (!commandMethod.getType().equals(IEBusCommandMethod.Type.MASTER_SLAVE)) {

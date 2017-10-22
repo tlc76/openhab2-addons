@@ -18,7 +18,6 @@ import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.thing.ThingUID;
 import org.eclipse.smarthome.core.thing.type.ChannelGroupTypeUID;
 import org.eclipse.smarthome.core.thing.type.ChannelTypeUID;
-import org.openhab.binding.ebus.EBusBindingConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +32,7 @@ import de.csdev.ebus.command.IEBusValue;
  */
 public class EBusBindingUtils {
 
-    private static final Logger logger = LoggerFactory.getLogger(EBusBindingConstants.class);
+    private static final Logger logger = LoggerFactory.getLogger(EBusBindingUtils.class);
 
     public static URI getURI(String id) {
         try {

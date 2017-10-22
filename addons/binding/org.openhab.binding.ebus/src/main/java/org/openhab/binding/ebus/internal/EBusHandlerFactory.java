@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
 
+import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.smarthome.config.discovery.DiscoveryService;
 import org.eclipse.smarthome.core.thing.Bridge;
 import org.eclipse.smarthome.core.thing.Thing;
@@ -111,9 +112,9 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory implements Manag
             return true;
 
         } catch (MalformedURLException e) {
-            logger.error("error!", e);
+            logger.error("Error on loading configuration by url: {}", e.getLocalizedMessage());
         } catch (IOException e) {
-            logger.error("error!", e);
+            logger.error("Error on loading configuration by url: {}", e.getLocalizedMessage());
         }
         return false;
     }
@@ -121,7 +122,7 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory implements Manag
     /**
      * @param bridgeHandler
      */
-    public synchronized void registerDiscoveryService(EBusBridgeHandler bridgeHandler) {
+    public synchronized void registerDiscoveryService(@NonNull EBusBridgeHandler bridgeHandler) {
         EBusDiscovery discoveryService = new EBusDiscovery(bridgeHandler);
         discoveryService.activate();
 

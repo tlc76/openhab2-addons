@@ -165,12 +165,13 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
             } else if (ArrayUtils.contains(value.getType().getSupportedTypes(), EBusTypeString.TYPE_STRING)) {
                 itemType = "String";
 
-            } else if (ArrayUtils.contains(value.getType().getSupportedTypes(), EBusTypeBytes.BYTES)) {
+            } else if (ArrayUtils.contains(value.getType().getSupportedTypes(), EBusTypeBytes.TYPE_BYTES)) {
                 itemType = "String";
 
             } else if (options != null) {
-                itemType = "Number";
-
+                // options works only for string! or in not readOnly mode
+                // itemType = "Number";
+                itemType = "String";
             }
 
             boolean advanced = value.getName().startsWith("_");
@@ -179,6 +180,7 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
             String pattern = value.getFormat();
             StateDescription state = new StateDescription(value.getMax(), value.getMin(), value.getStep(), pattern,
                     readOnly, options);
+            // StateDescription state = new StateDescription(null, null, null, pattern, readOnly, options);
             URI configDescriptionURI = polling ? EBusBindingConstants.CONFIG_DESCRIPTION_URI_POLLING_CHANNEL : null;
 
             String description = null;
@@ -186,7 +188,8 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
             String category = null;
             EventDescription event = null;
 
-            state = new StateDescription(value.getMax(), value.getMin(), value.getStep(), pattern, readOnly, options);
+            // state = new StateDescription(value.getMax(), value.getMin(), value.getStep(), pattern, readOnly,
+            // options);
 
             return new ChannelType(uid, advanced, itemType, kind, label, description, category, tags, state, event,
                     configDescriptionURI);
