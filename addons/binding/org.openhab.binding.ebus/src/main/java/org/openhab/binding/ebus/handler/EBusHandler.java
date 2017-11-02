@@ -172,14 +172,18 @@ public class EBusHandler extends BaseThingHandler {
         } else if (getBridge().getStatus() == ThingStatus.ONLINE) {
             updateStatus(ThingStatus.ONLINE);
 
-            refreshThingConfiguration();
-
-            initializePolling();
+            updateHandler();
 
         } else {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.BRIDGE_OFFLINE);
         }
 
+    }
+
+    public void updateHandler() {
+        // refreshThingConfiguration();
+
+        initializePolling();
     }
 
     /**

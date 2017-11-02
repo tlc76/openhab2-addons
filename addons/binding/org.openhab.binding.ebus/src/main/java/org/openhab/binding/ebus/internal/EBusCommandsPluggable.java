@@ -9,14 +9,10 @@
 package org.openhab.binding.ebus.internal;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import org.apache.commons.lang.StringUtils;
-import org.eclipse.smarthome.core.thing.ManagedThingProvider;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingRegistry;
 import org.eclipse.smarthome.core.thing.ThingUID;
@@ -24,19 +20,18 @@ import org.eclipse.smarthome.io.console.Console;
 import org.eclipse.smarthome.io.console.extensions.ConsoleCommandExtension;
 import org.openhab.binding.ebus.handler.EBusBridgeHandler;
 import org.openhab.binding.ebus.handler.EBusHandler;
+import org.openhab.binding.ebus.thing.EBusTypeProvider;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.csdev.ebus.client.EBusClient;
-import de.csdev.ebus.command.EBusCommandUtils;
 import de.csdev.ebus.command.IEBusCommandCollection;
-import de.csdev.ebus.command.IEBusCommandMethod;
-import de.csdev.ebus.command.datatypes.EBusTypeException;
 import de.csdev.ebus.core.connection.EBusEmulatorConnection;
 import de.csdev.ebus.core.connection.IEBusConnection;
 import de.csdev.ebus.service.device.EBusDeviceTable;
+import de.csdev.ebus.utils.EBusConsoleUtils;
 import de.csdev.ebus.utils.EBusUtils;
 
 /**
@@ -45,6 +40,7 @@ import de.csdev.ebus.utils.EBusUtils;
  */
 public class EBusCommandsPluggable implements ConsoleCommandExtension {
 
+    @SuppressWarnings("unused")
     private final Logger logger = LoggerFactory.getLogger(EBusCommandsPluggable.class);
 
     private static final String CMD = "ebus";
@@ -57,10 +53,9 @@ public class EBusCommandsPluggable implements ConsoleCommandExtension {
 
     private static final String SUBCMD_RESOLVE = "resolve";
 
-    @SuppressWarnings("unused")
-    private ManagedThingProvider managedThingProvider;
-
     private ThingRegistry thingRegistry;
+
+    private EBusTypeProvider typeProvider;
 
     /**
      * Activating this component - called from DS.
@@ -79,17 +74,16 @@ public class EBusCommandsPluggable implements ConsoleCommandExtension {
     }
 
     @Reference
-    protected void setManagedThingProvider(ManagedThingProvider managedThingProvider) {
-        this.managedThingProvider = managedThingProvider;
-    }
-
-    @Reference
     protected void setThingRegistry(ThingRegistry thingRegistry) {
         this.thingRegistry = thingRegistry;
     }
 
-    protected void unsetManagedThingProvider(ManagedThingProvider managedThingProvider) {
-        this.managedThingProvider = null;
+    public void setTypeProvider(EBusTypeProvider typeProvider) {
+        this.typeProvider = typeProvider;
+    }
+
+    public void unsetTypeProvider(EBusTypeProvider typeProvider) {
+        this.typeProvider = null;
     }
 
     protected void unsetThingRegistry(ThingRegistry thingRegistry) {
@@ -156,7 +150,7 @@ public class EBusCommandsPluggable implements ConsoleCommandExtension {
                 EBusDeviceTable deviceTable = client.getDeviceTable();
                 Collection<IEBusCommandCollection> collections = client.getCommandCollections();
 
-                console.print(deviceTable.getDeviceTableInformation(collections));
+                console.print(EBusConsoleUtils.getDeviceTableInformation(collections, deviceTable));
             }
 
         } else {
@@ -165,31 +159,14 @@ public class EBusCommandsPluggable implements ConsoleCommandExtension {
             EBusDeviceTable deviceTable = client.getDeviceTable();
             Collection<IEBusCommandCollection> collections = client.getCommandCollections();
 
-            console.print(deviceTable.getDeviceTableInformation(collections));
+            console.print(EBusConsoleUtils.getDeviceTableInformation(collections, deviceTable));
 
         }
     }
 
     private void resolve(byte[] data, Console console, EBusBridgeHandler bridge) {
-
-        List<IEBusCommandMethod> methods = bridge.getLibClient().getClient().getConfigurationProvider().find(data);
-
-        console.println(String.format("Found %s command methods for this telegram.", methods.size()));
-
-        for (IEBusCommandMethod method : methods) {
-            try {
-                Map<String, Object> result = EBusCommandUtils.decodeTelegram(method, data);
-
-                console.println(String.format("Decode command %s with method %s.", method.getParent().getId(),
-                        method.getMethod()));
-                for (Entry<String, Object> entry : result.entrySet()) {
-                    console.println(String.format("  %-20s = %s", entry.getKey(), entry.getValue()));
-                }
-
-            } catch (EBusTypeException e) {
-                logger.error("error!", e);
-            }
-        }
+        // EBusCommandRegistry commandRegistry = bridge.getLibClient().getClient().getConfigurationProvider();
+        console.println(EBusConsoleUtils.analyzeTelegram(typeProvider.getCommandRegistry(), data));
     }
 
     @Override
@@ -203,9 +180,8 @@ public class EBusCommandsPluggable implements ConsoleCommandExtension {
         if (StringUtils.equals(args[0], SUBCMD_LIST)) {
             list(args, console);
             return;
-        }
 
-        if (StringUtils.equals(args[0], SUBCMD_DEVICES)) {
+        } else if (StringUtils.equals(args[0], SUBCMD_DEVICES)) {
 
             if (args.length == 2) {
                 devices(args, console, getBridge(args[1], console));
@@ -213,24 +189,34 @@ public class EBusCommandsPluggable implements ConsoleCommandExtension {
                 devices(args, console, null);
             }
 
-            return;
-        }
-
-        final EBusBridgeHandler bridge = getBridge(args[1], console);
-        if (bridge == null) {
-            return;
-        }
-
-        byte[] data = EBusUtils.toByteArray(args[2]);
-
-        if (StringUtils.equals(args[0], SUBCMD_SEND)) {
-            bridge.getLibClient().sendTelegram(data);
-
         } else if (StringUtils.equals(args[0], SUBCMD_RESOLVE)) {
-            resolve(data, console, bridge);
+            // TODO: use TypeProvider service instead!
+            resolve(EBusUtils.toByteArray(args[1]), console, getFirstBridge(console));
 
+        } else if (StringUtils.equals(args[0], SUBCMD_SEND)) {
+            EBusBridgeHandler bridge = null;
+
+            if (args.length == 3) {
+                bridge = getBridge(args[2], console);
+            } else {
+                bridge = getFirstBridge(console);
+            }
+
+            if (bridge != null) {
+                byte[] data = EBusUtils.toByteArray(args[1]);
+                bridge.getLibClient().sendTelegram(data);
+            }
+        }
+    }
+
+    private EBusBridgeHandler getFirstBridge(Console console) {
+        Collection<EBusBridgeHandler> bridgeHandlers = getAllEBusBridgeHandlers();
+        if (!bridgeHandlers.isEmpty()) {
+            return bridgeHandlers.iterator().next();
         }
 
+        console.println("Error: Unable to find an eBUS bridge");
+        return null;
     }
 
     private EBusBridgeHandler getBridge(String bridgeUID, Console console) {
@@ -262,8 +248,16 @@ public class EBusCommandsPluggable implements ConsoleCommandExtension {
 
         String line = "%s %s - %s";
         String line2 = "%s %s %s - %s";
-        return Arrays.asList(String.format(line, CMD, SUBCMD_LIST, "lists all eBUS devices"), String.format(line2, CMD,
-                SUBCMD_SEND, "send <thingUID> \"<ebus telegram>\"", "sends a raw hex telegram to an eBUS bridge"));
+
+        List<String> list = new ArrayList<>();
+        list.add(String.format(line, CMD, SUBCMD_LIST, "lists all eBUS devices"));
+        list.add(String.format(line2, CMD, SUBCMD_SEND, "\"<ebus telegram>\" [<bridgeUID>]",
+                "sends a raw hex telegram to an eBUS bridge or if not set to first bridge"));
+        list.add(String.format(line2, CMD, SUBCMD_DEVICES, "[<bridgeUID>]",
+                "lists all devices connect to an eBUS bridge or list only a specific bridge"));
+        list.add(String.format(line2, CMD, SUBCMD_RESOLVE, "\"<ebus telegram>\"", "resolves and analyze a telegram"));
+
+        return list;
     }
 
 }

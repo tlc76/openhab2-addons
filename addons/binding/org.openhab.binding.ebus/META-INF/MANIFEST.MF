@@ -6,7 +6,7 @@ Bundle-Vendor: openHAB
 Bundle-Version: 2.2.0.qualifier
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ClassPath: .,
- lib/de.csdev.ebus.core-0.6.0_20171022110539.jar
+ lib/de.csdev.ebus.core-0.6.0_20171102184125.jar
 Import-Package: 
  com.google.gson,
  com.google.gson.annotations,

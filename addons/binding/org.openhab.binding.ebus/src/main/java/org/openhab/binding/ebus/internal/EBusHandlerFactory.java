@@ -10,10 +10,6 @@ package org.openhab.binding.ebus.internal;
 
 import static org.openhab.binding.ebus.EBusBindingConstants.BINDING_ID;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
@@ -30,13 +26,9 @@ import org.openhab.binding.ebus.handler.EBusBridgeHandler;
 import org.openhab.binding.ebus.handler.EBusHandler;
 import org.openhab.binding.ebus.thing.EBusTypeProvider;
 import org.osgi.framework.ServiceRegistration;
-import org.osgi.service.cm.ConfigurationException;
-import org.osgi.service.cm.ManagedService;
 import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import de.csdev.ebus.client.EBusClientConfiguration;
 
 /**
  * The {@link EBusHandlerFactory} is responsible for creating things and thing
@@ -44,11 +36,10 @@ import de.csdev.ebus.client.EBusClientConfiguration;
  *
  * @author Christian Sowada - Initial contribution
  */
-public class EBusHandlerFactory extends BaseThingHandlerFactory implements ManagedService {
+public class EBusHandlerFactory extends BaseThingHandlerFactory {
 
+    @SuppressWarnings("unused")
     private final Logger logger = LoggerFactory.getLogger(EBusHandlerFactory.class);
-
-    private EBusClientConfiguration configuration;
 
     private Map<ThingUID, ServiceRegistration<?>> discoveryServiceRegs = new HashMap<>();
 
@@ -63,9 +54,6 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory implements Manag
     @Override
     protected void activate(ComponentContext componentContext) {
         super.activate(componentContext);
-
-        configuration = new EBusClientConfiguration();
-        updateConfiguration(componentContext.getProperties());
     }
 
     /*
@@ -79,7 +67,7 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory implements Manag
     protected ThingHandler createHandler(Thing thing) {
 
         if (EBusBridgeHandler.SUPPORTED_THING_TYPES.contains(thing.getThingTypeUID())) {
-            return new EBusBridgeHandler((Bridge) thing, configuration, this);
+            return new EBusBridgeHandler((Bridge) thing, typeProvider, this);
 
         } else if (BINDING_ID.equals(thing.getUID().getBindingId())) {
             return new EBusHandler(thing);
@@ -90,46 +78,18 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory implements Manag
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.eclipse.smarthome.core.thing.binding.BaseThingHandlerFactory#deactivate(org.osgi.service.component.
-     * ComponentContext)
-     */
-    @Override
-    protected void deactivate(ComponentContext componentContext) {
-        super.deactivate(componentContext);
-        configuration.clear();
-    }
-
-    /**
-     * @param configuration
-     * @param url
-     */
-    private boolean loadConfigurationByUrl(EBusClientConfiguration configuration, String url) {
-        try {
-            configuration.loadConfiguration(new URL(url).openStream());
-            return true;
-
-        } catch (MalformedURLException e) {
-            logger.error("Error on loading configuration by url: {}", e.getLocalizedMessage());
-        } catch (IOException e) {
-            logger.error("Error on loading configuration by url: {}", e.getLocalizedMessage());
-        }
-        return false;
-    }
-
     /**
      * @param bridgeHandler
      */
     public synchronized void registerDiscoveryService(@NonNull EBusBridgeHandler bridgeHandler) {
         EBusDiscovery discoveryService = new EBusDiscovery(bridgeHandler);
-        discoveryService.activate();
 
         ServiceRegistration<?> service = bundleContext.registerService(DiscoveryService.class.getName(),
                 discoveryService, new Hashtable<String, Object>());
 
         this.discoveryServiceRegs.put(bridgeHandler.getThing().getUID(), service);
+
+        discoveryService.activate();
     }
 
     public synchronized void disposeDiscoveryService(EBusBridgeHandler bridgeHandler) {
@@ -164,12 +124,8 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory implements Manag
         }
     }
 
-    /**
-     * @param typeProvider
-     */
     public void setTypeProvider(EBusTypeProvider typeProvider) {
         this.typeProvider = typeProvider;
-
     }
 
     /*
@@ -189,45 +145,5 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory implements Manag
      */
     public void unsetTypeProvider(EBusTypeProvider typeProvider) {
         this.typeProvider = null;
-    }
-
-    /**
-     * @param properties
-     */
-    private void updateConfiguration(Dictionary<String, ?> properties) {
-
-        configuration.clear();
-
-        configuration.loadInternalConfigurations();
-
-        if (properties.get("configurationUrl") instanceof String) {
-            logger.info("Load custom configuration file '{}' ...", properties.get("configurationUrl"));
-            loadConfigurationByUrl(configuration, (String) properties.get("configurationUrl"));
-        }
-
-        if (properties.get("configurationUrl1") instanceof String) {
-            logger.info("Load custom configuration file '{}' ...", properties.get("configurationUrl1"));
-            loadConfigurationByUrl(configuration, (String) properties.get("configurationUrl1"));
-        }
-
-        if (properties.get("configurationUrl2") instanceof String) {
-            logger.info("Load custom configuration file '{}' ...", properties.get("configurationUrl2"));
-            loadConfigurationByUrl(configuration, (String) properties.get("configurationUrl2"));
-        }
-
-        typeProvider.update(configuration.getCollections());
-
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.osgi.service.cm.ManagedService#updated(java.util.Dictionary)
-     */
-    @Override
-    public void updated(Dictionary<String, ?> properties) throws ConfigurationException {
-        if (properties != null) {
-            updateConfiguration(properties);
-        }
     }
 }

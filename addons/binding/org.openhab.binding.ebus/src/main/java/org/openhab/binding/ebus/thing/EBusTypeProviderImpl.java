@@ -8,9 +8,13 @@
  */
 package org.openhab.binding.ebus.thing;
 
+import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,17 +37,23 @@ import org.eclipse.smarthome.core.types.StateDescription;
 import org.eclipse.smarthome.core.types.StateOption;
 import org.openhab.binding.ebus.EBusBindingConstants;
 import org.openhab.binding.ebus.internal.EBusBindingUtils;
+import org.osgi.service.cm.ConfigurationException;
+import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.csdev.ebus.cfg.std.EBusConfigurationReader;
+import de.csdev.ebus.command.EBusCommandRegistry;
 import de.csdev.ebus.command.IEBusCommand;
 import de.csdev.ebus.command.IEBusCommandCollection;
 import de.csdev.ebus.command.IEBusCommandMethod;
 import de.csdev.ebus.command.IEBusNestedValue;
 import de.csdev.ebus.command.IEBusValue;
 import de.csdev.ebus.command.datatypes.ext.EBusTypeBytes;
+import de.csdev.ebus.command.datatypes.ext.EBusTypeDate;
 import de.csdev.ebus.command.datatypes.ext.EBusTypeDateTime;
 import de.csdev.ebus.command.datatypes.ext.EBusTypeString;
+import de.csdev.ebus.command.datatypes.ext.EBusTypeTime;
 import de.csdev.ebus.command.datatypes.std.EBusTypeBit;
 
 /**
@@ -54,11 +64,14 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
 
     private final Logger logger = LoggerFactory.getLogger(EBusTypeProviderImpl.class);
 
-    public void activate() {
+    private EBusCommandRegistry commandRegistry = new EBusCommandRegistry(EBusConfigurationReader.class, true);
+
+    public void activate(ComponentContext componentContext) {
         logger.info("Loading eBUS Type Provider ...");
+        // updateConfiguration(componentContext.getProperties());
     }
 
-    public void dispose() {
+    public void deactivate(ComponentContext componentContext) {
         logger.info("Stopping eBUS Type Provider ...");
         clear();
     }
@@ -162,6 +175,12 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
             } else if (ArrayUtils.contains(value.getType().getSupportedTypes(), EBusTypeDateTime.TYPE_DATETIME)) {
                 itemType = "DateTime";
 
+            } else if (ArrayUtils.contains(value.getType().getSupportedTypes(), EBusTypeDate.TYPE_DATE)) {
+                itemType = "DateTime";
+
+            } else if (ArrayUtils.contains(value.getType().getSupportedTypes(), EBusTypeTime.TYPE_TIME)) {
+                itemType = "DateTime";
+
             } else if (ArrayUtils.contains(value.getType().getSupportedTypes(), EBusTypeString.TYPE_STRING)) {
                 itemType = "String";
 
@@ -187,9 +206,6 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
             Set<String> tags = null;
             String category = null;
             EventDescription event = null;
-
-            // state = new StateDescription(value.getMax(), value.getMin(), value.getStep(), pattern, readOnly,
-            // options);
 
             return new ChannelType(uid, advanced, itemType, kind, label, description, category, tags, state, event,
                     configDescriptionURI);
@@ -232,6 +248,8 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
             updateCollection(collection);
         }
         logger.info("Generated all eBUS command collections ...");
+
+        fireOnUpdate();
     }
 
     /**
@@ -313,6 +331,73 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
 
         ThingType thingType = createThingType(collection, null, channelGroupDefinitions);
         thingTypes.put(thingType.getUID(), thingType);
+    }
+
+    private void updateConfiguration(Dictionary<String, ?> properties) {
+
+        if (properties != null && !properties.isEmpty()) {
+
+            logger.debug("Update eBUS configuration ...");
+
+            commandRegistry.clear();
+
+            // configuration.loadInternalConfigurations();
+            commandRegistry.loadBuildInCommandCollections();
+
+            if (properties.get("configurationUrl") instanceof String) {
+                logger.info("Load custom configuration file '{}' ...", properties.get("configurationUrl"));
+                loadConfigurationByUrl((String) properties.get("configurationUrl"));
+            }
+
+            if (properties.get("configurationUrl1") instanceof String) {
+                logger.info("Load custom configuration file '{}' ...", properties.get("configurationUrl1"));
+                loadConfigurationByUrl((String) properties.get("configurationUrl1"));
+            }
+
+            if (properties.get("configurationUrl2") instanceof String) {
+                logger.info("Load custom configuration file '{}' ...", properties.get("configurationUrl2"));
+                loadConfigurationByUrl((String) properties.get("configurationUrl2"));
+            }
+
+            update(commandRegistry.getCommandCollections());
+        }
+    }
+
+    @Override
+    public void updated(Dictionary<String, ?> properties) throws ConfigurationException {
+
+        // we directly use activate properties to initialize,
+        // this causes a double load on init
+        // if (skipFirstUpdate) {
+        // skipFirstUpdate = false;
+        // return;
+        // }
+
+        if (properties != null) {
+            updateConfiguration(properties);
+        }
+    }
+
+    /**
+     * @param configuration
+     * @param url
+     */
+    private boolean loadConfigurationByUrl(String url) {
+        try {
+            commandRegistry.loadCommandCollection(new URL(url).openStream());
+            return true;
+
+        } catch (MalformedURLException e) {
+            logger.error("Error on loading configuration by url: {}", e.getLocalizedMessage());
+        } catch (IOException e) {
+            logger.error("Error on loading configuration by url: {}", e.getLocalizedMessage());
+        }
+        return false;
+    }
+
+    @Override
+    public EBusCommandRegistry getCommandRegistry() {
+        return commandRegistry;
     }
 
 }

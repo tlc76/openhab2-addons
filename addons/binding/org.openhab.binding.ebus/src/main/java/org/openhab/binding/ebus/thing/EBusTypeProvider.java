@@ -12,17 +12,26 @@ import java.util.List;
 
 import org.eclipse.smarthome.core.thing.binding.ThingTypeProvider;
 import org.eclipse.smarthome.core.thing.type.ChannelTypeProvider;
+import org.osgi.service.cm.ManagedService;
 
+import de.csdev.ebus.command.EBusCommandRegistry;
 import de.csdev.ebus.command.IEBusCommandCollection;
 
 /**
  *
  * @author Christian Sowada - Initial contribution
  */
-public interface EBusTypeProvider extends ThingTypeProvider, ChannelTypeProvider {
+public interface EBusTypeProvider extends ThingTypeProvider, ChannelTypeProvider, ManagedService {
 
     public void clear();
 
     public void update(List<IEBusCommandCollection> collections);
 
+    // public EBusClientConfiguration getEBusClientConfiguration();
+
+    public void addTypeProviderListener(IEBusTypeProviderListener listener);
+
+    public void removeTypeProviderListener(IEBusTypeProviderListener listener);
+
+    public EBusCommandRegistry getCommandRegistry();
 }

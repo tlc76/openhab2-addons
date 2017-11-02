@@ -1,3 +1,16 @@
+## Alpha 0.0.13 (2017-11-02)
+
+Features:
+
+  - Update to eBUS library 0.0.13, [github](https://github.com/csowada/ebus/tree/0.0.13)
+  - Restructure configuration loading, add listener for updates
+  
+Bugfixes:
+
+  - Fix mapping for EBusTypeDate and EBusTypeTime to openHAB DateTime
+  - Update console commands incl. help
+  - Fix discovered thing ids
+ 
 ## Alpha 0.0.12 (2017-10-22)
 
 Features:

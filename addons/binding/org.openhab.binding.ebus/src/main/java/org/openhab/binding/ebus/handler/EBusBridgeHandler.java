@@ -29,10 +29,11 @@ import org.eclipse.smarthome.core.types.Command;
 import org.openhab.binding.ebus.EBusBindingConstants;
 import org.openhab.binding.ebus.internal.EBusHandlerFactory;
 import org.openhab.binding.ebus.internal.EBusLibClient;
+import org.openhab.binding.ebus.thing.EBusTypeProvider;
+import org.openhab.binding.ebus.thing.IEBusTypeProviderListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.csdev.ebus.client.EBusClientConfiguration;
 import de.csdev.ebus.command.IEBusCommandMethod;
 import de.csdev.ebus.core.EBusDataException;
 import de.csdev.ebus.core.IEBusConnectorEventListener;
@@ -45,7 +46,8 @@ import de.csdev.ebus.utils.EBusUtils;
  *
  * @author Christian Sowada - Initial contribution
  */
-public class EBusBridgeHandler extends BaseBridgeHandler implements IEBusParserListener, IEBusConnectorEventListener {
+public class EBusBridgeHandler extends BaseBridgeHandler
+        implements IEBusParserListener, IEBusConnectorEventListener, IEBusTypeProviderListener {
 
     private final Logger logger = LoggerFactory.getLogger(EBusBridgeHandler.class);
     private final Logger loggerExt = LoggerFactory.getLogger("org.openhab.ebus-ext");
@@ -55,17 +57,16 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements IEBusParserL
 
     private EBusLibClient libClient;
 
-    private EBusClientConfiguration clientConfiguration;
-
     private EBusHandlerFactory handlerFactory;
 
-    public EBusBridgeHandler(@NonNull Bridge bridge, EBusClientConfiguration clientConfiguration,
-            EBusHandlerFactory handlerFactory) {
+    private EBusTypeProvider typeProvider;
+
+    public EBusBridgeHandler(@NonNull Bridge bridge, EBusTypeProvider typeProvider, EBusHandlerFactory handlerFactory) {
 
         super(bridge);
 
         // reference configuration
-        this.clientConfiguration = clientConfiguration;
+        this.typeProvider = typeProvider;
         this.handlerFactory = handlerFactory;
     }
 
@@ -81,7 +82,7 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements IEBusParserL
     public void initialize() {
 
         // initialize the ebus client wrapper
-        libClient = new EBusLibClient(clientConfiguration);
+        libClient = new EBusLibClient(typeProvider.getCommandRegistry());
 
         // add the discovery service
         handlerFactory.disposeDiscoveryService(this);
@@ -148,11 +149,15 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements IEBusParserL
         // start eBus controller
         libClient.startClient();
 
+        typeProvider.addTypeProviderListener(this);
+
         updateStatus(ThingStatus.ONLINE);
     }
 
     @Override
     public void dispose() {
+
+        typeProvider.removeTypeProviderListener(this);
 
         // remove discovery service
         handlerFactory.disposeDiscoveryService(this);
@@ -177,6 +182,11 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements IEBusParserL
 
         logger.info("Received telegram from address {} to {} with command {}", source, destination,
                 commandChannel.getParent().getId());
+
+        if (!this.isInitialized()) {
+            logger.warn("eBUS bridge is not initialized! Unable to process resolved telegram!");
+            return;
+        }
 
         if (getThing().getThings() != null) {
 
@@ -230,6 +240,18 @@ public class EBusBridgeHandler extends BaseBridgeHandler implements IEBusParserL
     public void onTelegramResolveFailed(byte[] receivedData, Integer sendQueueId) {
         if (loggerExt.isDebugEnabled()) {
             loggerExt.debug("Unknown telegram {}", EBusUtils.toHexDumpString(receivedData));
+        }
+    }
+
+    @Override
+    public void onTypeProviderUpdate() {
+
+        // update all handlers
+        for (Thing thing : getThing().getThings()) {
+            EBusHandler handler = (EBusHandler) thing.getHandler();
+            if (handler != null) {
+                handler.updateHandler();
+            }
         }
     }
 }

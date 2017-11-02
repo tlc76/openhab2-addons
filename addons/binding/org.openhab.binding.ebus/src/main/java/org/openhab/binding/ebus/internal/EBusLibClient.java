@@ -26,7 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.csdev.ebus.client.EBusClient;
-import de.csdev.ebus.client.EBusClientConfiguration;
+import de.csdev.ebus.command.EBusCommandRegistry;
 import de.csdev.ebus.command.IEBusCommandMethod;
 import de.csdev.ebus.command.IEBusCommandMethod.Method;
 import de.csdev.ebus.command.datatypes.EBusTypeException;
@@ -51,13 +51,11 @@ public class EBusLibClient {
 
     private IEBusConnection connection;
 
-    // private ScheduledFuture<?> mockupSynJob;
-
     /**
      * @param configuration
      */
-    public EBusLibClient(EBusClientConfiguration configuration) {
-        client = new EBusClient(configuration);
+    public EBusLibClient(EBusCommandRegistry commandRegistry) {
+        client = new EBusClient(commandRegistry);
     }
 
     /**
@@ -106,25 +104,12 @@ public class EBusLibClient {
                 EBusLibClient.this.sendRawData(1500, "03 FE 05 03 08 01 00 40 FF 2C 17 30 0E 96 AA");
 
                 // number with option
-                logger.info("RUN ..............");
                 EBusLibClient.this.sendRawData(100, "AA FF 08 50 22 03 11 74 27 2C 00 02 00 80 AC 00 AA");
 
                 EBusLibClient.this.sendRawData(100, "AA FF 08 B5 09 03 0D 28 00 EA 00 02 FE 0E C2 00 AA");
 
             }
         }, 5, TimeUnit.SECONDS);
-
-        // mockupSynJob = scheduler.scheduleWithFixedDelay(new Runnable() {
-        //
-        // @Override
-        // public void run() {
-        // try {
-        // connection.writeByte(EBusConsts.SYN);
-        // } catch (IOException e) {
-        // logger.error("error!", e);
-        // }
-        // }
-        // }, 10, 1, TimeUnit.SECONDS);
     }
 
     /**
@@ -221,6 +206,11 @@ public class EBusLibClient {
 
         IEBusCommandMethod commandMethod = client.getConfigurationProvider().getCommandMethodById(collectionId,
                 commandId, type);
+
+        if (commandMethod == null) {
+            logger.error("Unable to find command method {} {} {} !", type, commandId, collectionId);
+            return null;
+        }
 
         if (!commandMethod.getType().equals(IEBusCommandMethod.Type.MASTER_SLAVE)) {
             logger.warn("Polling is only available for master-slave commands!");

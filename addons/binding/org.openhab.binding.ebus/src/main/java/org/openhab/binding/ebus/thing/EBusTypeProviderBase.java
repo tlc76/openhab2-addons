@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.thing.type.ChannelGroupType;
@@ -23,6 +24,8 @@ import org.eclipse.smarthome.core.thing.type.ChannelGroupTypeUID;
 import org.eclipse.smarthome.core.thing.type.ChannelType;
 import org.eclipse.smarthome.core.thing.type.ChannelTypeUID;
 import org.eclipse.smarthome.core.thing.type.ThingType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -30,7 +33,11 @@ import org.eclipse.smarthome.core.thing.type.ThingType;
  */
 public abstract class EBusTypeProviderBase implements EBusTypeProvider {
 
+    private final Logger logger = LoggerFactory.getLogger(EBusTypeProviderBase.class);
+
     protected final List<String> supportedBridgeTypeUIDs = Arrays.asList(THING_TYPE_EBUS_BRIDGE.getAsString());
+
+    protected List<IEBusTypeProviderListener> listeners = new CopyOnWriteArrayList<>();
 
     protected Map<ChannelGroupTypeUID, ChannelGroupType> channelGroupTypes = new HashMap<>();
 
@@ -66,5 +73,25 @@ public abstract class EBusTypeProviderBase implements EBusTypeProvider {
     @Override
     public Collection<ThingType> getThingTypes(Locale locale) {
         return thingTypes.values();
+    }
+
+    @Override
+    public void addTypeProviderListener(IEBusTypeProviderListener listener) {
+        listeners.add(listener);
+    }
+
+    @Override
+    public void removeTypeProviderListener(IEBusTypeProviderListener listener) {
+        listeners.remove(listener);
+    }
+
+    protected void fireOnUpdate() {
+        for (IEBusTypeProviderListener listener : listeners) {
+            try {
+                listener.onTypeProviderUpdate();
+            } catch (Exception e) {
+                logger.error("error on fireOnUpdate!", e);
+            }
+        }
     }
 }
