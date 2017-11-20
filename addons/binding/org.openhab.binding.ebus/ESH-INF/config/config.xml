@@ -47,6 +47,13 @@
             <default>true</default>
             <advanced>true</advanced>
         </parameter>
+        
+        <parameter name="polling" type="decimal" unit="s">
+            <label>Polling all channels</label>
+            <description><![CDATA[Set to poll all getter channels every n seconds.]]></description>
+            <unitLabel>Seconds</unitLabel>
+            <advanced>true</advanced>
+        </parameter>
 
     </config-description>
     

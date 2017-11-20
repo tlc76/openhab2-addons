@@ -250,11 +250,6 @@ public class EBusLibClient {
      *
      */
     public void stopClient() {
-        //
-        // if (mockupSynJob != null) {
-        // mockupSynJob.cancel(true);
-        // mockupSynJob = null;
-        // }
 
         if (controller != null && !controller.isInterrupted()) {
             controller.interrupt();

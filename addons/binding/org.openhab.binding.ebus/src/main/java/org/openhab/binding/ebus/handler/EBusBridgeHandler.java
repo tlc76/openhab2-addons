@@ -14,19 +14,24 @@ import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.smarthome.config.core.Configuration;
+import org.eclipse.smarthome.core.library.types.DecimalType;
 import org.eclipse.smarthome.core.thing.Bridge;
 import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
+import org.eclipse.smarthome.core.thing.ThingUID;
 import org.eclipse.smarthome.core.thing.binding.BaseBridgeHandler;
 import org.eclipse.smarthome.core.types.Command;
 import org.openhab.binding.ebus.EBusBindingConstants;
+import org.openhab.binding.ebus.internal.EBusAdvancedLogging;
 import org.openhab.binding.ebus.internal.EBusHandlerFactory;
 import org.openhab.binding.ebus.internal.EBusLibClient;
 import org.openhab.binding.ebus.thing.EBusTypeProvider;
@@ -37,6 +42,7 @@ import org.slf4j.LoggerFactory;
 import de.csdev.ebus.command.IEBusCommandMethod;
 import de.csdev.ebus.core.EBusDataException;
 import de.csdev.ebus.core.IEBusConnectorEventListener;
+import de.csdev.ebus.service.metrics.EBusMetricsService;
 import de.csdev.ebus.service.parser.IEBusParserListener;
 import de.csdev.ebus.utils.EBusUtils;
 
@@ -60,6 +66,9 @@ public class EBusBridgeHandler extends BaseBridgeHandler
     private EBusHandlerFactory handlerFactory;
 
     private EBusTypeProvider typeProvider;
+
+    private EBusAdvancedLogging advanceLogger;
+    private ScheduledFuture<?> metricsRefreshSchedule;
 
     public EBusBridgeHandler(@NonNull Bridge bridge, EBusTypeProvider typeProvider, EBusHandlerFactory handlerFactory) {
 
@@ -104,6 +113,11 @@ public class EBusBridgeHandler extends BaseBridgeHandler
             masterAddressStr = (String) configuration.get(MASTER_ADDRESS);
             serialPort = (String) configuration.get(SERIAL_PORT);
 
+            if (configuration.get(ADVANCED_LOGGING).equals(Boolean.TRUE)) {
+                logger.warn("Enable advanced logging for eBUS commands!");
+                advanceLogger = new EBusAdvancedLogging();
+            }
+
         } catch (Exception e) {
             logger.debug("Cannot set parameters!", e);
         }
@@ -142,6 +156,11 @@ public class EBusBridgeHandler extends BaseBridgeHandler
 
         libClient.initClient(masterAddress);
 
+        // add before other listeners, better to read in logs
+        if (advanceLogger != null) {
+            libClient.getClient().addEBusParserListener(advanceLogger);
+        }
+
         // add listeners
         libClient.getClient().addEBusEventListener(this);
         libClient.getClient().addEBusParserListener(this);
@@ -151,13 +170,51 @@ public class EBusBridgeHandler extends BaseBridgeHandler
 
         typeProvider.addTypeProviderListener(this);
 
+        metricsRefreshSchedule = scheduler.scheduleAtFixedRate(new Runnable() {
+
+            @Override
+            public void run() {
+                try {
+                    EBusMetricsService metricsService = libClient.getClient().getMetricsService();
+                    EBusBridgeHandler that = EBusBridgeHandler.this;
+                    ThingUID thingUID = that.getThing().getUID();
+
+                    that.updateState(new ChannelUID(thingUID, METRICS, RECEIVED_TELEGRAMS),
+                            new DecimalType(metricsService.getReceived()));
+                    that.updateState(new ChannelUID(thingUID, METRICS, FAILED_TELEGRAMS),
+                            new DecimalType(metricsService.getFailed()));
+                    that.updateState(new ChannelUID(thingUID, METRICS, RESOLVED_TELEGRAMS),
+                            new DecimalType(metricsService.getResolved()));
+                    that.updateState(new ChannelUID(thingUID, METRICS, UNRESOLVED_TELEGRAMS),
+                            new DecimalType(metricsService.getUnresolved()));
+                    that.updateState(new ChannelUID(thingUID, METRICS, FAILED_RATIO),
+                            new DecimalType(metricsService.getFailureRatio()));
+                    that.updateState(new ChannelUID(thingUID, METRICS, UNRESOLVED_RATIO),
+                            new DecimalType(metricsService.getUnresolvedRatio()));
+                } catch (Exception e) {
+                    logger.error("error!", e);
+                }
+            }
+        }, 0, 30, TimeUnit.SECONDS);
+
         updateStatus(ThingStatus.ONLINE);
     }
 
     @Override
     public void dispose() {
 
+        if (metricsRefreshSchedule != null) {
+            metricsRefreshSchedule.cancel(true);
+            metricsRefreshSchedule = null;
+        }
+
         typeProvider.removeTypeProviderListener(this);
+
+        if (advanceLogger != null) {
+            libClient.getClient().removeEBusParserListener(advanceLogger);
+            advanceLogger.close();
+            advanceLogger = null;
+        }
 
         // remove discovery service
         handlerFactory.disposeDiscoveryService(this);
@@ -237,13 +294,6 @@ public class EBusBridgeHandler extends BaseBridgeHandler
     }
 
     @Override
-    public void onTelegramResolveFailed(byte[] receivedData, Integer sendQueueId) {
-        if (loggerExt.isDebugEnabled()) {
-            loggerExt.debug("Unknown telegram {}", EBusUtils.toHexDumpString(receivedData));
-        }
-    }
-
-    @Override
     public void onTypeProviderUpdate() {
 
         // update all handlers
@@ -252,6 +302,14 @@ public class EBusBridgeHandler extends BaseBridgeHandler
             if (handler != null) {
                 handler.updateHandler();
             }
+        }
+    }
+
+    @Override
+    public void onTelegramResolveFailed(IEBusCommandMethod commandChannel, byte[] receivedData, Integer sendQueueId,
+            String exceptionMessage) {
+        if (loggerExt.isDebugEnabled()) {
+            loggerExt.debug("Unknown telegram {}", EBusUtils.toHexDumpString(receivedData));
         }
     }
 }

@@ -27,6 +27,11 @@
             <description>Define a URL to load external configuration files. Ex. http://my.url/custom.json or file:///etc/oh2/custom.json</description>
         </parameter>
         
+        <parameter name="configurationBundleUrl" type="text">
+            <label>Configuration Bundle URL</label>
+            <description>Define a URL to load external configuration bundles. http://my.url/index.json or file:///etc/oh2/index.json</description>
+        </parameter>
+        
     </config-description>
 
 </binding:binding>

@@ -84,8 +84,11 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory {
     public synchronized void registerDiscoveryService(@NonNull EBusBridgeHandler bridgeHandler) {
         EBusDiscovery discoveryService = new EBusDiscovery(bridgeHandler);
 
+        Hashtable<String, Object> hashtable = new Hashtable<String, Object>();
+        hashtable.put("service.pid", "discovery.ebus");
+
         ServiceRegistration<?> service = bundleContext.registerService(DiscoveryService.class.getName(),
-                discoveryService, new Hashtable<String, Object>());
+                discoveryService, hashtable);
 
         this.discoveryServiceRegs.put(bridgeHandler.getThing().getUID(), service);
 

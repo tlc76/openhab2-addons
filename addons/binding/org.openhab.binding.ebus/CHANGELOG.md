@@ -1,3 +1,12 @@
+## Alpha 0.0.14 (2017-11-20)
+
+Features:
+
+  - Update to eBUS library 0.0.14, [github](https://github.com/csowada/ebus/tree/0.0.14)
+  - Add advance logging to eBUS binding configuration
+  - Add configuration bundle URL to eBUS binding configuration
+  - Add polling per thing
+  
 ## Alpha 0.0.13 (2017-11-02)
 
 Features:

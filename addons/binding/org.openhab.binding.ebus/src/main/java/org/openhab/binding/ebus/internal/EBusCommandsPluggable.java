@@ -164,8 +164,7 @@ public class EBusCommandsPluggable implements ConsoleCommandExtension {
         }
     }
 
-    private void resolve(byte[] data, Console console, EBusBridgeHandler bridge) {
-        // EBusCommandRegistry commandRegistry = bridge.getLibClient().getClient().getConfigurationProvider();
+    private void resolve(byte[] data, Console console) {
         console.println(EBusConsoleUtils.analyzeTelegram(typeProvider.getCommandRegistry(), data));
     }
 
@@ -190,8 +189,7 @@ public class EBusCommandsPluggable implements ConsoleCommandExtension {
             }
 
         } else if (StringUtils.equals(args[0], SUBCMD_RESOLVE)) {
-            // TODO: use TypeProvider service instead!
-            resolve(EBusUtils.toByteArray(args[1]), console, getFirstBridge(console));
+            resolve(EBusUtils.toByteArray(args[1]), console);
 
         } else if (StringUtils.equals(args[0], SUBCMD_SEND)) {
             EBusBridgeHandler bridge = null;

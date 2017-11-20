@@ -215,18 +215,34 @@ public class EBusHandler extends BaseThingHandler {
 
         final EBusLibClient libClient = getLibClient();
 
+        Configuration thingConfiguration = thing.getConfiguration();
+
+        // is global polling for this thing enabled?
+        Long pollingPeriodAll = null;
+        if (thingConfiguration.get(POLLING) instanceof Number) {
+            pollingPeriodAll = ((Number) thingConfiguration.get(POLLING)).longValue();
+        }
+
         for (final Channel channel : thing.getChannels()) {
 
-            Configuration configuration = channel.getConfiguration();
-            Object pollingObj = configuration.get(POLLING);
+            final Configuration configuration = channel.getConfiguration();
 
             final String collectionId = channel.getProperties().get(COLLECTION);
             final String commandId = channel.getProperties().get(COMMAND);
 
             // a valid value for polling
-            if (pollingObj instanceof Number) {
+            Long pollingPeriod = null;
+            if (configuration.get(POLLING) instanceof Number) {
+                pollingPeriod = ((Number) configuration.get(POLLING)).longValue();
+            }
 
-                long pollingPeriod = ((Number) pollingObj).longValue();
+            // overwrite with global polling if not set
+            if (pollingPeriod == null) {
+                pollingPeriod = pollingPeriodAll;
+            }
+
+            // a valid value for polling
+            if (pollingPeriod != null && pollingPeriod > 0) {
 
                 try {
                     // compose the telegram

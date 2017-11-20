@@ -10,18 +10,20 @@ package org.openhab.binding.ebus.internal;
 
 import static org.openhab.binding.ebus.EBusBindingConstants.BINDING_ID;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.lang.StringUtils;
 import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.smarthome.config.discovery.AbstractDiscoveryService;
 import org.eclipse.smarthome.config.discovery.DiscoveryResult;
 import org.eclipse.smarthome.config.discovery.DiscoveryResultBuilder;
-import org.eclipse.smarthome.config.discovery.ScanListener;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.thing.ThingUID;
@@ -33,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import de.csdev.ebus.client.EBusClient;
 import de.csdev.ebus.command.IEBusCommandCollection;
 import de.csdev.ebus.core.EBusConsts;
+import de.csdev.ebus.service.device.EBusDeviceTableService;
 import de.csdev.ebus.service.device.IEBusDevice;
 import de.csdev.ebus.service.device.IEBusDeviceTableListener;
 import de.csdev.ebus.utils.EBusUtils;
@@ -50,57 +53,37 @@ public class EBusDiscovery extends AbstractDiscoveryService implements IEBusDevi
     private ScheduledFuture<?> discoveryJob;
 
     public EBusDiscovery(@NonNull EBusBridgeHandler bridgeHandle) throws IllegalArgumentException {
-        super(60);
+        super(new HashSet<>(Arrays.asList(bridgeHandle.getThing().getThingTypeUID())), 20, false);
 
         this.bridgeHandle = bridgeHandle;
         bridgeHandle.getLibClient().getClient().addEBusDeviceTableListener(this);
     }
 
     @Override
-    public boolean isBackgroundDiscoveryEnabled() {
-        // TODO Auto-generated method stub
-        return true;
-    }
-
-    @Override
-    public synchronized void startScan(ScanListener listener) {
-        // TODO Auto-generated method stub
-        super.startScan(listener);
-        System.out.println("EBusDiscovery.startScan()");
-    }
-
-    @Override
-    public synchronized void abortScan() {
-        // TODO Auto-generated method stub
-        super.abortScan();
-        System.out.println("EBusDiscovery.abortScan()");
-    }
-
-    @Override
-    protected synchronized void stopScan() {
-        // TODO Auto-generated method stub
-        super.stopScan();
-        System.out.println("EBusDiscovery.enclosing_method()");
-    }
-
-    @Override
     protected void startBackgroundDiscovery() {
-        logger.debug("Start eBUS device background discovery");
+        logger.info("Start eBUS device background discovery");
         if (discoveryJob == null || discoveryJob.isCancelled()) {
             discoveryJob = scheduler.scheduleWithFixedDelay(new Runnable() {
 
                 @Override
                 public void run() {
-                    bridgeHandle.getLibClient().getClient().getDeviceTableService().startDeviceScan();
+                    EBusDeviceTableService deviceTableService = getDeviceTableService();
+                    if (deviceTableService != null) {
+                        deviceTableService.inquiryDeviceExistence();
+                    }
                 }
 
-            }, 0, 600, TimeUnit.SECONDS);
+            }, 0, 20, TimeUnit.MINUTES);
         }
+    }
+
+    private EBusDeviceTableService getDeviceTableService() {
+        return bridgeHandle.getLibClient().getClient().getDeviceTableService();
     }
 
     @Override
     protected void stopBackgroundDiscovery() {
-        logger.debug("Stop eBUS device background discovery");
+        logger.info("Stop eBUS device background discovery");
         if (discoveryJob != null && !discoveryJob.isCancelled()) {
             discoveryJob.cancel(true);
             discoveryJob = null;
@@ -110,23 +93,25 @@ public class EBusDiscovery extends AbstractDiscoveryService implements IEBusDevi
     @Override
     protected void startScan() {
         logger.warn("Starting eBUS discovery scan ...");
-        //
-        // EBusClient client = bridgeHandle.getLibClient().getClient();
-        // client.getDeviceTableService().startDeviceScan();
 
+        EBusDeviceTableService deviceTableService = getDeviceTableService();
+        if (deviceTableService != null) {
+            deviceTableService.inquiryDeviceExistence();
+        }
     }
 
     protected void activate() {
         super.activate(new HashMap<String, Object>());
-        logger.debug("Start eBUS discovery service ...");
+        logger.info("Start eBUS discovery service ...");
     }
 
     @Override
     public void deactivate() {
 
-        logger.debug("Stopping eBUS discovery service ...");
+        logger.info("Stopping eBUS discovery service ...");
 
         removeOlderResults(new Date().getTime());
+
         try {
             bridgeHandle.getLibClient().getClient().removeEBusDeviceTableListener(this);
         } catch (Exception e) {
@@ -140,6 +125,11 @@ public class EBusDiscovery extends AbstractDiscoveryService implements IEBusDevi
         String slaveAddress = EBusUtils.toHexDumpString(device.getSlaveAddress());
 
         String id = slaveAddress;
+
+        if (StringUtils.isEmpty(id)) {
+            logger.debug("No slave address for device available! {}", device.toString());
+            return;
+        }
 
         ThingTypeUID thingTypeUID = new ThingTypeUID(BINDING_ID, collection.getId());
         ThingUID thingUID = new ThingUID(thingTypeUID, bridgeHandle.getThing().getUID(), id);

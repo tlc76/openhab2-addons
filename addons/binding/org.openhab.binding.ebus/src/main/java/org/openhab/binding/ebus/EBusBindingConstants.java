@@ -35,6 +35,12 @@ public class EBusBindingConstants {
     public static final String SERIAL_PORT = "serialPort";
     public static final String IP_ADDRESS = "ipAddress";
     public static final String PORT = "port";
+    public static final String ADVANCED_LOGGING = "advancedLogging";
+
+    public static final String CONFIGURATION_URL = "configurationUrl";
+    public static final String CONFIGURATION_URL1 = "configurationUrl1";
+    public static final String CONFIGURATION_URL2 = "configurationUrl2";
+    public static final String CONFIGURATION_BUNDLE_URL = "configurationBundleUrl";
 
     // properties to map ebus core configurations
     public static final String COLLECTION = "collection";
@@ -45,6 +51,17 @@ public class EBusBindingConstants {
     public static final String FILTER_ACCEPT_MASTER = "filterAcceptMaster";
     public static final String FILTER_ACCEPT_SLAVE = "filterAcceptSlave";
     public static final String FILTER_ACCEPT_BROADCAST = "filterAcceptBroadcasts";
+
+    // channel group id
+    public static final String METRICS = "metrics";
+
+    // channel ids
+    public static final String RECEIVED_TELEGRAMS = "receivedTelegrams";
+    public static final String FAILED_TELEGRAMS = "failedTelegrams";
+    public static final String RESOLVED_TELEGRAMS = "resolvedTelegrams";
+    public static final String UNRESOLVED_TELEGRAMS = "unresolvedTelegrams";
+    public static final String FAILED_RATIO = "failedRatio";
+    public static final String UNRESOLVED_RATIO = "unresolvedRatio";
 
     // configuration uris
     public static final URI CONFIG_DESCRIPTION_URI_NODE = EBusBindingUtils

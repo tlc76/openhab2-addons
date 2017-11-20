@@ -8,7 +8,8 @@
  */
 package org.openhab.binding.ebus.thing;
 
-import java.io.IOException;
+import static org.openhab.binding.ebus.EBusBindingConstants.*;
+
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -35,7 +36,6 @@ import org.eclipse.smarthome.core.thing.type.ThingType;
 import org.eclipse.smarthome.core.types.EventDescription;
 import org.eclipse.smarthome.core.types.StateDescription;
 import org.eclipse.smarthome.core.types.StateOption;
-import org.openhab.binding.ebus.EBusBindingConstants;
 import org.openhab.binding.ebus.internal.EBusBindingUtils;
 import org.osgi.service.cm.ConfigurationException;
 import org.osgi.service.component.ComponentContext;
@@ -68,7 +68,6 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
 
     public void activate(ComponentContext componentContext) {
         logger.info("Loading eBUS Type Provider ...");
-        // updateConfiguration(componentContext.getProperties());
     }
 
     public void deactivate(ComponentContext componentContext) {
@@ -107,9 +106,9 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
 
             // store command id and value name
             Map<String, String> properties = new HashMap<String, String>();
-            properties.put(EBusBindingConstants.COLLECTION, mainMethod.getParent().getParentCollection().getId());
-            properties.put(EBusBindingConstants.COMMAND, mainMethod.getParent().getId());
-            properties.put(EBusBindingConstants.VALUE_NAME, value.getName());
+            properties.put(COLLECTION, mainMethod.getParent().getParentCollection().getId());
+            properties.put(COMMAND, mainMethod.getParent().getId());
+            properties.put(VALUE_NAME, value.getName());
 
             return new ChannelDefinition(EBusBindingUtils.formatId(value.getName()), channelType.getUID(), properties,
                     value.getLabel(), null);
@@ -200,7 +199,7 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
             StateDescription state = new StateDescription(value.getMax(), value.getMin(), value.getStep(), pattern,
                     readOnly, options);
             // StateDescription state = new StateDescription(null, null, null, pattern, readOnly, options);
-            URI configDescriptionURI = polling ? EBusBindingConstants.CONFIG_DESCRIPTION_URI_POLLING_CHANNEL : null;
+            URI configDescriptionURI = polling ? CONFIG_DESCRIPTION_URI_POLLING_CHANNEL : null;
 
             String description = null;
             Set<String> tags = null;
@@ -229,11 +228,11 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
         String description = collection.getDescription();
 
         Map<String, String> properties = new HashMap<String, String>();
-        properties.put(EBusBindingConstants.COLLECTION, collection.getId());
+        properties.put(COLLECTION, collection.getId());
         properties.put("collectionHash", String.valueOf(collection.hashCode()));
 
         return new ThingType(thingTypeUID, supportedBridgeTypeUIDs, label, description, channelDefinitions,
-                channelGroupDefinitions, properties, EBusBindingConstants.CONFIG_DESCRIPTION_URI_NODE);
+                channelGroupDefinitions, properties, CONFIG_DESCRIPTION_URI_NODE);
     }
 
     /*
@@ -335,47 +334,44 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
 
     private void updateConfiguration(Dictionary<String, ?> properties) {
 
+        logger.warn("Update eBUS configuration ...");
+
+        commandRegistry.clear();
+
+        // configuration.loadInternalConfigurations();
+        commandRegistry.loadBuildInCommandCollections();
+
         if (properties != null && !properties.isEmpty()) {
 
-            logger.debug("Update eBUS configuration ...");
-
-            commandRegistry.clear();
-
-            // configuration.loadInternalConfigurations();
-            commandRegistry.loadBuildInCommandCollections();
-
-            if (properties.get("configurationUrl") instanceof String) {
-                logger.info("Load custom configuration file '{}' ...", properties.get("configurationUrl"));
-                loadConfigurationByUrl((String) properties.get("configurationUrl"));
+            if (properties.get(CONFIGURATION_URL) instanceof String) {
+                logger.info("Load custom configuration file '{}' ...", properties.get(CONFIGURATION_URL));
+                loadConfigurationByUrl((String) properties.get(CONFIGURATION_URL));
             }
 
-            if (properties.get("configurationUrl1") instanceof String) {
-                logger.info("Load custom configuration file '{}' ...", properties.get("configurationUrl1"));
-                loadConfigurationByUrl((String) properties.get("configurationUrl1"));
+            if (properties.get(CONFIGURATION_URL1) instanceof String) {
+                logger.info("Load custom configuration file '{}' ...", properties.get(CONFIGURATION_URL1));
+                loadConfigurationByUrl((String) properties.get(CONFIGURATION_URL1));
             }
 
-            if (properties.get("configurationUrl2") instanceof String) {
-                logger.info("Load custom configuration file '{}' ...", properties.get("configurationUrl2"));
-                loadConfigurationByUrl((String) properties.get("configurationUrl2"));
+            if (properties.get(CONFIGURATION_URL2) instanceof String) {
+                logger.info("Load custom configuration file '{}' ...", properties.get(CONFIGURATION_URL2));
+                loadConfigurationByUrl((String) properties.get(CONFIGURATION_URL2));
             }
 
-            update(commandRegistry.getCommandCollections());
+            if (properties.get(CONFIGURATION_BUNDLE_URL) instanceof String) {
+                logger.info("Load custom configuration bundle '{}' ...", properties.get(CONFIGURATION_BUNDLE_URL));
+                loadConfigurationBundleByUrl((String) properties.get(CONFIGURATION_BUNDLE_URL));
+            }
         }
+
+        // update
+        update(commandRegistry.getCommandCollections());
     }
 
     @Override
     public void updated(Dictionary<String, ?> properties) throws ConfigurationException {
-
-        // we directly use activate properties to initialize,
-        // this causes a double load on init
-        // if (skipFirstUpdate) {
-        // skipFirstUpdate = false;
-        // return;
-        // }
-
-        if (properties != null) {
-            updateConfiguration(properties);
-        }
+        logger.warn("EBusTypeProviderImpl.updated()");
+        updateConfiguration(properties);
     }
 
     /**
@@ -384,12 +380,21 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
      */
     private boolean loadConfigurationByUrl(String url) {
         try {
-            commandRegistry.loadCommandCollection(new URL(url).openStream());
+            commandRegistry.loadCommandCollection(new URL(url));
             return true;
 
         } catch (MalformedURLException e) {
             logger.error("Error on loading configuration by url: {}", e.getLocalizedMessage());
-        } catch (IOException e) {
+        }
+        return false;
+    }
+
+    private boolean loadConfigurationBundleByUrl(String url) {
+        try {
+            commandRegistry.loadCommandCollectionBundle(new URL(url));
+            return true;
+
+        } catch (MalformedURLException e) {
             logger.error("Error on loading configuration by url: {}", e.getLocalizedMessage());
         }
         return false;
