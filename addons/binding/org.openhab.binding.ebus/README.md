@@ -51,7 +51,9 @@ eBUS interface over Ethernet. See example at the end of this file.
 
 ### Heating Devices
 
-Your heating system must support the eBUS protocol. Connect your eBUS interface to your heating system. A heating system normally consists of several components, like Burners, mixers and solar modules. Please check your manual.
+Your heating system must support the eBUS protocol. Connect your eBUS interface 
+to your heating system. A heating system normally consists of several components, 
+like Burners, mixers and solar modules. Please check your manual.
 
 The build-in things are listed below.  
 _We need your help to support more devices!_ See 
@@ -90,7 +92,9 @@ standard thing is added for each detected device.
 ## Binding Configuration
 
 You can add up to three custom configuration files or one bundle file. This 
-allows you to add new eBUS devices without updating this binding. The built-in configurations are always loaded first, the own files are loaded afterwards. These can also overwrite already loaded commands. You must use the URL syntax. 
+allows you to add new eBUS devices without updating this binding. The built-in 
+configurations are always loaded first, the own files are loaded afterwards. 
+These can also overwrite already loaded commands. You must use the URL syntax. 
 For more information see [URL](https://en.wikipedia.org/wiki/URL) on wikipedia.
 
 There are several settings for a binding:
@@ -108,7 +112,7 @@ Define a third URL to load external configuration files
 Define a bundle URL to load a set of configurations at once.
 
 
-### Examples
+### Example URLs
 
     http://www.mydomain.com/files/custom-configuration.json
     file:///etc/openhab/custom-configuration.json
@@ -151,7 +155,8 @@ Slave address of this node as HEX value like `FF`
 **Advanced settings:**
 
 - **eBUS Master Address** _(masterAddress)_  
-Master address of this node as HEX value like `FF`. In general, this value must not be set, since this value is calculated on the basis of the slave address.
+Master address of this node as HEX value like `FF`. In general, this value 
+must not be set, since this value is calculated on the basis of the slave address.
 
 - **Accept for master address** _(filterAcceptMaster)_  
 Accept telegrams for master address, default is `false`
@@ -169,7 +174,8 @@ every eBUS command with a random delay to scatter the bus access.
 
 ## Channel Configuration
 
-Polling can be set for all getter channels. The polling applies to all channels in a group. Thus, the value must only be set for one channel.
+Polling can be set for all getter channels. The polling applies to all channels in 
+a group. Thus, the value must only be set for one channel.
 
 There are only one settings for a channel:
 
@@ -179,80 +185,25 @@ channel group will be refreshed by one polling. Polling is not available on
 broadcast commands.
 
 
-## Thing Configuration TEXT
-
-Things are all discovered automatically, you can handle them in PaperUI.  
-
-If you really like to manually configure a thing:
-
-```java
-Bridge ebus:bridge:home1 "eBUS Bridge1" @ "My location" [ serialPort="COM1", masterAddress="00", advancedLogging=true ] {
-    Thing vrc700_zone1 zone1 [ slaveAddress="08", polling=120 ]
-    Thing vrc430 vrc [ slaveAddress="15", polling=120 ]
-}
-```
-
-```java
-Bridge ebus:bridge:home2 "eBUS Bridge2" [ ipAddress="10.0.0.2", port=80 ] {
-    Thing vrc700_zone1 zone1 [ slaveAddress="08" ]
-    Thing vrc430 vrc [ slaveAddress="15" ]
-}
-```
-
-The first parameter after Thing is the device type, the second the serial number.
-If you are using Homegear, you have to add the prefix ```HG-``` for each type.
-This is necessary, because the Homegear devices supports more datapoints than Homematic devices.
-
-```java
-  Thing HG-HM-LC-Dim1T-Pl-2     JEQ0999999
-```
-
-As additional parameters you can define a name and a location for each thing.
-The Name will be used to identify the Thing in the Paper UI lists, the Location will be used in the Control section of PaperUI to sort the things.
-
-```java
-  Thing HG-HM-LC-Dim1T-Pl-2     JEQ0999999  "Name"  @  "Location"
-```
-
-All channels have two configs:
-
-- **delay**: delays transmission of a command **to** the Homematic gateway, duplicate commands are filtered out
-- **receiveDelay**: delays a received event **from** the Homematic gateway, duplicate events are filtered out (OH 2.2)
-
-The receiveDelay is handy for dimmers and rollershutters for example.
-If you have a slider in a UI and you move this slider to a new position, it jumps around because the gateway sends multiple events with different positions until the final has been reached.
-If you set the ```receiveDelay``` to some seconds, these events are filtered out and only the last position is distributed to openHab.
-The disadvantage is of course, that all events for this channel are delayed.
-
-```java
-  Thing vrc700_zone1 zone1 [ slaveAddress="08", polling=120 ] {
-      Channels:
-          Type HM-LC-Dim1T-Pl-2_1_level : 1#LEVEL [
-              delay = 0,
-              receiveDelay = 4
-          ]
-  }
-```
-
-The Type is the device type, channel number and lowercase channel name separated with a underscore.
-
-
-
 ## Channels
-...
-
-
-
+Due to the long and dynamic channels, there is no list here.
 
 
 ## Full Example
-...
+
+It is also possible to set up the configuration by text instead of PaperUI. Due to 
+the dynamic channels the configuration is not as comfortable as with PaperUI. The 
+problem is finding the right IDs.
+You should first setup the configuration via PaperUI. From there you can copy 
+the information for things and channels.
+
+You can get the channel type by copying the channel id from PaperUI and replace the hash ``#`` character with and underscore ``_`` character.
 
 **.thing file**
 
 ```java
 Bridge ebus:bridge:home1 "eBUS Bridge (serial)" @ "Home" [ serialPort="/dev/ttyUSB1", masterAddress="FF", advancedLogging=true ] {
-  Thing std 08 "My eBUS Standard at address 08" [slaveAddress="08"]
+  Thing std 08 "My eBUS Standard at address 08" [ slaveAddress="08" ]
   Thing vrc430 15 "My VRC430 at address 15" [ slaveAddress="15" ] {
     Channels:
       Type vrc430_heating_program-heating-circuit_program : vrc430_heating_program-heating-circuit#program [ polling = 60 ]
@@ -268,17 +219,22 @@ Bridge ebus:bridge:home2 "eBUS Bridge2" [ ipAddress="10.0.0.2", port=80 ] {
 
 **.items file**
 
-...
-
-
-**.sitemap file**
-
-...
+```java
+Number Heating_HC_Program "Heating Program [%s]" (Heating) { channel="ebus:vrc430:home1:15:vrc430_heating_program-heating-circuit#program" }
+```
 
 
 ## Console Commands
 
-...
+This binding also brings some useful console commands to get more information from
+the configuration.
+
+    smarthome:ebus list                                    lists all eBUS devices
+    smarthome:ebus send "<ebus telegram>" [<bridgeUID>]    sends a raw hex telegram to an eBUS bridge or if not set to first bridge
+    smarthome:ebus devices [<bridgeUID>]                   lists all devices connect to an eBUS bridge or list only a specific bridge
+    smarthome:ebus resolve "<ebus telegram>"               resolves and analyze a telegram
+    smarthome:ebus reload                                  reload all defined json configuration files
+    smarthome:ebus update                                  update all things to newest json configuration files
 
 
 ## Issues
