@@ -17,6 +17,10 @@ import org.eclipse.smarthome.core.thing.Bridge;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingRegistry;
 import org.eclipse.smarthome.core.thing.ThingUID;
+import org.eclipse.smarthome.core.thing.type.ChannelDefinition;
+import org.eclipse.smarthome.core.thing.type.ChannelGroupDefinition;
+import org.eclipse.smarthome.core.thing.type.ChannelGroupType;
+import org.eclipse.smarthome.core.thing.type.ThingType;
 import org.eclipse.smarthome.io.console.Console;
 import org.eclipse.smarthome.io.console.extensions.ConsoleCommandExtension;
 import org.openhab.binding.ebus.handler.EBusBridgeHandler;
@@ -57,6 +61,8 @@ public class EBusCommandsPluggable implements ConsoleCommandExtension {
     private static final String SUBCMD_RELOAD = "reload";
 
     private static final String SUBCMD_UPDATE = "update";
+
+    private static final String SUBCMD_CHANNELS = "channels";
 
     private ThingRegistry thingRegistry;
 
@@ -118,6 +124,46 @@ public class EBusCommandsPluggable implements ConsoleCommandExtension {
         }
 
         return result;
+    }
+
+    private void listChannels(String[] args, Console console) {
+        Collection<ThingType> thingTypes = typeProvider.getThingTypes(null);
+
+        for (ThingType thingType : thingTypes) {
+
+            String format = String.format("** %-45s | ID: %-20s **", "Type: " + thingType.getLabel(),
+                    thingType.getUID().getId());
+
+            console.println("");
+            console.println(StringUtils.repeat("*", format.length()));
+            console.println(format);
+            console.println(StringUtils.repeat("*", format.length()));
+
+            List<ChannelGroupDefinition> channelGroupDefinitions = thingType.getChannelGroupDefinitions();
+            for (ChannelGroupDefinition channelGroupDefinition : channelGroupDefinitions) {
+
+                ChannelGroupType channelGroupType = this.typeProvider
+                        .getChannelGroupType(channelGroupDefinition.getTypeUID(), null);
+
+                console.println("\n  ChannelGroupType " + channelGroupType.getUID().getId());
+
+                console.println(String.format("\n  %-60s | %-40s",
+                        channelGroupType.getUID().getId() + "#" + channelGroupType.getUID().getId(),
+                        channelGroupType.getLabel()));
+
+                List<ChannelDefinition> channelDefinitions = channelGroupType.getChannelDefinitions();
+
+                for (ChannelDefinition channelDefinition : channelDefinitions) {
+
+                    console.println(String.format("    -> %-55s | %-40s",
+                            channelGroupType.getUID().getId() + "#" + channelDefinition.getId(),
+                            channelDefinition.getLabel()));
+
+                }
+
+            }
+
+        }
     }
 
     /**
@@ -200,6 +246,9 @@ public class EBusCommandsPluggable implements ConsoleCommandExtension {
         if (StringUtils.equals(args[0], SUBCMD_LIST)) {
             list(args, console);
             return;
+
+        } else if (StringUtils.equals(args[0], SUBCMD_CHANNELS)) {
+            listChannels(args, console);
 
         } else if (StringUtils.equals(args[0], SUBCMD_DEVICES)) {
 
@@ -316,6 +365,8 @@ public class EBusCommandsPluggable implements ConsoleCommandExtension {
 
         list.add(String.format(line, CMD, SUBCMD_RELOAD, "reload all defined json configuration files"));
         list.add(String.format(line, CMD, SUBCMD_UPDATE, "update all things to newest json configuration files"));
+
+        list.add(String.format(line, CMD, SUBCMD_CHANNELS, "show all available thing and it's channels"));
 
         return list;
     }
