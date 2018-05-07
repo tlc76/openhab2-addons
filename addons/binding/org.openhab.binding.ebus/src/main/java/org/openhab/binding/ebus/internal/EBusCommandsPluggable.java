@@ -366,7 +366,7 @@ public class EBusCommandsPluggable implements ConsoleCommandExtension {
         list.add(String.format(line, CMD, SUBCMD_RELOAD, "reload all defined json configuration files"));
         list.add(String.format(line, CMD, SUBCMD_UPDATE, "update all things to newest json configuration files"));
 
-        list.add(String.format(line, CMD, SUBCMD_CHANNELS, "show all available thing and it's channels"));
+        list.add(String.format(line, CMD, SUBCMD_CHANNELS, "show all available things and it's channels"));
 
         return list;
     }
