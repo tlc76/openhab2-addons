@@ -36,6 +36,7 @@ public class EBusBindingConstants {
     public static final String IP_ADDRESS = "ipAddress";
     public static final String PORT = "port";
     public static final String ADVANCED_LOGGING = "advancedLogging";
+    public static final String PROTOCOL = "protocol";
 
     public static final String CONFIGURATION_URL = "configurationUrl";
     public static final String CONFIGURATION_URL1 = "configurationUrl1";

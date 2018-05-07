@@ -42,6 +42,16 @@
                  <required>false</required>
              </parameter>
             
+            <parameter name="protocol" type="text" required="true">
+                <label>Network Protocol</label>
+                <description>Used network protocol of the eBUS interface</description>
+	            <options>
+		            <option value="tcp"></option>
+		            <option value="udp"></option>
+	            </options>
+                <default>tcp</default>
+            </parameter>
+            
             <parameter name="serialPort" type="text" groupName="serial">
                 <label>Serial Port</label>
                 <context>serial-port</context>

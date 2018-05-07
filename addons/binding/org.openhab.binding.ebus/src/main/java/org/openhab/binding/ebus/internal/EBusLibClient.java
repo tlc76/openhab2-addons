@@ -32,6 +32,7 @@ import de.csdev.ebus.core.EBusController;
 import de.csdev.ebus.core.connection.EBusEmulatorConnection;
 import de.csdev.ebus.core.connection.EBusSerialNRJavaSerialConnection;
 import de.csdev.ebus.core.connection.EBusTCPConnection;
+import de.csdev.ebus.core.connection.EBusUDPConnection;
 import de.csdev.ebus.core.connection.IEBusConnection;
 import de.csdev.ebus.utils.EBusUtils;
 
@@ -62,6 +63,14 @@ public class EBusLibClient {
      */
     public void setTCPConnection(String hostname, int port) {
         connection = new EBusTCPConnection(hostname, port);
+    }
+
+    /**
+     * @param hostname
+     * @param port
+     */
+    public void setUDPConnection(String hostname, int port) {
+        connection = new EBusUDPConnection(hostname, port);
     }
 
     /**

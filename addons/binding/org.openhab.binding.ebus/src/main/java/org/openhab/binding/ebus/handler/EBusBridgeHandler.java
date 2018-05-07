@@ -113,11 +113,14 @@ public class EBusBridgeHandler extends BaseBridgeHandler
         String masterAddressStr = null;
         Byte masterAddress = (byte) 0xFF;
 
+        String protocol = "tcp";
+
         try {
             ipAddress = (String) configuration.get(IP_ADDRESS);
             port = (BigDecimal) configuration.get(PORT);
             masterAddressStr = (String) configuration.get(MASTER_ADDRESS);
             serialPort = (String) configuration.get(SERIAL_PORT);
+            protocol = (String) configuration.get(PROTOCOL);
 
             if (configuration.get(ADVANCED_LOGGING).equals(Boolean.TRUE)) {
                 logger.warn("Enable advanced logging for eBUS commands!");
@@ -133,13 +136,15 @@ public class EBusBridgeHandler extends BaseBridgeHandler
         }
 
         if (StringUtils.isNotEmpty(ipAddress) && port != null) {
-            libClient.setTCPConnection(ipAddress, port.intValue());
+            if (protocol.equals("udp")) {
+                libClient.setUDPConnection(ipAddress, port.intValue());
+            } else {
+                libClient.setTCPConnection(ipAddress, port.intValue());
+            }
+
         }
 
         if (StringUtils.isNotEmpty(serialPort)) {
-
-            libClient.setSerialConnection(serialPort);
-
             libClient.setSerialConnection(serialPort);
         }
 
