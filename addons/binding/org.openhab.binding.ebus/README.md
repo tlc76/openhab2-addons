@@ -14,10 +14,26 @@ read temperatures, pump performance, gas consumption etc.
 
 ## Installation
 
-To install this binding put the downloaded 
-`org.openhab.binding.ebus-2.x.x-SNAPSHOT.jar` file into `openhab\addon` folder 
-or install the binding over the market place 
+### ZIP file
+
+To install this binding copy the contents of the zip file into the `openhab\addon`
+directory. The zip file contains the individual bundles of the binding.
+
+### KAR file
+
+To install this binding copy the kar file into the  `openhab\addon` directory.
+The kar file is an archive that contains everything.
+
+When using the kar file, the binding must be entered in the file `addons.cfg`
+under `binding` with the value `ebus`. If this does not happen, the binding
+will be uninstalled after a few seconds.
+
+### Marketplace
+
+Install the binding over the market place 
 [link](https://marketplace.eclipse.org/content/ebus-20-binding).
+
+### Serial driver (optional)
 
 If you use a serial adapter, you maybe need to install the openhab serial 
 driver. Enter the command below in your openhab console. To get you serial 
