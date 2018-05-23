@@ -255,22 +255,19 @@ public class EBusBridgeHandler extends BaseBridgeHandler
             return;
         }
 
-        if (getThing().getThings() != null) {
+        // loop over all child nodes
+        for (Thing thing : getThing().getThings()) {
 
-            // loop over all child nodes
-            for (Thing thing : getThing().getThings()) {
+            EBusHandler handler = (EBusHandler) thing.getHandler();
 
-                EBusHandler handler = (EBusHandler) thing.getHandler();
+            if (handler != null) {
 
-                if (handler != null) {
+                // check if this handler can process this telegram
+                if (handler.supportsTelegram(receivedData, commandChannel)) {
 
-                    // check if this handler can process this telegram
-                    if (handler.supportsTelegram(receivedData, commandChannel)) {
-
-                        // process
-                        handler.handleReceivedTelegram(commandChannel, result, receivedData, sendQueueId);
-                        noHandler = false;
-                    }
+                    // process
+                    handler.handleReceivedTelegram(commandChannel, result, receivedData, sendQueueId);
+                    noHandler = false;
                 }
             }
         }
