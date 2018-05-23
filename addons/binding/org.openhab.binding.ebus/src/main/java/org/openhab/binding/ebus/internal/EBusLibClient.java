@@ -137,7 +137,7 @@ public class EBusLibClient {
 
         if (command instanceof State) {
             State state = (State) command;
-            DecimalType decimalValue = (DecimalType) state.as(DecimalType.class);
+            DecimalType decimalValue = state.as(DecimalType.class);
 
             if (decimalValue == null) {
                 decimalValue = new DecimalType(state.toString());

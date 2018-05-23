@@ -191,7 +191,7 @@ public class EBusDiscovery extends AbstractDiscoveryService implements IEBusDevi
      */
     private void updateInitializedThings(IEBusDevice device) {
 
-        if (bridgeHandle == null || bridgeHandle.getThing() == null || bridgeHandle.getThing().getThings() == null) {
+        if (bridgeHandle == null) {
             logger.debug("No things available ...");
             return;
         }

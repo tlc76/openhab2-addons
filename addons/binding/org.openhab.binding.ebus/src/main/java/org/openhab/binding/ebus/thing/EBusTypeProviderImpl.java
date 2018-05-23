@@ -33,6 +33,7 @@ import org.eclipse.smarthome.core.thing.type.ChannelKind;
 import org.eclipse.smarthome.core.thing.type.ChannelType;
 import org.eclipse.smarthome.core.thing.type.ChannelTypeUID;
 import org.eclipse.smarthome.core.thing.type.ThingType;
+import org.eclipse.smarthome.core.thing.type.ThingTypeBuilder;
 import org.eclipse.smarthome.core.types.EventDescription;
 import org.eclipse.smarthome.core.types.StateDescription;
 import org.eclipse.smarthome.core.types.StateOption;
@@ -240,8 +241,13 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
         properties.put(COLLECTION, collection.getId());
         properties.put("collectionHash", String.valueOf(collection.hashCode()));
 
-        return new ThingType(thingTypeUID, supportedBridgeTypeUIDs, label, description, channelDefinitions,
-                channelGroupDefinitions, properties, CONFIG_DESCRIPTION_URI_NODE);
+        return ThingTypeBuilder.instance(thingTypeUID, label).withSupportedBridgeTypeUIDs(supportedBridgeTypeUIDs)
+                .withChannelDefinitions(channelDefinitions).withChannelGroupDefinitions(channelGroupDefinitions)
+                .withConfigDescriptionURI(CONFIG_DESCRIPTION_URI_NODE).withDescription(description)
+                .withProperties(properties).build();
+
+        // return new ThingType(thingTypeUID, supportedBridgeTypeUIDs, label, description, channelDefinitions,
+        // channelGroupDefinitions, properties, CONFIG_DESCRIPTION_URI_NODE);
     }
 
     @Override

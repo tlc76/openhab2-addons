@@ -12,11 +12,14 @@ import static org.openhab.binding.ebus.EBusBindingConstants.*;
 
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
+import java.util.TimeZone;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -27,6 +30,7 @@ import org.eclipse.smarthome.core.library.types.DateTimeType;
 import org.eclipse.smarthome.core.library.types.DecimalType;
 import org.eclipse.smarthome.core.library.types.OnOffType;
 import org.eclipse.smarthome.core.library.types.StringType;
+import org.eclipse.smarthome.core.thing.Bridge;
 import org.eclipse.smarthome.core.thing.Channel;
 import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.Thing;
@@ -180,12 +184,12 @@ public class EBusHandler extends BaseThingHandler {
     @Override
     public void initialize() {
 
-        if (getBridge() == null) {
+        Bridge bridge = getBridge();
+        if (bridge == null) {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "No bridge defined!");
 
-        } else if (getBridge().getStatus() == ThingStatus.ONLINE) {
+        } else if (bridge.getStatus() == ThingStatus.ONLINE) {
             updateStatus(ThingStatus.ONLINE);
-
             updateHandler();
 
         } else {
@@ -208,11 +212,12 @@ public class EBusHandler extends BaseThingHandler {
      */
     private EBusLibClient getLibClient() {
 
-        if (getBridge() == null) {
+        Bridge bridge = getBridge();
+        if (bridge == null) {
             throw new RuntimeException("No eBUS bridge defined!");
         }
 
-        EBusBridgeHandler handler = (EBusBridgeHandler) getBridge().getHandler();
+        EBusBridgeHandler handler = (EBusBridgeHandler) bridge.getHandler();
         if (handler != null) {
             return handler.getLibClient();
         }
@@ -268,7 +273,7 @@ public class EBusHandler extends BaseThingHandler {
             }
 
             // skip channel if not linked, todo: this is not dynamic - we need to update on channel link/unlink
-            if (linkRegistry.getLinks(channel.getUID()).isEmpty()) {
+            if (isLinked(channel.getUID())) {
                 pollingPeriod = 0l;
             }
 
@@ -451,7 +456,11 @@ public class EBusHandler extends BaseThingHandler {
         } else if (channel.getAcceptedItemType().equals("DateTime")) {
 
             if (value instanceof EBusDateTime) {
-                this.updateState(channel.getUID(), new DateTimeType(((EBusDateTime) value).getCalendar()));
+                Calendar calendar = ((EBusDateTime) value).getCalendar();
+                ZonedDateTime zonedDateTime = ZonedDateTime.ofInstant(calendar.toInstant(),
+                        TimeZone.getDefault().toZoneId());
+
+                this.updateState(channel.getUID(), new DateTimeType(zonedDateTime));
             }
 
         }
