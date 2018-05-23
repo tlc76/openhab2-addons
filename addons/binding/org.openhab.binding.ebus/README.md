@@ -97,6 +97,7 @@ Solar Module Wolf CGB-2
 Mixer Module Wolf
 
 
+
 ## Discovery
 
 This binding is able to resolve many devices automatically. It's listening for 
@@ -202,6 +203,7 @@ broadcast commands.
 
 
 ## Channels
+
 Due to the long and dynamic channels, there is no list here.
 
 

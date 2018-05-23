@@ -145,24 +145,24 @@ public class EBusCommandsPluggable implements ConsoleCommandExtension {
                 ChannelGroupType channelGroupType = this.typeProvider
                         .getChannelGroupType(channelGroupDefinition.getTypeUID(), null);
 
-                console.println("\n  ChannelGroupType " + channelGroupType.getUID().getId());
+                if (channelGroupType != null) {
+                    console.println("\n  ChannelGroupType " + channelGroupType.getUID().getId());
 
-                console.println(String.format("\n  %-60s | %-40s",
-                        channelGroupType.getUID().getId() + "#" + channelGroupType.getUID().getId(),
-                        channelGroupType.getLabel()));
+                    console.println(String.format("\n  %-60s | %-40s",
+                            channelGroupType.getUID().getId() + "#" + channelGroupType.getUID().getId(),
+                            channelGroupType.getLabel()));
 
-                List<ChannelDefinition> channelDefinitions = channelGroupType.getChannelDefinitions();
+                    List<ChannelDefinition> channelDefinitions = channelGroupType.getChannelDefinitions();
 
-                for (ChannelDefinition channelDefinition : channelDefinitions) {
+                    for (ChannelDefinition channelDefinition : channelDefinitions) {
 
-                    console.println(String.format("    -> %-55s | %-40s",
-                            channelGroupType.getUID().getId() + "#" + channelDefinition.getId(),
-                            channelDefinition.getLabel()));
+                        console.println(String.format("    -> %-55s | %-40s",
+                                channelGroupType.getUID().getId() + "#" + channelDefinition.getId(),
+                                channelDefinition.getLabel()));
 
+                    }
                 }
-
             }
-
         }
     }
 
