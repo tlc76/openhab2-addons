@@ -68,6 +68,7 @@ public class EBusBridgeHandler extends BaseBridgeHandler
     private EBusTypeProvider typeProvider;
 
     private EBusAdvancedLogging advanceLogger;
+
     private ScheduledFuture<?> metricsRefreshSchedule;
 
     public EBusBridgeHandler(@NonNull Bridge bridge, EBusTypeProvider typeProvider, EBusHandlerFactory handlerFactory) {
@@ -165,9 +166,6 @@ public class EBusBridgeHandler extends BaseBridgeHandler
         libClient.getClient().addEBusEventListener(this);
         libClient.getClient().addEBusParserListener(this);
 
-        // start eBus controller
-        libClient.startClient();
-
         typeProvider.addTypeProviderListener(this);
 
         metricsRefreshSchedule = scheduler.scheduleAtFixedRate(new Runnable() {
@@ -196,6 +194,9 @@ public class EBusBridgeHandler extends BaseBridgeHandler
                 }
             }
         }, 0, 30, TimeUnit.SECONDS);
+
+        // start eBus controller
+        libClient.startClient();
 
         updateStatus(ThingStatus.ONLINE);
     }

@@ -22,6 +22,7 @@ import org.openhab.binding.ebus.internal.EBusBindingUtils;
 public class EBusBindingConstants {
 
     public static final String BINDING_ID = "ebus";
+    public static final String BINDING_PID = "org.openhab.ebus";
 
     // bridge
     public static final ThingTypeUID THING_TYPE_EBUS_BRIDGE = new ThingTypeUID(BINDING_ID, "bridge");
@@ -43,7 +44,7 @@ public class EBusBindingConstants {
     public static final String CONFIGURATION_BUNDLE_URL = "configurationBundleUrl";
 
     // properties to map ebus core configurations
-    public static final String COLLECTION = "collection";
+    // public static final String COLLECTION = "collection";
     public static final String COMMAND = "command";
     public static final String METHOD = "method";
     public static final String VALUE_NAME = "valueName";
