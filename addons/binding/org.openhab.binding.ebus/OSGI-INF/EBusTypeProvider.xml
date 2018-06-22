@@ -15,4 +15,6 @@
 
 	<property name="service.pid" value="org.openhab.ebus" />
 
+ <reference bind="setConfigurationAdmin" cardinality="0..1" interface="org.osgi.service.cm.ConfigurationAdmin" name="ConfigurationAdmin" policy="static" unbind="unsetConfigurationAdmin"/>
+
 </scr:component>

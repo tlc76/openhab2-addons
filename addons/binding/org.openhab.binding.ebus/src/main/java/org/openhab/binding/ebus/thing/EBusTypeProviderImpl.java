@@ -10,6 +10,7 @@ package org.openhab.binding.ebus.thing;
 
 import static org.openhab.binding.ebus.EBusBindingConstants.*;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -38,6 +39,8 @@ import org.eclipse.smarthome.core.types.EventDescription;
 import org.eclipse.smarthome.core.types.StateDescription;
 import org.eclipse.smarthome.core.types.StateOption;
 import org.openhab.binding.ebus.internal.EBusBindingUtils;
+import org.osgi.service.cm.Configuration;
+import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.cm.ConfigurationException;
 import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
@@ -65,9 +68,11 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
 
     private final Logger logger = LoggerFactory.getLogger(EBusTypeProviderImpl.class);
 
-    private EBusCommandRegistry commandRegistry = new EBusCommandRegistry(EBusConfigurationReaderExt.class, true);
+    private EBusCommandRegistry commandRegistry;
 
-    private Dictionary<String, ?> properties;
+    private ConfigurationAdmin configurationAdmin;
+
+    private boolean skipFirstConfigurationAdminUpdate = true;
 
     /**
      * Activating this component - called from DS.
@@ -75,26 +80,28 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
      * @param componentContext
      */
     public void activate(ComponentContext componentContext) {
-        this.properties = null;
+
         logger.info("Loading eBUS Type Provider ...");
-    }
 
-    /**
-     * Deactivating this component - called from DS.
-     *
-     * @param componentContext
-     */
-    public void deactivate(ComponentContext componentContext) {
-        logger.info("Stopping eBUS Type Provider ...");
-        this.properties = null;
-        clear();
-    }
+        commandRegistry = new EBusCommandRegistry(EBusConfigurationReaderExt.class, false);
+        skipFirstConfigurationAdminUpdate = true;
 
-    @Override
-    public void clear() {
-        channelGroupTypes.clear();
-        channelTypes.clear();
-        thingTypes.clear();
+        try {
+            // ServiceReference<ConfigurationAdmin> reference = componentContext.getBundleContext()
+            // .getServiceReference(ConfigurationAdmin.class);
+            //
+            // ConfigurationAdmin configurationAdmin = componentContext.getBundleContext().getService(reference);
+
+            if (configurationAdmin != null) {
+                Configuration configuration = configurationAdmin.getConfiguration(BINDING_PID, null);
+                updateConfiguration(configuration.getProperties());
+            } else {
+                logger.warn("Unable to get current binding configuration, use default!");
+            }
+
+        } catch (IOException e) {
+            logger.error("error!", e);
+        }
     }
 
     /**
@@ -116,7 +123,6 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
 
             // store command id and value name
             Map<String, String> properties = new HashMap<String, String>();
-            properties.put(COLLECTION, mainMethod.getParent().getParentCollection().getId());
             properties.put(COMMAND, mainMethod.getParent().getId());
             properties.put(VALUE_NAME, value.getName());
 
@@ -137,8 +143,7 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
 
         ChannelGroupTypeUID groupTypeUID = EBusBindingUtils.generateChannelGroupTypeUID(command);
 
-        @SuppressWarnings("deprecation")
-        ChannelGroupType cgt = new ChannelGroupType(groupTypeUID, false, command.getLabel(), command.getId(),
+        ChannelGroupType cgt = new ChannelGroupType(groupTypeUID, false, command.getLabel(), "HVAC", command.getId(),
                 channelDefinitions);
 
         // add to global list
@@ -208,13 +213,19 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
             String pattern = value.getFormat();
             StateDescription state = new StateDescription(value.getMax(), value.getMin(), value.getStep(), pattern,
                     readOnly, options);
-            // StateDescription state = new StateDescription(null, null, null, pattern, readOnly, options);
+
             URI configDescriptionURI = polling ? CONFIG_DESCRIPTION_URI_POLLING_CHANNEL : null;
 
             String description = null;
             Set<String> tags = null;
             String category = null;
             EventDescription event = null;
+
+            // apply new quantity extension
+            if (itemType.equals("Number") && label.contains("°C")) {
+                label = label.replace("°C", "%unit%");
+                itemType = "Number:Temperature";
+            }
 
             return new ChannelType(uid, advanced, itemType, kind, label, description, category, tags, state, event,
                     configDescriptionURI);
@@ -238,16 +249,99 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
         String description = collection.getDescription();
 
         Map<String, String> properties = new HashMap<String, String>();
-        properties.put(COLLECTION, collection.getId());
         properties.put("collectionHash", String.valueOf(collection.hashCode()));
 
         return ThingTypeBuilder.instance(thingTypeUID, label).withSupportedBridgeTypeUIDs(supportedBridgeTypeUIDs)
                 .withChannelDefinitions(channelDefinitions).withChannelGroupDefinitions(channelGroupDefinitions)
                 .withConfigDescriptionURI(CONFIG_DESCRIPTION_URI_NODE).withDescription(description)
                 .withProperties(properties).build();
+    }
 
-        // return new ThingType(thingTypeUID, supportedBridgeTypeUIDs, label, description, channelDefinitions,
-        // channelGroupDefinitions, properties, CONFIG_DESCRIPTION_URI_NODE);
+    /**
+     * Deactivating this component - called from DS.
+     *
+     * @param componentContext
+     */
+    public void deactivate(ComponentContext componentContext) {
+
+        logger.info("Stopping eBUS Type Provider ...");
+
+        channelGroupTypes.clear();
+        channelTypes.clear();
+        thingTypes.clear();
+        listeners.clear();
+
+        commandRegistry.clear();
+        commandRegistry = null;
+
+        configurationAdmin = null;
+    }
+
+    @Override
+    public EBusCommandRegistry getCommandRegistry() {
+        return commandRegistry;
+    }
+
+    /**
+     * @param url
+     * @return
+     */
+    private boolean loadConfigurationBundleByUrl(EBusCommandRegistry commandRegistry, String url) {
+        try {
+            commandRegistry.loadCommandCollectionBundle(new URL(url));
+            return true;
+
+        } catch (MalformedURLException e) {
+            logger.error("Error on loading configuration by url: {}", e.getLocalizedMessage());
+        }
+        return false;
+    }
+
+    /**
+     * @param configuration
+     * @param url
+     */
+    private boolean loadConfigurationByUrl(EBusCommandRegistry commandRegistry, String url) {
+        try {
+            commandRegistry.loadCommandCollection(new URL(url));
+            return true;
+
+        } catch (MalformedURLException e) {
+            logger.error("Error on loading configuration by url: {}", e.getLocalizedMessage());
+        }
+        return false;
+    }
+
+    @Override
+    public boolean reload() {
+
+        try {
+            if (configurationAdmin != null) {
+                Configuration configuration = configurationAdmin.getConfiguration(BINDING_PID, null);
+                updateConfiguration(configuration.getProperties());
+            }
+            return true;
+
+        } catch (IOException e) {
+            logger.error("error!", e);
+        }
+
+        return false;
+    }
+
+    /**
+     * @param cm
+     */
+    public void setConfigurationAdmin(ConfigurationAdmin cm) {
+        this.configurationAdmin = cm;
+
+    }
+
+    /**
+     * @param cm
+     */
+    public void unsetConfigurationAdmin(ConfigurationAdmin cm) {
+        this.configurationAdmin = null;
     }
 
     @Override
@@ -268,7 +362,7 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
 
         // don't add empty command collections, in most cases template files
         if (collection.getCommands().isEmpty()) {
-            logger.debug("empty");
+            logger.trace("eBUS command collection {} is empty, ignore ...", collection.getId());
             return;
         }
 
@@ -349,93 +443,49 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
 
     private void updateConfiguration(Dictionary<String, ?> properties) {
 
-        logger.warn("Update eBUS configuration ...");
+        logger.trace("Update eBUS configuration ...");
 
         commandRegistry.clear();
 
-        // configuration.loadInternalConfigurations();
         commandRegistry.loadBuildInCommandCollections();
 
         if (properties != null && !properties.isEmpty()) {
 
             if (properties.get(CONFIGURATION_URL) instanceof String) {
                 logger.info("Load custom configuration file '{}' ...", properties.get(CONFIGURATION_URL));
-                loadConfigurationByUrl((String) properties.get(CONFIGURATION_URL));
+                loadConfigurationByUrl(commandRegistry, (String) properties.get(CONFIGURATION_URL));
             }
 
             if (properties.get(CONFIGURATION_URL1) instanceof String) {
                 logger.info("Load custom configuration file '{}' ...", properties.get(CONFIGURATION_URL1));
-                loadConfigurationByUrl((String) properties.get(CONFIGURATION_URL1));
+                loadConfigurationByUrl(commandRegistry, (String) properties.get(CONFIGURATION_URL1));
             }
 
             if (properties.get(CONFIGURATION_URL2) instanceof String) {
                 logger.info("Load custom configuration file '{}' ...", properties.get(CONFIGURATION_URL2));
-                loadConfigurationByUrl((String) properties.get(CONFIGURATION_URL2));
+                loadConfigurationByUrl(commandRegistry, (String) properties.get(CONFIGURATION_URL2));
             }
 
             if (properties.get(CONFIGURATION_BUNDLE_URL) instanceof String) {
                 logger.info("Load custom configuration bundle '{}' ...", properties.get(CONFIGURATION_BUNDLE_URL));
-                loadConfigurationBundleByUrl((String) properties.get(CONFIGURATION_BUNDLE_URL));
+                loadConfigurationBundleByUrl(commandRegistry, (String) properties.get(CONFIGURATION_BUNDLE_URL));
             }
         }
 
-        // update
         update(commandRegistry.getCommandCollections());
     }
 
     @Override
     public void updated(Dictionary<String, ?> properties) throws ConfigurationException {
-        this.properties = properties;
-        logger.warn("EBusTypeProviderImpl.updated()");
+
+        // block the first update that directly follows after activate
+        if (skipFirstConfigurationAdminUpdate) {
+            skipFirstConfigurationAdminUpdate = false;
+            return;
+        }
+
+        logger.info("Update eBUS Type Provider ...");
         updateConfiguration(properties);
-    }
-
-    /**
-     * @param configuration
-     * @param url
-     */
-    private boolean loadConfigurationByUrl(String url) {
-        try {
-            commandRegistry.loadCommandCollection(new URL(url));
-            return true;
-
-        } catch (MalformedURLException e) {
-            logger.error("Error on loading configuration by url: {}", e.getLocalizedMessage());
-        }
-        return false;
-    }
-
-    /**
-     * @param url
-     * @return
-     */
-    private boolean loadConfigurationBundleByUrl(String url) {
-        try {
-            commandRegistry.loadCommandCollectionBundle(new URL(url));
-            return true;
-
-        } catch (MalformedURLException e) {
-            logger.error("Error on loading configuration by url: {}", e.getLocalizedMessage());
-        }
-        return false;
-    }
-
-    @Override
-    public EBusCommandRegistry getCommandRegistry() {
-        return commandRegistry;
-    }
-
-    @Override
-    public boolean reload() {
-        try {
-            updated(properties);
-            return true;
-
-        } catch (ConfigurationException e) {
-            logger.error("error!", e);
-        }
-
-        return false;
     }
 
 }

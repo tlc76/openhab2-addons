@@ -24,11 +24,6 @@ import de.csdev.ebus.command.IEBusCommandCollection;
 public interface EBusTypeProvider extends ThingTypeProvider, ChannelTypeProvider, ManagedService {
 
     /**
-     *
-     */
-    public void clear();
-
-    /**
      * @param collections
      */
     public void update(List<IEBusCommandCollection> collections);
