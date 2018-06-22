@@ -137,9 +137,6 @@ public class EBusBridgeHandler extends BaseBridgeHandler
         }
 
         if (StringUtils.isNotEmpty(serialPort)) {
-
-            libClient.setSerialConnection(serialPort);
-
             libClient.setSerialConnection(serialPort);
         }
 
