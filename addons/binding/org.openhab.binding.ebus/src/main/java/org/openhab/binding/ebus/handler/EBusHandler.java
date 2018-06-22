@@ -39,7 +39,6 @@ import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
 import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.RefreshType;
-import org.openhab.binding.ebus.EBusBindingConstants;
 import org.openhab.binding.ebus.internal.EBusBindingUtils;
 import org.openhab.binding.ebus.internal.EBusLibClient;
 import org.slf4j.Logger;
@@ -133,6 +132,7 @@ public class EBusHandler extends BaseThingHandler {
     public void channelLinked(@NonNull ChannelUID channelUID) {
         super.channelLinked(channelUID);
 
+        logger.info("channelLinked {}", channelUID);
         initializeChannelPolling(channelUID);
     }
 
@@ -140,6 +140,7 @@ public class EBusHandler extends BaseThingHandler {
     public void channelUnlinked(@NonNull ChannelUID channelUID) {
         super.channelUnlinked(channelUID);
 
+        logger.info("channelUnlinked {}", channelUID);
         disposeChannelPolling(channelUID);
     }
 
@@ -152,8 +153,9 @@ public class EBusHandler extends BaseThingHandler {
     public void dispose() {
 
         // Cancel all polling jobs
-        for (ScheduledFuture<?> pollingJob : uniqueTelegramPollings.values()) {
-            pollingJob.cancel(true);
+        for (Entry<ByteBuffer, ScheduledFuture<?>> entry : uniqueTelegramPollings.entrySet()) {
+            logger.info("Remove polling job for {}", EBusUtils.toHexDumpString(entry.getKey()));
+            entry.getValue().cancel(true);
         }
 
         uniqueTelegramPollings.clear();
@@ -211,6 +213,11 @@ public class EBusHandler extends BaseThingHandler {
             pollingPeriod = 0l;
         }
 
+        // only for linked channels
+        if (!isLinked(channel.getUID())) {
+            pollingPeriod = 0l;
+        }
+
         return pollingPeriod;
     }
 
@@ -225,8 +232,9 @@ public class EBusHandler extends BaseThingHandler {
         final EBusLibClient libClient = getLibClient();
 
         final Map<@NonNull String, @NonNull String> properties = channel.getProperties();
+        final String collectionId = thing.getThingTypeUID().getId();
 
-        final String collectionId = properties.get(COLLECTION);
+        // final String collectionId = properties.get(COLLECTION);
         final String commandId = properties.get(COMMAND);
 
         try {
@@ -301,7 +309,7 @@ public class EBusHandler extends BaseThingHandler {
 
         for (Entry<String, Object> resultEntry : result.entrySet()) {
 
-            logger.debug("Key {} with value {}", resultEntry.getKey(), resultEntry.getValue());
+            logger.trace("Key {} with value {}", resultEntry.getKey(), resultEntry.getValue());
 
             ChannelUID channelUID = EBusBindingUtils.generateChannelUID(commandChannel.getParent(),
                     resultEntry.getKey(), thing.getUID());
@@ -331,7 +339,6 @@ public class EBusHandler extends BaseThingHandler {
 
         } else if (bridge.getStatus() == ThingStatus.ONLINE) {
             updateStatus(ThingStatus.ONLINE);
-            // updateHandler();
 
         } else {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.BRIDGE_OFFLINE);
@@ -362,6 +369,11 @@ public class EBusHandler extends BaseThingHandler {
         final EBusLibClient libClient = getLibClient();
         final String commandId = channel.getProperties().get(COMMAND);
 
+        if (StringUtils.isEmpty(commandId)) {
+            logger.warn("Invalid channel uid {}", channelUID);
+            logger.warn("Invalid channel {}", channel);
+        }
+
         // compose the telegram
         final ByteBuffer telegram = getChannelTelegram(channel);
 
@@ -386,7 +398,7 @@ public class EBusHandler extends BaseThingHandler {
                 // add this job to global list, so we can stop all later on.
                 uniqueTelegramPollings.put(telegram, job);
 
-                logger.info("Register polling for \"{}\" every {} sec. (initil delay {} sec.)", commandId,
+                logger.info("Register polling for \"{}\" every {} sec. (initial delay {} sec.)", commandId,
                         pollingPeriod, firstExecutionDelay);
             } else {
 
@@ -413,7 +425,7 @@ public class EBusHandler extends BaseThingHandler {
 
         Map<@NonNull String, String> properties = thing.getProperties();
         String oldHash = properties.get("collectionHash");
-        String collectionId = properties.get(EBusBindingConstants.COLLECTION);
+        String collectionId = thing.getThingTypeUID().getId();
         IEBusCommandCollection collection = libClient.getClient().getCommandCollection(collectionId);
 
         if (StringUtils.isEmpty(collectionId)) {
@@ -478,7 +490,7 @@ public class EBusHandler extends BaseThingHandler {
         boolean filterAcceptDestination = (boolean) getThing().getConfiguration().get(FILTER_ACCEPT_SLAVE);
         boolean filterAcceptBroadcast = (boolean) getThing().getConfiguration().get(FILTER_ACCEPT_BROADCAST);
 
-        String collectionId = thing.getProperties().get(COLLECTION);
+        String collectionId = thing.getThingTypeUID().getId();
 
         if (!commandMethod.getParent().getParentCollection().getId().equals(collectionId)) {
             logger.trace("eBUS node handler {} use collectionId {}, not {} ...", thing.getUID(), collectionId,
@@ -506,8 +518,8 @@ public class EBusHandler extends BaseThingHandler {
             if (EBusUtils.isMasterAddress(destinationAddress) && masterAddressComp != null
                     && destinationAddress == masterAddressComp) {
                 // master-master telegram
-
                 return true;
+
             } else if (slaveAddress == destinationAddress) {
                 // master-slave telegram
                 return true;
@@ -529,12 +541,13 @@ public class EBusHandler extends BaseThingHandler {
         for (Channel oldChannel : currentThing.getChannels()) {
 
             Channel newChannel = thing.getChannel(oldChannel.getUID().getId());
-
+            logger.info("thingUpdated {}", oldChannel.getUID());
             if (newChannel != null
                     && !ObjectUtils.equals(oldChannel.getConfiguration(), newChannel.getConfiguration())) {
                 logger.debug("Configuration for channel {} changed from {} to {} ...", oldChannel.getUID(),
                         oldChannel.getConfiguration(), newChannel.getConfiguration());
 
+                logger.info("thingUpdated {}", thing.getUID());
                 updateChannelPolling(oldChannel.getUID());
             }
         }
@@ -554,7 +567,7 @@ public class EBusHandler extends BaseThingHandler {
      * Updates the handler incl. all pollings
      */
     public void updateHandler() {
-        // initializePolling();
+
         logger.info("Initialize all eBUS pollings for {} ...", thing.getUID());
 
         for (final Channel channel : thing.getChannels()) {

@@ -44,4 +44,3 @@ Service-Component: OSGI-INF/*.xml
 Export-Package: org.openhab.binding.ebus,
  org.openhab.binding.ebus.handler,
  org.openhab.binding.ebus.thing
-Bundle-ActivationPolicy: lazy

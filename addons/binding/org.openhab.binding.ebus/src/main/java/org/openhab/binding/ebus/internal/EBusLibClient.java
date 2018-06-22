@@ -113,10 +113,11 @@ public class EBusLibClient {
      * @return
      * @throws EBusTypeException
      */
+    @SuppressWarnings({ "unused", "null" })
     public ByteBuffer generateSetterTelegram(Thing thing, Channel channel, Command command) throws EBusTypeException {
 
         String slaveAddress = (String) thing.getConfiguration().get(EBusBindingConstants.SLAVE_ADDRESS);
-        String collectionId = channel.getProperties().get(COLLECTION);
+        String collectionId = thing.getThingTypeUID().getId();
         String commandId = channel.getProperties().get(COMMAND);
         String valueName = channel.getProperties().get(VALUE_NAME);
 

@@ -93,7 +93,7 @@ public class EBusDiscovery extends AbstractDiscoveryService implements IEBusDevi
 
     @Override
     protected void startScan() {
-        logger.warn("Starting eBUS discovery scan ...");
+        logger.debug("Starting eBUS discovery scan ...");
 
         EBusDeviceTableService deviceTableService = getDeviceTableService();
         if (deviceTableService != null) {
@@ -173,7 +173,7 @@ public class EBusDiscovery extends AbstractDiscoveryService implements IEBusDevi
             String deviceStr = EBusUtils.toHexDumpString(device.getDeviceId()).toString();
             for (final IEBusCommandCollection collection : commandCollections) {
                 if (collection.getIdentification().contains(deviceStr)) {
-                    logger.info("Discovered device {} ...", collection.getId());
+                    logger.info("Discovered eBUS device {} ...", collection.getId());
                     updateDiscoveredThing(device, collection);
                 }
             }
