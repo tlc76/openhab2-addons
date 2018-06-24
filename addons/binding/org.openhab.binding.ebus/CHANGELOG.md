@@ -1,3 +1,46 @@
+## Alpha 0.0.21 (2018-06-24)
+
+Features:
+
+  - Check Thing configuration on initialize and not set to ``ONLINE``
+  
+Bugfixes:
+
+  - Polling changes on Thing level are updated imidiatly
+
+  
+## Alpha 0.0.20 (2018-06-23)
+
+Features:
+
+  - Optimize channel polling to react on un/link channels
+  - Add new openhab ``Units Of Measurement`` feature for temperature values
+
+Bugfixes:
+
+  - Fix polling regression from previous release
+  
+## Alpha 0.0.19 (2018-05-23)
+
+Features:
+
+  - Update binding to openHAB 2.3, it is not compatible to a lower version!
+  
+## Alpha 0.0.18 (2017-05-07)
+
+Features:
+
+  - Update README.MD
+  - Add a new console command ``smarthome:ebus channels``
+  
+## Alpha 0.0.17 (2017-12-04)
+
+...
+  
+## Alpha 0.0.16 (2017-12-04)
+
+...
+  
 ## Alpha 0.0.15 (2017-12-04)
 
 Features:
