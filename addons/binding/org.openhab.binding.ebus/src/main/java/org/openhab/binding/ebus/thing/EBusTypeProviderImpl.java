@@ -214,7 +214,8 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
             StateDescription state = new StateDescription(value.getMax(), value.getMin(), value.getStep(), pattern,
                     readOnly, options);
 
-            URI configDescriptionURI = polling ? CONFIG_DESCRIPTION_URI_POLLING_CHANNEL : null;
+            URI configDescriptionURI = polling ? CONFIG_DESCRIPTION_URI_POLLING_CHANNEL
+                    : CONFIG_DESCRIPTION_URI_NULL_CHANNEL;
 
             String description = null;
             Set<String> tags = null;
