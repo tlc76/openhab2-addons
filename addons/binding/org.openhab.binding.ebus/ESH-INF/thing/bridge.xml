@@ -113,6 +113,7 @@
 		<category>Metric</category>
 		<state readOnly="true" pattern="%d">
 		</state>
+		<config-description></config-description>
 	</channel-type>
 
 	<channel-type id="metricsFloat">
@@ -121,6 +122,7 @@
 		<category>Metric</category>
 		<state readOnly="true" pattern="%.1f%%">
 		</state>
+		<config-description></config-description>
 	</channel-type>
 
 </thing:thing-descriptions>

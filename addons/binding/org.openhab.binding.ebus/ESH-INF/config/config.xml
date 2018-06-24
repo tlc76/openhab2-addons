@@ -66,5 +66,9 @@
 		</parameter>
 
 	</config-description>
+	
+	<config-description uri="channel-type:ebus:nullChannel">
+	
+	</config-description>
 
 </config-description:config-descriptions>
