@@ -337,11 +337,15 @@ public class EBusHandler extends BaseThingHandler {
         if (bridge == null) {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "No bridge defined!");
 
+        } else if (StringUtils.isEmpty((String) thing.getConfiguration().get(SLAVE_ADDRESS))) {
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR);
+
         } else if (bridge.getStatus() == ThingStatus.ONLINE) {
             updateStatus(ThingStatus.ONLINE);
+            updateHandler();
 
         } else {
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.BRIDGE_OFFLINE);
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.BRIDGE_OFFLINE, "Slave address is not set!");
         }
 
     }
@@ -533,6 +537,8 @@ public class EBusHandler extends BaseThingHandler {
     public void thingUpdated(@NonNull Thing thing) {
 
         // Info: I expect no difference in the channel list without a restart!
+
+        logger.warn("EBusHandler.thingUpdated()");
 
         Thing currentThing = this.thing;
 
