@@ -338,14 +338,14 @@ public class EBusHandler extends BaseThingHandler {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "No bridge defined!");
 
         } else if (StringUtils.isEmpty((String) thing.getConfiguration().get(SLAVE_ADDRESS))) {
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR);
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Slave address is not set!");
 
-        } else if (bridge.getStatus() == ThingStatus.ONLINE) {
-            updateStatus(ThingStatus.ONLINE);
-            updateHandler();
+        } else if (bridge.getStatus() != ThingStatus.ONLINE) {
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.BRIDGE_OFFLINE);
 
         } else {
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.BRIDGE_OFFLINE, "Slave address is not set!");
+            updateStatus(ThingStatus.ONLINE);
+            updateHandler();
         }
 
     }
@@ -376,6 +376,7 @@ public class EBusHandler extends BaseThingHandler {
         if (StringUtils.isEmpty(commandId)) {
             logger.warn("Invalid channel uid {}", channelUID);
             logger.warn("Invalid channel {}", channel);
+            return;
         }
 
         // compose the telegram
@@ -537,9 +538,6 @@ public class EBusHandler extends BaseThingHandler {
     public void thingUpdated(@NonNull Thing thing) {
 
         // Info: I expect no difference in the channel list without a restart!
-
-        logger.warn("EBusHandler.thingUpdated()");
-
         Thing currentThing = this.thing;
 
         this.thing = thing;
@@ -552,8 +550,6 @@ public class EBusHandler extends BaseThingHandler {
                     && !ObjectUtils.equals(oldChannel.getConfiguration(), newChannel.getConfiguration())) {
                 logger.debug("Configuration for channel {} changed from {} to {} ...", oldChannel.getUID(),
                         oldChannel.getConfiguration(), newChannel.getConfiguration());
-
-                logger.info("thingUpdated {}", thing.getUID());
                 updateChannelPolling(oldChannel.getUID());
             }
         }
@@ -574,7 +570,7 @@ public class EBusHandler extends BaseThingHandler {
      */
     public void updateHandler() {
 
-        logger.info("Initialize all eBUS pollings for {} ...", thing.getUID());
+        logger.info("(Re)Initialize all eBUS pollings for {} ...", thing.getUID());
 
         for (final Channel channel : thing.getChannels()) {
             updateChannelPolling(channel.getUID());
