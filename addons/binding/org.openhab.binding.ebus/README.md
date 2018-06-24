@@ -16,17 +16,13 @@ read temperatures, pump performance, gas consumption etc.
 
 ### ZIP file
 
-To install this binding copy the contents of the zip file into the `openhab\addon`
+**Deprecated:** To install this binding copy the contents of the zip file into the `openhab\addon`
 directory. The zip file contains the individual bundles of the binding.
 
 ### KAR file
 
 To install this binding copy the kar file into the  `openhab\addon` directory.
 The kar file is an archive that contains everything.
-
-When using the kar file, the binding must be entered in the file `addons.cfg`
-under `binding` with the value `ebus`. If this does not happen, the binding
-will be uninstalled after a few seconds.
 
 ### Marketplace
 
