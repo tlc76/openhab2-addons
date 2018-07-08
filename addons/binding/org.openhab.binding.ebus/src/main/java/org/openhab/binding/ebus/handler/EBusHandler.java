@@ -22,6 +22,7 @@ import java.util.TimeZone;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jdt.annotation.NonNull;
@@ -491,9 +492,9 @@ public class EBusHandler extends BaseThingHandler {
         // only interesting for broadcasts
         Byte masterAddressComp = masterAddress == null ? EBusUtils.getMasterAddress(slaveAddress) : masterAddress;
 
-        boolean filterAcceptSource = (boolean) getThing().getConfiguration().get(FILTER_ACCEPT_MASTER);
-        boolean filterAcceptDestination = (boolean) getThing().getConfiguration().get(FILTER_ACCEPT_SLAVE);
-        boolean filterAcceptBroadcast = (boolean) getThing().getConfiguration().get(FILTER_ACCEPT_BROADCAST);
+        boolean filterAcceptSource = BooleanUtils.isTrue((Boolean) configuration.get(FILTER_ACCEPT_MASTER));
+        boolean filterAcceptDestination = BooleanUtils.isTrue((Boolean) configuration.get(FILTER_ACCEPT_SLAVE));
+        boolean filterAcceptBroadcast = BooleanUtils.isTrue((Boolean) configuration.get(FILTER_ACCEPT_BROADCAST));
 
         String collectionId = thing.getThingTypeUID().getId();
 
