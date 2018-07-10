@@ -29,6 +29,7 @@ import de.csdev.ebus.command.IEBusCommandMethod;
 import de.csdev.ebus.command.IEBusCommandMethod.Method;
 import de.csdev.ebus.command.datatypes.EBusTypeException;
 import de.csdev.ebus.core.EBusController;
+import de.csdev.ebus.core.EBusControllerException;
 import de.csdev.ebus.core.connection.EBusEmulatorConnection;
 import de.csdev.ebus.core.connection.EBusSerialNRJavaSerialConnection;
 import de.csdev.ebus.core.connection.EBusTCPConnection;
@@ -93,16 +94,18 @@ public class EBusLibClient {
     /**
      * @param telegram
      * @return
+     * @throws EBusControllerException
      */
-    public Integer sendTelegram(ByteBuffer telegram) {
+    public Integer sendTelegram(ByteBuffer telegram) throws EBusControllerException {
         return client.addToSendQueue(EBusUtils.toByteArray(telegram));
     }
 
     /**
      * @param telegram
      * @return
+     * @throws EBusControllerException
      */
-    public Integer sendTelegram(byte[] telegram) {
+    public Integer sendTelegram(byte[] telegram) throws EBusControllerException {
         return client.addToSendQueue(telegram);
     }
 

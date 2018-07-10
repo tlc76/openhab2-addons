@@ -49,6 +49,7 @@ import de.csdev.ebus.command.IEBusCommandCollection;
 import de.csdev.ebus.command.IEBusCommandMethod;
 import de.csdev.ebus.command.datatypes.EBusTypeException;
 import de.csdev.ebus.core.EBusConsts;
+import de.csdev.ebus.core.EBusControllerException;
 import de.csdev.ebus.utils.EBusDateTime;
 import de.csdev.ebus.utils.EBusUtils;
 
@@ -287,7 +288,7 @@ public class EBusHandler extends BaseThingHandler {
                     if (telegram != null) {
                         getLibClient().sendTelegram(telegram);
                     }
-                } catch (EBusTypeException e) {
+                } catch (EBusTypeException | EBusControllerException e) {
                     logger.error("error!", e);
                 }
 
@@ -397,7 +398,13 @@ public class EBusHandler extends BaseThingHandler {
                     logger.info("Poll command \"{}\" with \"{}\" ...", channel.getUID(),
                             EBusUtils.toHexDumpString(telegram).toString());
 
-                    libClient.getClient().addToSendQueue(EBusUtils.toByteArray(telegram), 2);
+                    try {
+                        libClient.getClient().addToSendQueue(EBusUtils.toByteArray(telegram), 2);
+
+                    } catch (EBusControllerException e) {
+                        logger.debug("Remove polling job for {} due to controller exception", channelUID);
+                        this.disposeChannelPolling(channelUID);
+                    }
 
                 }, firstExecutionDelay, pollingPeriod, TimeUnit.SECONDS);
 

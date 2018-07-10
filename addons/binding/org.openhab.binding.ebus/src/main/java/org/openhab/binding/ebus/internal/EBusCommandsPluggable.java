@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import de.csdev.ebus.client.EBusClient;
 import de.csdev.ebus.command.IEBusCommandCollection;
+import de.csdev.ebus.core.EBusControllerException;
 import de.csdev.ebus.core.connection.EBusEmulatorConnection;
 import de.csdev.ebus.core.connection.IEBusConnection;
 import de.csdev.ebus.service.device.EBusDeviceTable;
@@ -169,8 +170,9 @@ public class EBusCommandsPluggable implements ConsoleCommandExtension {
     /**
      * @param args
      * @param console
+     * @throws EBusControllerException
      */
-    private void list(String[] args, Console console) {
+    private void list(String[] args, Console console) throws EBusControllerException {
         console.println(String.format("%-40s | %-40s | %-10s", "Thing UID", "Label", "Type"));
         console.println(String.format("%-40s-+-%-40s-+-%-10s", StringUtils.repeat("-", 40), StringUtils.repeat("-", 40),
                 StringUtils.repeat("-", 10)));
@@ -238,71 +240,75 @@ public class EBusCommandsPluggable implements ConsoleCommandExtension {
     @Override
     public void execute(String[] args, Console console) {
 
-        if (args.length == 0) {
-            list(args, console);
-            return;
-        }
-
-        if (StringUtils.equals(args[0], SUBCMD_LIST)) {
-            list(args, console);
-            return;
-
-        } else if (StringUtils.equals(args[0], SUBCMD_CHANNELS)) {
-            listChannels(args, console);
-
-        } else if (StringUtils.equals(args[0], SUBCMD_DEVICES)) {
-
-            if (args.length == 2) {
-                devices(args, console, getBridge(args[1], console));
-            } else {
-                devices(args, console, null);
+        try {
+            if (args.length == 0) {
+                list(args, console);
+                return;
             }
 
-        } else if (StringUtils.equals(args[0], SUBCMD_RESOLVE)) {
-            resolve(EBusUtils.toByteArray(args[1]), console);
+            if (StringUtils.equals(args[0], SUBCMD_LIST)) {
+                list(args, console);
+                return;
 
-        } else if (StringUtils.equals(args[0], SUBCMD_SEND)) {
-            EBusBridgeHandler bridge = null;
+            } else if (StringUtils.equals(args[0], SUBCMD_CHANNELS)) {
+                listChannels(args, console);
 
-            if (args.length == 3) {
-                bridge = getBridge(args[2], console);
-            } else {
-                bridge = getFirstBridge(console);
-            }
+            } else if (StringUtils.equals(args[0], SUBCMD_DEVICES)) {
 
-            if (bridge != null) {
-                byte[] data = EBusUtils.toByteArray(args[1]);
-                bridge.getLibClient().sendTelegram(data);
-            }
-        } else if (StringUtils.equals(args[0], SUBCMD_RELOAD)) {
-            console.println("Reload all eBUS configurations ...");
-            typeProvider.reload();
+                if (args.length == 2) {
+                    devices(args, console, getBridge(args[1], console));
+                } else {
+                    devices(args, console, null);
+                }
 
-        } else if (StringUtils.equals(args[0], SUBCMD_UPDATE)) {
-            Collection<EBusBridgeHandler> bridgeHandlers = getAllEBusBridgeHandlers();
+            } else if (StringUtils.equals(args[0], SUBCMD_RESOLVE)) {
+                resolve(EBusUtils.toByteArray(args[1]), console);
 
-            StringBuilder sb = new StringBuilder();
-            sb.append("Refresh all available eBUS Things ...\n");
-            sb.append("\n");
-            sb.append(String.format("%-40s | %-40s | %-10s\n", "Thing UID", "Label", "Refreshed ?"));
-            sb.append(String.format("%-40s-+-%-40s-+-%-10s\n", StringUtils.repeat("-", 40), StringUtils.repeat("-", 40),
-                    StringUtils.repeat("-", 10)));
+            } else if (StringUtils.equals(args[0], SUBCMD_SEND)) {
+                EBusBridgeHandler bridge = null;
 
-            for (EBusBridgeHandler bridgeHandler : bridgeHandlers) {
-                Bridge bridge = bridgeHandler.getThing();
+                if (args.length == 3) {
+                    bridge = getBridge(args[2], console);
+                } else {
+                    bridge = getFirstBridge(console);
+                }
 
-                for (Thing thing : bridge.getThings()) {
-                    if (thing.getHandler() instanceof EBusHandler) {
-                        EBusHandler handler = (EBusHandler) thing.getHandler();
-                        if (handler != null) {
-                            boolean status = handler.refreshThingConfiguration();
-                            sb.append(
-                                    String.format("%-40s | %-40s | %-10s\n", thing.getUID(), thing.getLabel(), status));
+                if (bridge != null) {
+                    byte[] data = EBusUtils.toByteArray(args[1]);
+                    bridge.getLibClient().sendTelegram(data);
+                }
+            } else if (StringUtils.equals(args[0], SUBCMD_RELOAD)) {
+                console.println("Reload all eBUS configurations ...");
+                typeProvider.reload();
+
+            } else if (StringUtils.equals(args[0], SUBCMD_UPDATE)) {
+                Collection<EBusBridgeHandler> bridgeHandlers = getAllEBusBridgeHandlers();
+
+                StringBuilder sb = new StringBuilder();
+                sb.append("Refresh all available eBUS Things ...\n");
+                sb.append("\n");
+                sb.append(String.format("%-40s | %-40s | %-10s\n", "Thing UID", "Label", "Refreshed ?"));
+                sb.append(String.format("%-40s-+-%-40s-+-%-10s\n", StringUtils.repeat("-", 40),
+                        StringUtils.repeat("-", 40), StringUtils.repeat("-", 10)));
+
+                for (EBusBridgeHandler bridgeHandler : bridgeHandlers) {
+                    Bridge bridge = bridgeHandler.getThing();
+
+                    for (Thing thing : bridge.getThings()) {
+                        if (thing.getHandler() instanceof EBusHandler) {
+                            EBusHandler handler = (EBusHandler) thing.getHandler();
+                            if (handler != null) {
+                                boolean status = handler.refreshThingConfiguration();
+                                sb.append(String.format("%-40s | %-40s | %-10s\n", thing.getUID(), thing.getLabel(),
+                                        status));
+                            }
                         }
                     }
                 }
+                console.print(sb.toString());
             }
-            console.print(sb.toString());
+        } catch (EBusControllerException e) {
+            console.print(e.getMessage());
         }
     }
 
