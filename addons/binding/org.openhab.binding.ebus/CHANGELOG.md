@@ -1,3 +1,19 @@
+## Alpha 0.0.23 (2018-09-24)
+
+Bugfixes:
+
+  - Fix for 2.4 milestone release, braking changes in ESH
+  
+## Alpha 0.0.22 (2018-07-10)
+
+Features:
+
+  - Update ebus core lib and add new exceptions
+  
+Bugfixes:
+
+  - Fix NPE - Use Apache BeanUtils for configuration
+
 ## Alpha 0.0.21 (2018-06-24)
 
 Features:
@@ -6,7 +22,7 @@ Features:
   
 Bugfixes:
 
-  - Polling changes on Thing level are updated imidiatly
+  - Polling changes on Thing level are updated immediately
 
   
 ## Alpha 0.0.20 (2018-06-23)
