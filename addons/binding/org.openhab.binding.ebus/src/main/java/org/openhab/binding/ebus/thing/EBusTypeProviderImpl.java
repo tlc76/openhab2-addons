@@ -143,8 +143,15 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
 
         ChannelGroupTypeUID groupTypeUID = EBusBindingUtils.generateChannelGroupTypeUID(command);
 
-        ChannelGroupType cgt = new ChannelGroupType(groupTypeUID, false, command.getLabel(), "HVAC", command.getId(),
+        ChannelGroupType cgt = new ChannelGroupType(groupTypeUID, false, command.getLabel(), command.getId(),
                 channelDefinitions);
+
+        // ChannelGroupType cgt = ChannelGroupTypeBuilder.instance(groupTypeUID, command.getLabel())
+        // .isAdvanced(false)
+        // .withCategory("HVAC")
+        // .withChannelDefinitions(channelDefinitions)
+        // .withDescription(command.getId())
+        // .build();
 
         // add to global list
         channelGroupTypes.put(cgt.getUID(), cgt);
