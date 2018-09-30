@@ -1,3 +1,13 @@
+## Release Candidate 1 (2018-09-30)
+
+Features:
+
+  - Add DS Annotations for service configuration
+  
+Bugfixes:
+
+  - Add new ChannelGroupTypeProvider to internal provider to fix broken Alpha 23
+  
 ## Alpha 0.0.23 (2018-09-24)
 
 Bugfixes:
