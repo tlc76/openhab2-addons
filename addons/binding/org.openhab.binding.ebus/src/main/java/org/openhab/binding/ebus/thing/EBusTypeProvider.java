@@ -8,10 +8,18 @@
  */
 package org.openhab.binding.ebus.thing;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.smarthome.core.thing.binding.ThingTypeProvider;
+import org.eclipse.smarthome.core.thing.type.ChannelGroupType;
+import org.eclipse.smarthome.core.thing.type.ChannelGroupTypeProvider;
+import org.eclipse.smarthome.core.thing.type.ChannelGroupTypeUID;
 import org.eclipse.smarthome.core.thing.type.ChannelTypeProvider;
+import org.eclipse.smarthome.core.thing.type.ChannelTypeRegistry;
 import org.osgi.service.cm.ManagedService;
 
 import de.csdev.ebus.command.EBusCommandRegistry;
@@ -21,7 +29,9 @@ import de.csdev.ebus.command.IEBusCommandCollection;
  *
  * @author Christian Sowada - Initial contribution
  */
-public interface EBusTypeProvider extends ThingTypeProvider, ChannelTypeProvider, ManagedService {
+@NonNullByDefault
+public interface EBusTypeProvider
+        extends ThingTypeProvider, ChannelTypeProvider, ChannelGroupTypeProvider, ManagedService {
 
     /**
      * @param collections
@@ -47,4 +57,18 @@ public interface EBusTypeProvider extends ThingTypeProvider, ChannelTypeProvider
      * @return
      */
     public boolean reload();
+
+    /**
+     * @see ChannelTypeRegistry#getChannelGroupType(ChannelGroupTypeUID, Locale)
+     */
+    @Override
+    @Nullable
+    ChannelGroupType getChannelGroupType(ChannelGroupTypeUID channelGroupTypeUID, @Nullable Locale locale);
+
+    /**
+     * @see ChannelTypeRegistry#getChannelGroupTypes(Locale)
+     */
+    @Override
+    @Nullable
+    Collection<ChannelGroupType> getChannelGroupTypes(@Nullable Locale locale);
 }
