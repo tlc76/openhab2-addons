@@ -27,9 +27,12 @@ import org.openhab.binding.ebus.handler.EBusBridgeHandler;
 import org.openhab.binding.ebus.handler.EBusHandler;
 import org.openhab.binding.ebus.thing.EBusTypeProvider;
 import org.osgi.service.component.ComponentContext;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
 
 import de.csdev.ebus.client.EBusClient;
 import de.csdev.ebus.command.IEBusCommandCollection;
@@ -44,10 +47,8 @@ import de.csdev.ebus.utils.EBusUtils;
  *
  * @author Christian Sowada - Initial contribution
  */
+@Component(service = { ConsoleCommandExtension.class }, immediate = true)
 public class EBusCommandsPluggable implements ConsoleCommandExtension {
-
-    @SuppressWarnings("unused")
-    private final Logger logger = LoggerFactory.getLogger(EBusCommandsPluggable.class);
 
     private static final String CMD = "ebus";
 
@@ -74,6 +75,7 @@ public class EBusCommandsPluggable implements ConsoleCommandExtension {
      *
      * @param componentContext
      */
+    @Activate
     protected void activate(ComponentContext componentContext) {
         // noop
     }
@@ -81,15 +83,17 @@ public class EBusCommandsPluggable implements ConsoleCommandExtension {
     /**
      * Deactivating this component - called from DS.
      */
+    @Deactivate
     protected void deactivate(ComponentContext componentContext) {
         // noop
     }
 
-    @Reference
+    @Reference(policy = ReferencePolicy.STATIC, cardinality = ReferenceCardinality.MANDATORY)
     protected void setThingRegistry(ThingRegistry thingRegistry) {
         this.thingRegistry = thingRegistry;
     }
 
+    @Reference(policy = ReferencePolicy.STATIC, cardinality = ReferenceCardinality.MANDATORY)
     public void setTypeProvider(EBusTypeProvider typeProvider) {
         this.typeProvider = typeProvider;
     }

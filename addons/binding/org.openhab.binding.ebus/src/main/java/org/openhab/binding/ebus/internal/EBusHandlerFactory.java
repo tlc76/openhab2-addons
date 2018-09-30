@@ -22,13 +22,16 @@ import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.thing.ThingUID;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandlerFactory;
 import org.eclipse.smarthome.core.thing.binding.ThingHandler;
+import org.eclipse.smarthome.core.thing.binding.ThingHandlerFactory;
 import org.openhab.binding.ebus.handler.EBusBridgeHandler;
 import org.openhab.binding.ebus.handler.EBusHandler;
 import org.openhab.binding.ebus.thing.EBusTypeProvider;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.ComponentContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
 
 /**
  * The {@link EBusHandlerFactory} is responsible for creating things and thing
@@ -36,10 +39,9 @@ import org.slf4j.LoggerFactory;
  *
  * @author Christian Sowada - Initial contribution
  */
+@Component(service = { ThingHandlerFactory.class }, configurationPid = "binding.ebus", property = {
+        "service.pid:String=org.openhab.ebus" }, immediate = true)
 public class EBusHandlerFactory extends BaseThingHandlerFactory {
-
-    @SuppressWarnings("unused")
-    private final Logger logger = LoggerFactory.getLogger(EBusHandlerFactory.class);
 
     private Map<ThingUID, ServiceRegistration<?>> discoveryServiceRegs = new HashMap<>();
 
@@ -127,6 +129,7 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory {
         }
     }
 
+    @Reference(policy = ReferencePolicy.STATIC, cardinality = ReferenceCardinality.MANDATORY)
     public void setTypeProvider(EBusTypeProvider typeProvider) {
         this.typeProvider = typeProvider;
     }
