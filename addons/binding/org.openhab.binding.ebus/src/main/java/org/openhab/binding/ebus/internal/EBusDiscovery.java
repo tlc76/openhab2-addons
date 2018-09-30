@@ -48,8 +48,6 @@ public class EBusDiscovery extends AbstractDiscoveryService implements IEBusDevi
 
     private EBusBridgeHandler bridgeHandle;
 
-    // private ScheduledFuture<?> discoveryJob;
-
     public EBusDiscovery(@NonNull EBusBridgeHandler bridgeHandle) throws IllegalArgumentException {
         super(new HashSet<>(Arrays.asList(bridgeHandle.getThing().getThingTypeUID())), 20, false);
 
@@ -57,39 +55,12 @@ public class EBusDiscovery extends AbstractDiscoveryService implements IEBusDevi
         bridgeHandle.getLibClient().getClient().addEBusDeviceTableListener(this);
     }
 
-    // @Override
-    // protected void startBackgroundDiscovery() {
-    // logger.info("Start eBUS device background discovery");
-    // if (discoveryJob == null || discoveryJob.isCancelled()) {
-    // discoveryJob = scheduler.scheduleWithFixedDelay(new Runnable() {
-    //
-    // @Override
-    // public void run() {
-    // EBusDeviceTableService deviceTableService = getDeviceTableService();
-    // if (deviceTableService != null) {
-    // deviceTableService.inquiryDeviceExistence();
-    // }
-    // }
-    //
-    // }, 0, 20, TimeUnit.MINUTES);
-    // }
-    // }
-
     /**
      * @return
      */
     private EBusDeviceTableService getDeviceTableService() {
         return bridgeHandle.getLibClient().getClient().getDeviceTableService();
     }
-
-    // @Override
-    // protected void stopBackgroundDiscovery() {
-    // logger.info("Stop eBUS device background discovery");
-    // if (discoveryJob != null && !discoveryJob.isCancelled()) {
-    // discoveryJob.cancel(true);
-    // discoveryJob = null;
-    // }
-    // }
 
     @Override
     protected void startScan() {

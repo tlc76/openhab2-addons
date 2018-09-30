@@ -26,12 +26,16 @@ import java.util.Set;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
+import org.eclipse.smarthome.core.thing.binding.ThingTypeProvider;
 import org.eclipse.smarthome.core.thing.type.ChannelDefinition;
 import org.eclipse.smarthome.core.thing.type.ChannelGroupDefinition;
 import org.eclipse.smarthome.core.thing.type.ChannelGroupType;
+import org.eclipse.smarthome.core.thing.type.ChannelGroupTypeBuilder;
+import org.eclipse.smarthome.core.thing.type.ChannelGroupTypeProvider;
 import org.eclipse.smarthome.core.thing.type.ChannelGroupTypeUID;
 import org.eclipse.smarthome.core.thing.type.ChannelKind;
 import org.eclipse.smarthome.core.thing.type.ChannelType;
+import org.eclipse.smarthome.core.thing.type.ChannelTypeProvider;
 import org.eclipse.smarthome.core.thing.type.ChannelTypeUID;
 import org.eclipse.smarthome.core.thing.type.ThingType;
 import org.eclipse.smarthome.core.thing.type.ThingTypeBuilder;
@@ -42,7 +46,14 @@ import org.openhab.binding.ebus.internal.EBusBindingUtils;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.cm.ConfigurationException;
+import org.osgi.service.cm.ManagedService;
 import org.osgi.service.component.ComponentContext;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,6 +75,9 @@ import de.csdev.ebus.configuration.EBusConfigurationReaderExt;
  *
  * @author Christian Sowada - Initial contribution
  */
+@Component(service = { EBusTypeProvider.class, ThingTypeProvider.class, ChannelTypeProvider.class,
+        ChannelGroupTypeProvider.class, ManagedService.class }, configurationPid = "binding.ebus", property = {
+                "service.pid:String=org.openhab.ebus" }, immediate = true)
 public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTypeProvider {
 
     private final Logger logger = LoggerFactory.getLogger(EBusTypeProviderImpl.class);
@@ -79,6 +93,7 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
      *
      * @param componentContext
      */
+    @Activate
     public void activate(ComponentContext componentContext) {
 
         logger.info("Loading eBUS Type Provider ...");
@@ -87,11 +102,6 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
         skipFirstConfigurationAdminUpdate = true;
 
         try {
-            // ServiceReference<ConfigurationAdmin> reference = componentContext.getBundleContext()
-            // .getServiceReference(ConfigurationAdmin.class);
-            //
-            // ConfigurationAdmin configurationAdmin = componentContext.getBundleContext().getService(reference);
-
             if (configurationAdmin != null) {
                 Configuration configuration = configurationAdmin.getConfiguration(BINDING_PID, null);
                 updateConfiguration(configuration.getProperties());
@@ -143,15 +153,9 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
 
         ChannelGroupTypeUID groupTypeUID = EBusBindingUtils.generateChannelGroupTypeUID(command);
 
-        ChannelGroupType cgt = new ChannelGroupType(groupTypeUID, false, command.getLabel(), command.getId(),
-                channelDefinitions);
-
-        // ChannelGroupType cgt = ChannelGroupTypeBuilder.instance(groupTypeUID, command.getLabel())
-        // .isAdvanced(false)
-        // .withCategory("HVAC")
-        // .withChannelDefinitions(channelDefinitions)
-        // .withDescription(command.getId())
-        // .build();
+        ChannelGroupType cgt = ChannelGroupTypeBuilder.instance(groupTypeUID, command.getLabel()).isAdvanced(false)
+                .withCategory(command.getId()).withChannelDefinitions(channelDefinitions).withDescription("HVAC")
+                .build();
 
         // add to global list
         channelGroupTypes.put(cgt.getUID(), cgt);
@@ -166,6 +170,7 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
      * @param mainChannel
      * @return
      */
+    @SuppressWarnings("deprecation")
     private ChannelType createChannelType(IEBusValue value, IEBusCommandMethod mainMethod) {
 
         // only process valid entries
@@ -270,6 +275,7 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
      *
      * @param componentContext
      */
+    @Deactivate
     public void deactivate(ComponentContext componentContext) {
 
         logger.info("Stopping eBUS Type Provider ...");
@@ -340,6 +346,7 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
     /**
      * @param cm
      */
+    @Reference(policy = ReferencePolicy.STATIC, cardinality = ReferenceCardinality.OPTIONAL)
     public void setConfigurationAdmin(ConfigurationAdmin cm) {
         this.configurationAdmin = cm;
 
