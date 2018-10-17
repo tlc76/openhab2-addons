@@ -151,9 +151,12 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
     private ChannelGroupDefinition createChannelGroupDefinition(IEBusCommand command,
             List<ChannelDefinition> channelDefinitions) {
 
+        // if()
+
         ChannelGroupTypeUID groupTypeUID = EBusBindingUtils.generateChannelGroupTypeUID(command);
 
-        ChannelGroupType cgt = ChannelGroupTypeBuilder.instance(groupTypeUID, command.getLabel()).isAdvanced(false)
+        ChannelGroupType cgt = ChannelGroupTypeBuilder
+                .instance(groupTypeUID, StringUtils.defaultIfEmpty(command.getLabel(), "-undefined-")).isAdvanced(false)
                 .withCategory(command.getId()).withChannelDefinitions(channelDefinitions).withDescription("HVAC")
                 .build();
 
@@ -363,7 +366,9 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
     public void update(List<IEBusCommandCollection> collections) {
 
         for (IEBusCommandCollection collection : collections) {
-            updateCollection(collection);
+            if (StringUtils.isNotEmpty(collection.getId())) {
+                updateCollection(collection);
+            }
         }
         logger.info("Generated all eBUS command collections ...");
 

@@ -51,7 +51,7 @@ public class EBusBindingUtils {
 
     /**
      * Generates a channel type uid
-     * 
+     *
      * @param value
      * @return
      */
@@ -102,7 +102,7 @@ public class EBusBindingUtils {
      * @return
      */
     public static ThingTypeUID generateThingTypeUID(IEBusCommandCollection collection) {
-        return new ThingTypeUID(BINDING_ID, collection.getId());
+        return new ThingTypeUID(BINDING_ID, formatCollectionId(collection));
     }
 
     /**
@@ -113,7 +113,7 @@ public class EBusBindingUtils {
      */
     public static String generateChannelGroupID(IEBusCommand command) {
         IEBusCommandCollection parentCollection = command.getParentCollection();
-        return String.format("%s_%s", parentCollection.getId(), formatId(command.getId()));
+        return String.format("%s_%s", formatCollectionId(parentCollection), formatId(command.getId()));
     }
 
     /**
@@ -136,5 +136,9 @@ public class EBusBindingUtils {
      */
     public static String formatId(String id) {
         return id.replace('_', '-').replace('.', '_');
+    }
+
+    public static String formatCollectionId(IEBusCommandCollection collection) {
+        return collection.getId().replace(' ', 'o');
     }
 }
