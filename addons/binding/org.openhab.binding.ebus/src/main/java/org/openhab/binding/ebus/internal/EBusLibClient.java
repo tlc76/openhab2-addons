@@ -31,6 +31,7 @@ import de.csdev.ebus.command.datatypes.EBusTypeException;
 import de.csdev.ebus.core.EBusController;
 import de.csdev.ebus.core.EBusControllerException;
 import de.csdev.ebus.core.connection.EBusEmulatorConnection;
+import de.csdev.ebus.core.connection.EBusJSerialCommConnection;
 import de.csdev.ebus.core.connection.EBusSerialNRJavaSerialConnection;
 import de.csdev.ebus.core.connection.EBusTCPConnection;
 import de.csdev.ebus.core.connection.IEBusConnection;
@@ -68,12 +69,16 @@ public class EBusLibClient {
     /**
      * @param serialPort
      */
-    public void setSerialConnection(String serialPort) {
-        if (serialPort.equals("emulator")) {
+    public void setSerialConnection(String serialPort, String type) {
+        if (StringUtils.equals(serialPort, "emulator")) {
             connection = new EBusEmulatorConnection();
 
         } else {
-            connection = new EBusSerialNRJavaSerialConnection(serialPort);
+            if (StringUtils.equals(type, DRIVER_JSERIALCOMM)) {
+                connection = new EBusJSerialCommConnection(serialPort);
+            } else {
+                connection = new EBusSerialNRJavaSerialConnection(serialPort);
+            }
         }
     }
 
