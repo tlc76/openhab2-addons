@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.2.0" activate="activate" configuration-pid="binding.ebus" deactivate="deactivate" immediate="true" name="org.openhab.binding.ebus.thing.EBusTypeProviderImpl">
-   <property name="service.pid" type="String" value="org.openhab.ebus"/>
-   <service servicefactory="false">
-      <provide interface="org.openhab.binding.ebus.thing.EBusTypeProvider"/>
-      <provide interface="org.eclipse.smarthome.core.thing.binding.ThingTypeProvider"/>
-      <provide interface="org.eclipse.smarthome.core.thing.type.ChannelTypeProvider"/>
-      <provide interface="org.eclipse.smarthome.core.thing.type.ChannelGroupTypeProvider"/>
-      <provide interface="org.osgi.service.cm.ManagedService"/>
-   </service>
-   <reference bind="setConfigurationAdmin" cardinality="0..1" interface="org.osgi.service.cm.ConfigurationAdmin" name="ConfigurationAdmin" policy="static" unbind="unsetConfigurationAdmin"/>
-   <implementation class="org.openhab.binding.ebus.thing.EBusTypeProviderImpl"/>
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.2.0" immediate="true" name="org.openhab.binding.ebus.thing.EBusTypeProviderImpl" activate="activate" deactivate="deactivate" configuration-pid="binding.ebus">
+    <property name="service.pid" value="org.openhab.ebus"/>
+    <service servicefactory="false">
+        <provide interface="org.openhab.binding.ebus.thing.EBusTypeProvider"/>
+        <provide interface="org.eclipse.smarthome.core.thing.binding.ThingTypeProvider"/>
+        <provide interface="org.eclipse.smarthome.core.thing.type.ChannelTypeProvider"/>
+        <provide interface="org.eclipse.smarthome.core.thing.type.ChannelGroupTypeProvider"/>
+        <provide interface="org.osgi.service.cm.ManagedService"/>
+    </service>
+    <reference name="ConfigurationAdmin" interface="org.osgi.service.cm.ConfigurationAdmin" cardinality="0..1" policy="static" bind="setConfigurationAdmin" unbind="unsetConfigurationAdmin"/>
+    <implementation class="org.openhab.binding.ebus.thing.EBusTypeProviderImpl"/>
 </scr:component>

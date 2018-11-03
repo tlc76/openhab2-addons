@@ -40,6 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.csdev.ebus.command.IEBusCommandMethod;
+import de.csdev.ebus.core.EBusController;
 import de.csdev.ebus.core.EBusDataException;
 import de.csdev.ebus.core.IEBusConnectorEventListener;
 import de.csdev.ebus.service.metrics.EBusMetricsService;
@@ -176,6 +177,8 @@ public class EBusBridgeHandler extends BaseBridgeHandler
             public void run() {
                 try {
                     EBusMetricsService metricsService = libClient.getClient().getMetricsService();
+                    EBusController controller = libClient.getClient().getController();
+
                     EBusBridgeHandler that = EBusBridgeHandler.this;
                     ThingUID thingUID = that.getThing().getUID();
 
@@ -191,6 +194,10 @@ public class EBusBridgeHandler extends BaseBridgeHandler
                             new DecimalType(metricsService.getFailureRatio()));
                     that.updateState(new ChannelUID(thingUID, METRICS, UNRESOLVED_RATIO),
                             new DecimalType(metricsService.getUnresolvedRatio()));
+
+                    that.updateState(new ChannelUID(thingUID, METRICS, SEND_RECEIVE_ROUNDTRIP_TIME),
+                            new DecimalType((int) controller.getLastSendReceiveRoundtripTime() / 1000));
+
                 } catch (Exception e) {
                     logger.error("error!", e);
                 }
