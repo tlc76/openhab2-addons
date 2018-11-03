@@ -1,3 +1,15 @@
+## Release Candidate 2 (2018-11-03)
+
+Features:
+
+  - Add additional serial port driver JSerialComm
+  - New option in bridge configuration to choose serial port driver
+  - Update eBUS library to version 0.9.19
+  
+Bugfixes:
+
+  - Fix spaces in collection id and NPE if label is null
+
 ## Release Candidate 1 (2018-09-30)
 
 Features:
@@ -12,7 +24,7 @@ Bugfixes:
 
 Bugfixes:
 
-  - Fix for 2.4 milestone release, braking changes in ESH
+  - Fix for 2.4 milestone release, breaking changes in ESH
   
 ## Alpha 0.0.22 (2018-07-10)
 

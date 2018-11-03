@@ -117,6 +117,12 @@
 				<label>Unresolved telegrams ratio</label>
 				<description>Unresolved telegram ratio</description>
 			</channel>
+			
+			<channel typeId="metricsInteger" id="sendReceiveRoundtripTime">
+                <label>Roundtrip time</label>
+                <description>Send/Receive roundtrip time in ms</description>
+            </channel>
+			
 		</channels>
 
 	</channel-group-type>
