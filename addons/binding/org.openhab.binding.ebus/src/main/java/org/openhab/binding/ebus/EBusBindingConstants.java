@@ -67,6 +67,7 @@ public class EBusBindingConstants {
     public static final String UNRESOLVED_TELEGRAMS = "unresolvedTelegrams";
     public static final String FAILED_RATIO = "failedRatio";
     public static final String UNRESOLVED_RATIO = "unresolvedRatio";
+    public static final String SEND_RECEIVE_ROUNDTRIP_TIME = "sendReceiveRoundtripTime";
 
     // configuration uris
     public static final URI CONFIG_DESCRIPTION_URI_NODE = EBusBindingUtils
