@@ -36,7 +36,11 @@ public class EBusBindingConstants {
     public static final String SERIAL_PORT = "serialPort";
     public static final String IP_ADDRESS = "ipAddress";
     public static final String PORT = "port";
+    public static final String SERIAL_PORT_DRIVER = "serialPortDriver";
     public static final String ADVANCED_LOGGING = "advancedLogging";
+
+    public static final String DRIVER_NRJAVASERIAL = "nrjavaserial";
+    public static final String DRIVER_JSERIALCOMM = "jserialcomm";
 
     public static final String CONFIGURATION_URL = "configurationUrl";
     public static final String CONFIGURATION_URL1 = "configurationUrl1";

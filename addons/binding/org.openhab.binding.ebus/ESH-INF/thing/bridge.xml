@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<thing:thing-descriptions bindingId="ebus" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<thing:thing-descriptions bindingId="ebus"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xmlns:thing="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0"
 	xsi:schemaLocation="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0 http://eclipse.org/smarthome/schemas/thing-description-1.0.0.xsd">
 
@@ -48,6 +49,19 @@
                     Serial port like COM1 or /dev/ttyUSB1 of the eBUS interface
                 </description>
 				<required>false</required>
+			</parameter>
+
+			<parameter name="serialPortDriver" type="text" groupName="serial">
+				<label>Serial Port Driver</label>
+				<context>serial-port</context>
+				<description>
+                    Serial port driver
+                </description>
+				<options>
+					<option value="nrjavaserial">nrjavaserial (RXTX)</option>
+					<option value="jserialcomm">jSerialComm</option>
+				</options>
+				<default>nrjavaserial</default>
 			</parameter>
 
 			<parameter name="masterAddress" type="text">
