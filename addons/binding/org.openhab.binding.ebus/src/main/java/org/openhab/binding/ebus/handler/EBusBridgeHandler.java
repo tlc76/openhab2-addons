@@ -110,6 +110,7 @@ public class EBusBridgeHandler extends BaseBridgeHandler
         String ipAddress = null;
         BigDecimal port = null;
         String serialPort = null;
+        String serialPortDriver = DRIVER_NRJAVASERIAL;
 
         String masterAddressStr = null;
         Byte masterAddress = (byte) 0xFF;
@@ -119,6 +120,7 @@ public class EBusBridgeHandler extends BaseBridgeHandler
             port = (BigDecimal) configuration.get(PORT);
             masterAddressStr = (String) configuration.get(MASTER_ADDRESS);
             serialPort = (String) configuration.get(SERIAL_PORT);
+            serialPortDriver = (String) configuration.get(SERIAL_PORT_DRIVER);
 
             if (configuration.get(ADVANCED_LOGGING).equals(Boolean.TRUE)) {
                 logger.warn("Enable advanced logging for eBUS commands!");
@@ -138,7 +140,7 @@ public class EBusBridgeHandler extends BaseBridgeHandler
         }
 
         if (StringUtils.isNotEmpty(serialPort)) {
-            libClient.setSerialConnection(serialPort);
+            libClient.setSerialConnection(serialPort, serialPortDriver);
         }
 
         if (masterAddress != null && !EBusUtils.isMasterAddress(masterAddress)) {

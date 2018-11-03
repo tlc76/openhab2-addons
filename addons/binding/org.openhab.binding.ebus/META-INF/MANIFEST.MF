@@ -19,7 +19,6 @@ Import-Package:
  de.csdev.ebus.service.metrics,
  de.csdev.ebus.service.parser,
  de.csdev.ebus.utils,
- gnu.io,
  org.apache.commons.lang,
  org.eclipse.jdt.annotation;resolution:=optional,
  org.eclipse.smarthome.config.core,
