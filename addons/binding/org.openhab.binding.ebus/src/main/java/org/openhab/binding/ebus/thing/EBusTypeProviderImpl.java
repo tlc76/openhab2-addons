@@ -21,27 +21,27 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.thing.binding.ThingTypeProvider;
 import org.eclipse.smarthome.core.thing.type.ChannelDefinition;
+import org.eclipse.smarthome.core.thing.type.ChannelDefinitionBuilder;
 import org.eclipse.smarthome.core.thing.type.ChannelGroupDefinition;
 import org.eclipse.smarthome.core.thing.type.ChannelGroupType;
 import org.eclipse.smarthome.core.thing.type.ChannelGroupTypeBuilder;
 import org.eclipse.smarthome.core.thing.type.ChannelGroupTypeProvider;
 import org.eclipse.smarthome.core.thing.type.ChannelGroupTypeUID;
-import org.eclipse.smarthome.core.thing.type.ChannelKind;
 import org.eclipse.smarthome.core.thing.type.ChannelType;
+import org.eclipse.smarthome.core.thing.type.ChannelTypeBuilder;
 import org.eclipse.smarthome.core.thing.type.ChannelTypeProvider;
 import org.eclipse.smarthome.core.thing.type.ChannelTypeUID;
 import org.eclipse.smarthome.core.thing.type.ThingType;
 import org.eclipse.smarthome.core.thing.type.ThingTypeBuilder;
-import org.eclipse.smarthome.core.types.EventDescription;
 import org.eclipse.smarthome.core.types.StateDescription;
 import org.eclipse.smarthome.core.types.StateOption;
+import org.openhab.binding.ebus.EBusBindingConstants;
 import org.openhab.binding.ebus.internal.EBusBindingUtils;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
@@ -136,8 +136,10 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
             properties.put(COMMAND, mainMethod.getParent().getId());
             properties.put(VALUE_NAME, value.getName());
 
-            return new ChannelDefinition(EBusBindingUtils.formatId(value.getName()), channelType.getUID(), properties,
-                    value.getLabel(), null);
+            String id = EBusBindingUtils.formatId(value.getName());
+            ChannelDefinitionBuilder builder = new ChannelDefinitionBuilder(id, channelType.getUID());
+
+            return builder.withProperties(properties).withLabel(value.getLabel()).build();
         }
 
         return null;
@@ -150,8 +152,6 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
      */
     private ChannelGroupDefinition createChannelGroupDefinition(IEBusCommand command,
             List<ChannelDefinition> channelDefinitions) {
-
-        // if()
 
         ChannelGroupTypeUID groupTypeUID = EBusBindingUtils.generateChannelGroupTypeUID(command);
 
@@ -173,7 +173,6 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
      * @param mainChannel
      * @return
      */
-    @SuppressWarnings("deprecation")
     private ChannelType createChannelType(IEBusValue value, IEBusCommandMethod mainMethod) {
 
         // only process valid entries
@@ -196,34 +195,33 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
             }
 
             // default
-            String itemType = "Number";
+            String itemType = EBusBindingConstants.ITEM_TYPE_NUMBER;
 
             if (ArrayUtils.contains(value.getType().getSupportedTypes(), EBusTypeBit.TYPE_BIT)) {
-                itemType = "Switch";
+                itemType = EBusBindingConstants.ITEM_TYPE_SWITCH;
 
             } else if (ArrayUtils.contains(value.getType().getSupportedTypes(), EBusTypeDateTime.TYPE_DATETIME)) {
-                itemType = "DateTime";
+                itemType = EBusBindingConstants.ITEM_TYPE_DATETIME;
 
             } else if (ArrayUtils.contains(value.getType().getSupportedTypes(), EBusTypeDate.TYPE_DATE)) {
-                itemType = "DateTime";
+                itemType = EBusBindingConstants.ITEM_TYPE_DATETIME;
 
             } else if (ArrayUtils.contains(value.getType().getSupportedTypes(), EBusTypeTime.TYPE_TIME)) {
-                itemType = "DateTime";
+                itemType = EBusBindingConstants.ITEM_TYPE_DATETIME;
 
             } else if (ArrayUtils.contains(value.getType().getSupportedTypes(), EBusTypeString.TYPE_STRING)) {
-                itemType = "String";
+                itemType = EBusBindingConstants.ITEM_TYPE_STRING;
 
             } else if (ArrayUtils.contains(value.getType().getSupportedTypes(), EBusTypeBytes.TYPE_BYTES)) {
-                itemType = "String";
+                itemType = EBusBindingConstants.ITEM_TYPE_STRING;
 
             } else if (options != null) {
                 // options works only for string! or in not readOnly mode
                 // itemType = "Number";
-                itemType = "String";
+                itemType = EBusBindingConstants.ITEM_TYPE_STRING;
             }
 
             boolean advanced = value.getName().startsWith("_");
-            ChannelKind kind = ChannelKind.STATE;
             String label = StringUtils.defaultIfEmpty(value.getLabel(), value.getName());
             String pattern = value.getFormat();
             StateDescription state = new StateDescription(value.getMax(), value.getMin(), value.getStep(), pattern,
@@ -232,19 +230,14 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
             URI configDescriptionURI = polling ? CONFIG_DESCRIPTION_URI_POLLING_CHANNEL
                     : CONFIG_DESCRIPTION_URI_NULL_CHANNEL;
 
-            String description = null;
-            Set<String> tags = null;
-            String category = null;
-            EventDescription event = null;
-
             // apply new quantity extension
-            if (itemType.equals("Number") && label.contains("°C")) {
+            if (itemType.equals(EBusBindingConstants.ITEM_TYPE_NUMBER) && label.contains("°C")) {
                 label = label.replace("°C", "%unit%");
-                itemType = "Number:Temperature";
+                itemType = EBusBindingConstants.ITEM_TYPE_TEMPERATURE;
             }
 
-            return new ChannelType(uid, advanced, itemType, kind, label, description, category, tags, state, event,
-                    configDescriptionURI);
+            return ChannelTypeBuilder.state(uid, label, itemType).withConfigDescriptionURI(configDescriptionURI)
+                    .isAdvanced(advanced).withStateDescription(state).build();
         }
 
         return null;
@@ -281,7 +274,7 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
     @Deactivate
     public void deactivate(ComponentContext componentContext) {
 
-        logger.info("Stopping eBUS Type Provider ...");
+        logger.debug("Stopping eBUS Type Provider ...");
 
         channelGroupTypes.clear();
         channelTypes.clear();
@@ -370,7 +363,7 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
                 updateCollection(collection);
             }
         }
-        logger.info("Generated all eBUS command collections ...");
+        logger.debug("Generated all eBUS command collections ...");
 
         fireOnUpdate();
     }
@@ -504,7 +497,7 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
             return;
         }
 
-        logger.info("Update eBUS Type Provider ...");
+        logger.debug("Update eBUS Type Provider ...");
         updateConfiguration(properties);
     }
 
