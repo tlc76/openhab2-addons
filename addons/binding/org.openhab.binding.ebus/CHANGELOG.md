@@ -1,3 +1,16 @@
+## Release Candidate 3 (2018-11-20)
+
+Changes:
+
+  - Use openHAB builder pattern
+  - Cleanup code, use more constants
+  - Lower log level for some debug messages
+  - Use openHAB QuantityType
+  
+Bugfixes:
+
+  - Fix issue if "°C" is used in configuration label
+  
 ## Release Candidate 2 (2018-11-03)
 
 Features:
