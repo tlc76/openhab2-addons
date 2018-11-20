@@ -76,4 +76,13 @@ public class EBusBindingConstants {
             .getURI("channel-type:" + BINDING_ID + ":pollingChannel");
     public static final URI CONFIG_DESCRIPTION_URI_NULL_CHANNEL = EBusBindingUtils
             .getURI("channel-type:" + BINDING_ID + ":nullChannel");
+
+    // item types
+    public static final String ITEM_TYPE_NUMBER = "Number";
+    public static final String ITEM_TYPE_STRING = "String";
+    public static final String ITEM_TYPE_SWITCH = "Switch";
+    public static final String ITEM_TYPE_DATETIME = "DateTime";
+
+    public static final String ITEM_TYPE_TEMPERATURE = "Number:Temperature";
+
 }

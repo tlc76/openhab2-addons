@@ -22,6 +22,8 @@ import java.util.TimeZone;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import javax.measure.quantity.Temperature;
+
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
@@ -30,7 +32,9 @@ import org.eclipse.smarthome.config.core.Configuration;
 import org.eclipse.smarthome.core.library.types.DateTimeType;
 import org.eclipse.smarthome.core.library.types.DecimalType;
 import org.eclipse.smarthome.core.library.types.OnOffType;
+import org.eclipse.smarthome.core.library.types.QuantityType;
 import org.eclipse.smarthome.core.library.types.StringType;
+import org.eclipse.smarthome.core.library.unit.SIUnits;
 import org.eclipse.smarthome.core.thing.Bridge;
 import org.eclipse.smarthome.core.thing.Channel;
 import org.eclipse.smarthome.core.thing.ChannelUID;
@@ -40,6 +44,8 @@ import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
 import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.RefreshType;
+import org.eclipse.smarthome.core.types.State;
+import org.eclipse.smarthome.core.types.UnDefType;
 import org.openhab.binding.ebus.internal.EBusBindingUtils;
 import org.openhab.binding.ebus.internal.EBusLibClient;
 import org.slf4j.Logger;
@@ -86,48 +92,54 @@ public class EBusHandler extends BaseThingHandler {
 
         String acceptedItemType = channel.getAcceptedItemType();
 
-        if (StringUtils.equals(acceptedItemType, "Number")) {
-            if (value != null) {
-                if (value instanceof BigDecimal) {
-                    updateState(channel.getUID(), new DecimalType((BigDecimal) value));
-                } else {
-                    logger.warn("Unexpected datatype {} for channel {} !", value.getClass().getSimpleName(),
-                            channel.getChannelTypeUID());
-                }
+        State state = null;
 
+        if (StringUtils.equals(acceptedItemType, ITEM_TYPE_NUMBER)) {
+            if (value instanceof BigDecimal) {
+                state = new DecimalType((BigDecimal) value);
             }
 
-        } else if (StringUtils.equals(acceptedItemType, "String")) {
-
+        } else if (StringUtils.equals(acceptedItemType, ITEM_TYPE_TEMPERATURE)) {
             if (value instanceof BigDecimal) {
-                updateState(channel.getUID(), new StringType(((BigDecimal) value).toString()));
+                state = new QuantityType<Temperature>((BigDecimal) value, SIUnits.CELSIUS);
+            }
+
+        } else if (StringUtils.equals(acceptedItemType, ITEM_TYPE_STRING)) {
+            if (value instanceof BigDecimal) {
+                state = new StringType(((BigDecimal) value).toString());
 
             } else if (value instanceof String) {
-                updateState(channel.getUID(), new StringType((String) value));
+                state = new StringType((String) value);
 
             } else if (value instanceof byte[]) {
                 // show bytes as hex string
-                updateState(channel.getUID(), new StringType(EBusUtils.toHexDumpString((byte[]) value).toString()));
+                state = new StringType(EBusUtils.toHexDumpString((byte[]) value).toString());
             }
 
-        } else if (StringUtils.equals(acceptedItemType, "Switch")) {
-
+        } else if (StringUtils.equals(acceptedItemType, ITEM_TYPE_SWITCH)) {
             if (value instanceof Boolean) {
                 boolean isOn = ((Boolean) value).booleanValue();
-                updateState(channel.getUID(), isOn ? OnOffType.ON : OnOffType.OFF);
+                state = isOn ? OnOffType.ON : OnOffType.OFF;
             }
 
-        } else if (StringUtils.equals(acceptedItemType, "DateTime")) {
+        } else if (StringUtils.equals(acceptedItemType, ITEM_TYPE_DATETIME)) {
 
             if (value instanceof EBusDateTime) {
                 Calendar calendar = ((EBusDateTime) value).getCalendar();
                 ZonedDateTime zonedDateTime = ZonedDateTime.ofInstant(calendar.toInstant(),
                         TimeZone.getDefault().toZoneId());
 
-                this.updateState(channel.getUID(), new DateTimeType(zonedDateTime));
+                state = new DateTimeType(zonedDateTime);
             }
-
         }
+
+        if (state == null) {
+            logger.warn("Unexpected datatype {} for channel {} !", value.getClass().getSimpleName(),
+                    channel.getChannelTypeUID());
+            state = UnDefType.UNDEF;
+        }
+
+        updateState(channel.getUID(), state);
     }
 
     @Override
