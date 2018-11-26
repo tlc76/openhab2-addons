@@ -134,9 +134,14 @@ public class EBusHandler extends BaseThingHandler {
         }
 
         if (state == null) {
-            logger.warn("Unexpected datatype {} for channel {} !", value.getClass().getSimpleName(),
-                    channel.getChannelTypeUID());
-            state = UnDefType.UNDEF;
+            if (value == null) {
+                logger.warn("Unexpected datatype {} for channel {} !", "NULL", channel.getChannelTypeUID());
+                state = UnDefType.NULL;
+            } else {
+                logger.warn("Unexpected datatype {} for channel {} !", value.getClass().getSimpleName(),
+                        channel.getChannelTypeUID());
+                state = UnDefType.UNDEF;
+            }
         }
 
         updateState(channel.getUID(), state);
