@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" immediate="true" name="org.openhab.binding.ebus.internal.EBusCommandsPluggable" activate="activate" deactivate="deactivate">
-    <service servicefactory="false">
-        <provide interface="org.eclipse.smarthome.io.console.extensions.ConsoleCommandExtension"/>
-    </service>
-    <reference name="ThingRegistry" interface="org.eclipse.smarthome.core.thing.ThingRegistry" cardinality="1..1" policy="static" bind="setThingRegistry" unbind="unsetThingRegistry"/>
-    <reference name="TypeProvider" interface="org.openhab.binding.ebus.thing.EBusTypeProvider" cardinality="1..1" policy="static" bind="setTypeProvider" unbind="unsetTypeProvider"/>
-    <implementation class="org.openhab.binding.ebus.internal.EBusCommandsPluggable"/>
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" activate="activate" deactivate="deactivate" immediate="true" name="org.openhab.binding.ebus.internal.EBusCommandsPluggable">
+   <service>
+      <provide interface="org.eclipse.smarthome.io.console.extensions.ConsoleCommandExtension"/>
+   </service>
+   <reference bind="setThingRegistry" cardinality="1..1" interface="org.eclipse.smarthome.core.thing.ThingRegistry" name="ThingRegistry" policy="static" unbind="unsetThingRegistry"/>
+   <reference bind="setTypeProvider" cardinality="1..1" interface="org.openhab.binding.ebus.thing.EBusTypeProvider" name="TypeProvider" policy="static" unbind="unsetTypeProvider"/>
+   <implementation class="org.openhab.binding.ebus.internal.EBusCommandsPluggable"/>
 </scr:component>
