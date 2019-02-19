@@ -20,15 +20,20 @@
 	     <dependency>
             <groupId>de.cs-dev.ebus</groupId>
             <artifactId>ebus-core</artifactId>
-            <version>0.9.18-SNAPSHOT</version>
+            <version>0.9.19-SNAPSHOT</version>
         </dependency>
         
 		<dependency>
 			<groupId>de.cs-dev.ebus</groupId>
 			<artifactId>ebus-configuration</artifactId>
-			<version>0.9.18-SNAPSHOT</version>
+			<version>0.9.19-SNAPSHOT</version>
 		</dependency>
-
+        <dependency>
+            <groupId>com.fazecast</groupId>
+            <artifactId>jSerialComm</artifactId>
+            <version>[2.0.0,3.0.0)</version>
+            <optional>true</optional>
+        </dependency>
 	</dependencies>
 	
 </project>
