@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.2.0" activate="activate" configuration-pid="binding.ebus" deactivate="deactivate" immediate="true" name="org.openhab.binding.ebus.thing.EBusTypeProviderImpl">
    <property name="service.pid" type="String" value="org.openhab.ebus"/>
-   <service>
+   <service servicefactory="false">
       <provide interface="org.openhab.binding.ebus.thing.EBusTypeProvider"/>
       <provide interface="org.eclipse.smarthome.core.thing.binding.ThingTypeProvider"/>
       <provide interface="org.eclipse.smarthome.core.thing.type.ChannelTypeProvider"/>

@@ -36,6 +36,12 @@ public class EBusBindingConstants {
     public static final String SERIAL_PORT = "serialPort";
     public static final String IP_ADDRESS = "ipAddress";
     public static final String PORT = "port";
+
+    public static final String PORT2 = "port2";
+    public static final String DRIVER_RAW = "raw";
+    public static final String DRIVER_EBUSD = "ebusd";
+    public static final String NETWORK_DRIVER = "networkDriver";
+
     public static final String SERIAL_PORT_DRIVER = "serialPortDriver";
     public static final String ADVANCED_LOGGING = "advancedLogging";
 
