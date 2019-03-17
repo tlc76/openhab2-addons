@@ -28,8 +28,10 @@ import de.csdev.ebus.command.EBusCommandRegistry;
 import de.csdev.ebus.command.IEBusCommandMethod;
 import de.csdev.ebus.command.IEBusCommandMethod.Method;
 import de.csdev.ebus.command.datatypes.EBusTypeException;
-import de.csdev.ebus.core.EBusController;
 import de.csdev.ebus.core.EBusControllerException;
+import de.csdev.ebus.core.EBusEbusdController;
+import de.csdev.ebus.core.EBusLowLevelController;
+import de.csdev.ebus.core.IEBusController;
 import de.csdev.ebus.core.connection.EBusEmulatorConnection;
 import de.csdev.ebus.core.connection.EBusJSerialCommConnection;
 import de.csdev.ebus.core.connection.EBusSerialNRJavaSerialConnection;
@@ -45,7 +47,7 @@ public class EBusLibClient {
 
     private final Logger logger = LoggerFactory.getLogger(EBusLibClient.class);
 
-    private EBusController controller;
+    private IEBusController controller;
 
     private EBusClient client;
 
@@ -64,6 +66,13 @@ public class EBusLibClient {
      */
     public void setTCPConnection(String hostname, int port) {
         connection = new EBusTCPConnection(hostname, port);
+
+        // load the eBus core element
+        controller = new EBusLowLevelController(connection);
+    }
+
+    public void setEbusdConnection(String hostname, int port, int port2) {
+        controller = new EBusEbusdController(hostname, port, port2);
     }
 
     /**
@@ -80,6 +89,9 @@ public class EBusLibClient {
                 connection = new EBusSerialNRJavaSerialConnection(serialPort);
             }
         }
+
+        // load the eBus core element
+        controller = new EBusLowLevelController(connection);
     }
 
     /**
@@ -198,9 +210,6 @@ public class EBusLibClient {
      * @param masterAddress
      */
     public void initClient(Byte masterAddress) {
-
-        // load the eBus core element
-        controller = new EBusController(connection);
 
         // connect the high level client
         client.connect(controller, masterAddress);

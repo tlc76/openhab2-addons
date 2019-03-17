@@ -40,9 +40,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.csdev.ebus.command.IEBusCommandMethod;
-import de.csdev.ebus.core.EBusController;
 import de.csdev.ebus.core.EBusDataException;
 import de.csdev.ebus.core.IEBusConnectorEventListener;
+import de.csdev.ebus.core.IEBusController;
 import de.csdev.ebus.service.metrics.EBusMetricsService;
 import de.csdev.ebus.service.parser.IEBusParserListener;
 import de.csdev.ebus.utils.EBusUtils;
@@ -110,6 +110,9 @@ public class EBusBridgeHandler extends BaseBridgeHandler
 
         String ipAddress = null;
         BigDecimal port = null;
+        BigDecimal port2 = null;
+        String networkDriver = DRIVER_RAW;
+
         String serialPort = null;
         String serialPortDriver = DRIVER_NRJAVASERIAL;
 
@@ -119,6 +122,9 @@ public class EBusBridgeHandler extends BaseBridgeHandler
         try {
             ipAddress = (String) configuration.get(IP_ADDRESS);
             port = (BigDecimal) configuration.get(PORT);
+            port2 = (BigDecimal) configuration.get(PORT2);
+            networkDriver = (String) configuration.get(NETWORK_DRIVER);
+
             masterAddressStr = (String) configuration.get(MASTER_ADDRESS);
             serialPort = (String) configuration.get(SERIAL_PORT);
             serialPortDriver = (String) configuration.get(SERIAL_PORT_DRIVER);
@@ -137,7 +143,13 @@ public class EBusBridgeHandler extends BaseBridgeHandler
         }
 
         if (StringUtils.isNotEmpty(ipAddress) && port != null) {
-            libClient.setTCPConnection(ipAddress, port.intValue());
+
+            // use ebusd as high level driver
+            if (networkDriver.equals(DRIVER_EBUSD) && port2 != null) {
+                libClient.setEbusdConnection(ipAddress, port.intValue(), port2.intValue());
+            } else {
+                libClient.setTCPConnection(ipAddress, port.intValue());
+            }
         }
 
         if (StringUtils.isNotEmpty(serialPort)) {
@@ -177,7 +189,7 @@ public class EBusBridgeHandler extends BaseBridgeHandler
             public void run() {
                 try {
                     EBusMetricsService metricsService = libClient.getClient().getMetricsService();
-                    EBusController controller = libClient.getClient().getController();
+                    IEBusController controller = libClient.getClient().getController();
 
                     EBusBridgeHandler that = EBusBridgeHandler.this;
                     ThingUID thingUID = that.getThing().getUID();
