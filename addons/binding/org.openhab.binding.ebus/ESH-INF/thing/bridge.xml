@@ -48,7 +48,7 @@
                 <required>false</required>
             </parameter>
 
-            <parameter name="networkPortDriver" type="text" groupName="serial">
+            <parameter name="networkDriver" type="text" groupName="network">
                 <label>Network Driver</label>
                 <context>network_address</context>
                 <description>

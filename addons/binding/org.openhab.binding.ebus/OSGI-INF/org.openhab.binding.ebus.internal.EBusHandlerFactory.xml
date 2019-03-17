@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.2.0" configuration-pid="binding.ebus" immediate="true" name="org.openhab.binding.ebus.internal.EBusHandlerFactory">
-   <property name="service.pid" type="String" value="org.openhab.ebus"/>
-   <service servicefactory="false">
-      <provide interface="org.eclipse.smarthome.core.thing.binding.ThingHandlerFactory"/>
-   </service>
-   <reference bind="setTypeProvider" cardinality="1..1" interface="org.openhab.binding.ebus.thing.EBusTypeProvider" name="TypeProvider" policy="static" unbind="unsetTypeProvider"/>
-   <implementation class="org.openhab.binding.ebus.internal.EBusHandlerFactory"/>
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.2.0" immediate="true" name="org.openhab.binding.ebus.internal.EBusHandlerFactory" configuration-pid="binding.ebus">
+    <property name="service.pid" value="org.openhab.ebus"/>
+    <service servicefactory="false">
+        <provide interface="org.eclipse.smarthome.core.thing.binding.ThingHandlerFactory"/>
+    </service>
+    <reference name="TypeProvider" interface="org.openhab.binding.ebus.thing.EBusTypeProvider" cardinality="1..1" policy="static" bind="setTypeProvider" unbind="unsetTypeProvider"/>
+    <implementation class="org.openhab.binding.ebus.internal.EBusHandlerFactory"/>
 </scr:component>
