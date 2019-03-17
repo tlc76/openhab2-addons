@@ -37,6 +37,8 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import de.csdev.ebus.client.EBusClient;
 import de.csdev.ebus.command.IEBusCommandCollection;
 import de.csdev.ebus.core.EBusControllerException;
+import de.csdev.ebus.core.EBusLowLevelController;
+import de.csdev.ebus.core.IEBusController;
 import de.csdev.ebus.core.connection.EBusEmulatorConnection;
 import de.csdev.ebus.core.connection.IEBusConnection;
 import de.csdev.ebus.service.device.EBusDeviceTable;
@@ -190,13 +192,21 @@ public class EBusCommandsPluggable implements ConsoleCommandExtension {
                 if (thing.getHandler() instanceof EBusBridgeHandler) {
                     EBusBridgeHandler bridge = (EBusBridgeHandler) thing.getHandler();
                     @SuppressWarnings("null")
-                    IEBusConnection connection = bridge.getLibClient().getClient().getController().getConnection();
 
-                    if (connection instanceof EBusEmulatorConnection) {
-                        type = "bridge (emulator)";
-                    } else {
-                        type = "bridge";
+                    IEBusController controller = bridge.getLibClient().getClient().getController();
+
+                    if (controller instanceof EBusLowLevelController) {
+                        IEBusConnection connection = ((EBusLowLevelController) controller).getConnection();
+
+                        if (connection instanceof EBusEmulatorConnection) {
+                            type = "bridge (emulator)";
+                        } else {
+                            type = "bridge";
+                        }
+                    } else if (controller instanceof EBusLowLevelController) {
+                        type = "bridge (ebusd)";
                     }
+
                 }
 
                 console.println(String.format("%-40s | %-40s | %-10s", thing.getUID(), thing.getLabel(), type));
