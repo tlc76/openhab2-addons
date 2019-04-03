@@ -71,8 +71,8 @@ public class EBusLibClient {
         controller = new EBusLowLevelController(connection);
     }
 
-    public void setEbusdConnection(String hostname, int port, int port2) {
-        controller = new EBusEbusdController(hostname, port, port2);
+    public void setEbusdConnection(String hostname, int port) {
+        controller = new EBusEbusdController(hostname, port);
     }
 
     /**
