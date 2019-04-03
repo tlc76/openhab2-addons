@@ -110,7 +110,6 @@ public class EBusBridgeHandler extends BaseBridgeHandler
 
         String ipAddress = null;
         BigDecimal port = null;
-        BigDecimal port2 = null;
         String networkDriver = DRIVER_RAW;
 
         String serialPort = null;
@@ -122,7 +121,6 @@ public class EBusBridgeHandler extends BaseBridgeHandler
         try {
             ipAddress = (String) configuration.get(IP_ADDRESS);
             port = (BigDecimal) configuration.get(PORT);
-            port2 = (BigDecimal) configuration.get(PORT2);
             networkDriver = (String) configuration.get(NETWORK_DRIVER);
 
             masterAddressStr = (String) configuration.get(MASTER_ADDRESS);
@@ -145,8 +143,8 @@ public class EBusBridgeHandler extends BaseBridgeHandler
         if (StringUtils.isNotEmpty(ipAddress) && port != null) {
 
             // use ebusd as high level driver
-            if (networkDriver.equals(DRIVER_EBUSD) && port2 != null) {
-                libClient.setEbusdConnection(ipAddress, port.intValue(), port2.intValue());
+            if (networkDriver.equals(DRIVER_EBUSD)) {
+                libClient.setEbusdConnection(ipAddress, port.intValue());
             } else {
                 libClient.setTCPConnection(ipAddress, port.intValue());
             }
