@@ -41,12 +41,6 @@
 				<description>Port of the eBUS/ebusd interface</description>
 				<required>false</required>
 			</parameter>
-			
-			<parameter name="port2" type="integer" groupName="network">
-                <label>Network Port</label>
-                <description>2. Port of the ebusd interface</description>
-                <required>false</required>
-            </parameter>
 
             <parameter name="networkDriver" type="text" groupName="network">
                 <label>Network Driver</label>

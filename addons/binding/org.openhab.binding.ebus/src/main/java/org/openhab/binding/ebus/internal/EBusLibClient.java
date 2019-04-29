@@ -72,6 +72,7 @@ public class EBusLibClient {
     }
 
     public void setEbusdConnection(String hostname, int port) {
+        logger.debug("Set ebusd controller ...");
         controller = new EBusEbusdController(hostname, port);
     }
 
@@ -105,6 +106,11 @@ public class EBusLibClient {
      * @return
      */
     public boolean isConnectionValid() {
+
+        if (controller instanceof EBusEbusdController) {
+            return true;
+        }
+
         return connection != null;
     }
 
