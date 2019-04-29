@@ -335,7 +335,10 @@ public class EBusBridgeHandler extends BaseBridgeHandler
      */
     @Override
     public void onTelegramReceived(byte[] receivedData, Integer sendQueueId) {
-        // noop
+        Bridge bridge = getBridge();
+        if (bridge != null && bridge.getStatus() != ThingStatus.ONLINE) {
+            updateStatus(ThingStatus.ONLINE);
+        }
     }
 
     /*
