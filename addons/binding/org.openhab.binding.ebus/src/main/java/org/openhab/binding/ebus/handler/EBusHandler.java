@@ -150,7 +150,7 @@ public class EBusHandler extends BaseThingHandler {
     public void channelLinked(@NonNull ChannelUID channelUID) {
         super.channelLinked(channelUID);
 
-        logger.info("channelLinked {}", channelUID);
+        logger.trace("channelLinked {}", channelUID);
         initializeChannelPolling(channelUID);
     }
 
@@ -158,7 +158,7 @@ public class EBusHandler extends BaseThingHandler {
     public void channelUnlinked(@NonNull ChannelUID channelUID) {
         super.channelUnlinked(channelUID);
 
-        logger.info("channelUnlinked {}", channelUID);
+        logger.trace("channelUnlinked {}", channelUID);
         disposeChannelPolling(channelUID);
     }
 
@@ -411,7 +411,7 @@ public class EBusHandler extends BaseThingHandler {
 
                 // create a job to send this raw telegram every n seconds
                 ScheduledFuture<?> job = scheduler.scheduleAtFixedRate(() -> {
-                    logger.info("Poll command \"{}\" with \"{}\" ...", channel.getUID(),
+                    logger.trace("Poll command \"{}\" with \"{}\" ...", channel.getUID(),
                             EBusUtils.toHexDumpString(telegram).toString());
 
                     try {
@@ -475,7 +475,7 @@ public class EBusHandler extends BaseThingHandler {
 
         // check both hashs
         if (!StringUtils.equals(oldHash, newHash)) {
-            logger.warn("eBUS configuration \"{}\"  has changed, update thing {} ...", collection.getId(),
+            logger.debug("eBUS configuration \"{}\"  has changed, update thing {} ...", collection.getId(),
                     thing.getUID());
 
             try {
