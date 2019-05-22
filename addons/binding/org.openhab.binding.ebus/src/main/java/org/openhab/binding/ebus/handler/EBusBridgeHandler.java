@@ -181,6 +181,21 @@ public class EBusBridgeHandler extends BaseBridgeHandler
 
         typeProvider.addTypeProviderListener(this);
 
+        startMetricScheduler();
+
+        // start eBus controller
+        libClient.startClient();
+
+        updateStatus(ThingStatus.ONLINE);
+    }
+
+    private void startMetricScheduler() {
+
+        if (metricsRefreshSchedule != null) {
+            metricsRefreshSchedule.cancel(true);
+            metricsRefreshSchedule = null;
+        }
+
         metricsRefreshSchedule = scheduler.scheduleAtFixedRate(new Runnable() {
 
             @Override
@@ -213,11 +228,6 @@ public class EBusBridgeHandler extends BaseBridgeHandler
                 }
             }
         }, 0, 30, TimeUnit.SECONDS);
-
-        // start eBus controller
-        libClient.startClient();
-
-        updateStatus(ThingStatus.ONLINE);
     }
 
     @Override
@@ -313,6 +323,12 @@ public class EBusBridgeHandler extends BaseBridgeHandler
      */
     @Override
     public void onConnectionException(Exception e) {
+
+        if (metricsRefreshSchedule != null) {
+            metricsRefreshSchedule.cancel(true);
+            metricsRefreshSchedule = null;
+        }
+
         updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, e.getMessage());
     }
 
@@ -335,9 +351,15 @@ public class EBusBridgeHandler extends BaseBridgeHandler
      */
     @Override
     public void onTelegramReceived(byte[] receivedData, Integer sendQueueId) {
-        Bridge bridge = getBridge();
-        if (bridge != null && bridge.getStatus() != ThingStatus.ONLINE) {
+        Bridge bridge = getThing();
+
+        if (bridge.getStatus() != ThingStatus.ONLINE) {
+
+            // bring the bridge back online
             updateStatus(ThingStatus.ONLINE);
+
+            // start the metrics scheduler
+            startMetricScheduler();
         }
     }
 
