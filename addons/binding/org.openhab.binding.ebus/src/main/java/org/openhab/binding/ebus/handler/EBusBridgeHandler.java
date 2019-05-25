@@ -57,7 +57,6 @@ public class EBusBridgeHandler extends BaseBridgeHandler
         implements IEBusParserListener, IEBusConnectorEventListener, IEBusTypeProviderListener {
 
     private final Logger logger = LoggerFactory.getLogger(EBusBridgeHandler.class);
-    private final Logger loggerExt = LoggerFactory.getLogger("org.openhab.ebus-ext");
 
     public final static Set<ThingTypeUID> SUPPORTED_THING_TYPES = Collections
             .singleton(EBusBindingConstants.THING_TYPE_EBUS_BRIDGE);
@@ -389,8 +388,15 @@ public class EBusBridgeHandler extends BaseBridgeHandler
     @Override
     public void onTelegramResolveFailed(IEBusCommandMethod commandChannel, byte[] receivedData, Integer sendQueueId,
             String exceptionMessage) {
-        if (loggerExt.isDebugEnabled()) {
-            loggerExt.debug("Unknown telegram {}", EBusUtils.toHexDumpString(receivedData));
+
+        if (commandChannel == null) {
+            if (logger.isTraceEnabled()) {
+                logger.trace("Unknown telegram {}", EBusUtils.toHexDumpString(receivedData));
+            }
+        } else {
+            logger.warn("Resolve error '{}' in {} from {} [data:{}]", exceptionMessage,
+                    commandChannel.getParent().getLabel(), commandChannel.getParent().getParentCollection().getLabel(),
+                    EBusUtils.toHexDumpString(receivedData));
         }
     }
 }
