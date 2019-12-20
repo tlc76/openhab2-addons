@@ -144,7 +144,7 @@ public class EBusDiscovery extends AbstractDiscoveryService implements IEBusDevi
             String deviceStr = EBusUtils.toHexDumpString(device.getDeviceId()).toString();
             for (final IEBusCommandCollection collection : commandCollections) {
                 if (collection.getIdentification().contains(deviceStr)) {
-                    logger.info("Discovered eBUS device {} ...", collection.getId());
+                    logger.debug("Discovered eBUS device {} ...", collection.getId());
                     updateDiscoveredThing(device, collection);
                 }
             }
