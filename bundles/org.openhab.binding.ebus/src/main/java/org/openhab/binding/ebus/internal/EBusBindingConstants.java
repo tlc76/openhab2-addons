@@ -26,7 +26,7 @@ import org.openhab.binding.ebus.internal.utils.EBusBindingUtils;
 public class EBusBindingConstants {
 
     public static final String BINDING_ID = "ebus";
-    public static final String BINDING_PID = "org.openhab.ebus";
+    public static final String BINDING_PID = "binding.ebus";
 
     // bridge
     public static final ThingTypeUID THING_TYPE_EBUS_BRIDGE = new ThingTypeUID(BINDING_ID, "bridge");
