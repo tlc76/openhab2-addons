@@ -7,7 +7,7 @@
         <feature>openhab-transport-serial</feature>
         <bundle>mvn:de.cs-dev.ebus/ebus-core/0.9.21-SNAPSHOT</bundle>
         <bundle>mvn:de.cs-dev.ebus/ebus-configuration/0.9.21-SNAPSHOT</bundle>
-        <bundle>mvn:com.fazecast/jSerialComm/2.5.0</bundle>
+        <bundle>mvn:com.fazecast/jSerialComm/2.5.3</bundle>
         <bundle start-level="80">mvn:org.openhab.addons.bundles/org.openhab.binding.ebus/${project.version}</bundle>
     </feature>
 </features>
