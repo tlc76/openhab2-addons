@@ -58,8 +58,6 @@ import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferenceCardinality;
-import org.osgi.service.component.annotations.ReferencePolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,8 +80,7 @@ import de.csdev.ebus.configuration.EBusConfigurationReaderExt;
  * @author Christian Sowada - Initial contribution
  */
 @Component(service = { EBusTypeProvider.class, ThingTypeProvider.class, ChannelTypeProvider.class,
-        ChannelGroupTypeProvider.class, ManagedService.class }, configurationPid = "binding.ebus", property = {
-                "service.pid:String=org.openhab.ebus" }, immediate = true)
+        ChannelGroupTypeProvider.class, ManagedService.class }, configurationPid = BINDING_PID, immediate = true)
 public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTypeProvider {
 
     private final Logger logger = LoggerFactory.getLogger(EBusTypeProviderImpl.class);
@@ -91,7 +88,7 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
     @Nullable
     private EBusCommandRegistry commandRegistry;
 
-    @Nullable
+    @Reference
     private ConfigurationAdmin configurationAdmin;
 
     private boolean skipFirstConfigurationAdminUpdate = true;
@@ -104,7 +101,7 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
     @Activate
     public void activate(ComponentContext componentContext) {
 
-        logger.info("Loading eBUS Type Provider ...");
+        logger.debug("Loading eBUS Type Provider ...");
 
         commandRegistry = new EBusCommandRegistry(EBusConfigurationReaderExt.class, false);
         skipFirstConfigurationAdminUpdate = true;
@@ -311,8 +308,6 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
             commandRegistry.clear();
             commandRegistry = null;
         }
-
-        configurationAdmin = null;
     }
 
     @Override
@@ -365,22 +360,6 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
         }
 
         return false;
-    }
-
-    /**
-     * @param cm
-     */
-    @Reference(policy = ReferencePolicy.STATIC, cardinality = ReferenceCardinality.OPTIONAL)
-    public void setConfigurationAdmin(ConfigurationAdmin cm) {
-        this.configurationAdmin = cm;
-
-    }
-
-    /**
-     * @param cm
-     */
-    public void unsetConfigurationAdmin(ConfigurationAdmin cm) {
-        this.configurationAdmin = null;
     }
 
     @Override

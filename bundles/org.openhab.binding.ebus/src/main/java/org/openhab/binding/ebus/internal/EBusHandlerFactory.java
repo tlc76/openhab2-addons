@@ -12,7 +12,7 @@
  */
 package org.openhab.binding.ebus.internal;
 
-import static org.openhab.binding.ebus.internal.EBusBindingConstants.BINDING_ID;
+import static org.openhab.binding.ebus.internal.EBusBindingConstants.*;
 
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -46,8 +46,9 @@ import org.osgi.service.component.annotations.ReferencePolicy;
  * @author Christian Sowada - Initial contribution
  */
 @NonNullByDefault
-@Component(service = { ThingHandlerFactory.class }, configurationPid = "binding.ebus", property = {
-        "service.pid:String=org.openhab.ebus" }, immediate = true)
+// @Component(service = { ThingHandlerFactory.class }, configurationPid = BINDING_PID, property = {
+// "service.pid:String=org.openhab.ebus" }, immediate = true)
+@Component(service = { ThingHandlerFactory.class }, configurationPid = BINDING_PID, immediate = true)
 public class EBusHandlerFactory extends BaseThingHandlerFactory {
 
     private Map<ThingUID, @Nullable ServiceRegistration<?>> discoveryServiceRegs = new HashMap<>();
@@ -137,7 +138,7 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory {
     }
 
     @Reference(policy = ReferencePolicy.STATIC, cardinality = ReferenceCardinality.MANDATORY)
-    public void setTypeProvider(EBusTypeProvider typeProvider) {
+    public synchronized void setTypeProvider(EBusTypeProvider typeProvider) {
         this.typeProvider = typeProvider;
     }
 
@@ -156,7 +157,7 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory {
     /**
      * @param typeProvider
      */
-    public void unsetTypeProvider(EBusTypeProvider typeProvider) {
+    public synchronized void unsetTypeProvider(EBusTypeProvider typeProvider) {
         this.typeProvider = null;
     }
 }
