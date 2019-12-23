@@ -19,7 +19,7 @@ package org.openhab.binding.ebus.internal.things;
 public interface IEBusTypeProviderListener {
 
     /**
-     * Fires event when Tpye Provider updates configuration.
+     * Fires event when Type Provider updates configuration.
      */
     public void onTypeProviderUpdate();
 
