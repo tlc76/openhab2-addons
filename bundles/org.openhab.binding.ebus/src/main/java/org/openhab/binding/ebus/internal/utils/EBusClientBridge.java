@@ -33,6 +33,7 @@ import de.csdev.ebus.client.EBusClient;
 import de.csdev.ebus.command.EBusCommandRegistry;
 import de.csdev.ebus.command.IEBusCommandMethod;
 import de.csdev.ebus.command.IEBusCommandMethod.Method;
+import de.csdev.ebus.command.IEBusCommandMethod.Type;
 import de.csdev.ebus.command.datatypes.EBusTypeException;
 import de.csdev.ebus.core.EBusControllerException;
 import de.csdev.ebus.core.EBusEbusdController;
@@ -162,12 +163,22 @@ public class EBusClientBridge {
             return null;
         }
 
+        byte target = EBusUtils.toByte(slaveAddress);
+
         IEBusCommandMethod commandMethod = client.getConfigurationProvider().getCommandMethodById(collectionId,
                 commandId, Method.SET);
 
         if (commandMethod == null) {
             logger.error("Unable to find setter command with id {}", commandId);
             return null;
+        }
+
+        // use master address for master-master telegrams
+        if (commandMethod.getType().equals(Type.MASTER_MASTER)) {
+            Byte newTarget = EBusUtils.getMasterAddress(target);
+            if (newTarget != null) {
+                target = newTarget;
+            }
         }
 
         HashMap<String, Object> values = new HashMap<>();
@@ -183,7 +194,6 @@ public class EBusClientBridge {
             values.put(valueName, decimalValue.toBigDecimal());
         }
 
-        byte target = EBusUtils.toByte(slaveAddress);
         return client.buildTelegram(commandMethod, target, values);
     }
 
