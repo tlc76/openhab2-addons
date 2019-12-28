@@ -24,7 +24,7 @@ import org.eclipse.smarthome.core.types.State;
  * @author Christian Sowada - Initial contribution
  */
 // @NonNullByDefault
-public abstract class EBusBaseBridgeHandler extends BaseBridgeHandler implements EBusBridgeX {
+public abstract class EBusBaseBridgeHandler extends BaseBridgeHandler implements IEBusBridgeHandler {
 
     public EBusBaseBridgeHandler(Bridge bridge) {
         super(bridge);
