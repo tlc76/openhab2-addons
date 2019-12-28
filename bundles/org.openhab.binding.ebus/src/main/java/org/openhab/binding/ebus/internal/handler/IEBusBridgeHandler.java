@@ -24,7 +24,7 @@ import org.openhab.binding.ebus.internal.utils.EBusClientBridge;
  *
  * @author Christian Sowada - Initial contribution
  */
-public interface EBusBridgeX extends ThingHandler {
+public interface IEBusBridgeHandler extends ThingHandler {
 
     /**
      * Returns the eBUS core lib client
@@ -34,9 +34,7 @@ public interface EBusBridgeX extends ThingHandler {
     public EBusClientBridge getLibClient();
 
     @Override
-    Bridge getThing();
-
-    // public EBusLibClient getLibClient();
+    public Bridge getThing();
 
     public ScheduledExecutorService getBindingScheduler();
 

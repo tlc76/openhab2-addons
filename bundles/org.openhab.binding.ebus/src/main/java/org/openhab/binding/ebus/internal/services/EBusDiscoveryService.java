@@ -31,7 +31,7 @@ import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.thing.ThingUID;
 import org.openhab.binding.ebus.internal.EBusBindingConstants;
 import org.openhab.binding.ebus.internal.handler.EBusBridgeHandler;
-import org.openhab.binding.ebus.internal.handler.EBusBridgeX;
+import org.openhab.binding.ebus.internal.handler.IEBusBridgeHandler;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Deactivate;
 import org.slf4j.Logger;
@@ -54,7 +54,7 @@ public class EBusDiscoveryService extends AbstractDiscoveryService implements IE
 
     private final Logger logger = LoggerFactory.getLogger(EBusDiscoveryService.class);
 
-    private EBusBridgeX bridgeHandle;
+    private IEBusBridgeHandler bridgeHandle;
 
     public EBusDiscoveryService(EBusBridgeHandler bridgeHandle) throws IllegalArgumentException {
         super(new HashSet<>(Arrays.asList(bridgeHandle.getThing().getThingTypeUID())), 20, false);

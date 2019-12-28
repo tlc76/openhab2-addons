@@ -22,7 +22,7 @@ import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.smarthome.core.library.types.DecimalType;
 import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.ThingUID;
-import org.openhab.binding.ebus.internal.handler.EBusBridgeX;
+import org.openhab.binding.ebus.internal.handler.IEBusBridgeHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,9 +41,9 @@ public class EBusMetricsService {
     @Nullable
     private ScheduledFuture<?> metricsRefreshSchedule;
 
-    private EBusBridgeX bridge;
+    private IEBusBridgeHandler bridge;
 
-    public EBusMetricsService(EBusBridgeX bridge) {
+    public EBusMetricsService(IEBusBridgeHandler bridge) {
         this.bridge = bridge;
     }
 
