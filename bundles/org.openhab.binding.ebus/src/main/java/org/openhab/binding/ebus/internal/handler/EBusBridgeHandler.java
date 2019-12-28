@@ -120,9 +120,6 @@ public class EBusBridgeHandler extends EBusBaseBridgeHandler
         handlerFactory.disposeDiscoveryService(this);
         handlerFactory.registerDiscoveryService(this);
 
-        // libClient = new EBusLibClient();
-        // Configuration configuration = getThing().getConfiguration();
-
         String ipAddress = null;
         BigDecimal port = null;
         String networkDriver = DRIVER_RAW;
