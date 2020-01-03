@@ -20,11 +20,14 @@ import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
@@ -47,17 +50,17 @@ import org.eclipse.smarthome.core.thing.type.ThingTypeBuilder;
 import org.eclipse.smarthome.core.types.StateDescription;
 import org.eclipse.smarthome.core.types.StateDescriptionFragmentBuilder;
 import org.eclipse.smarthome.core.types.StateOption;
+import org.openhab.binding.ebus.internal.EBusBindingConfiguration;
 import org.openhab.binding.ebus.internal.EBusBindingConstants;
 import org.openhab.binding.ebus.internal.utils.EBusBindingUtils;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
-import org.osgi.service.cm.ConfigurationException;
-import org.osgi.service.cm.ManagedService;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,19 +82,17 @@ import de.csdev.ebus.configuration.EBusConfigurationReaderExt;
  *
  * @author Christian Sowada - Initial contribution
  */
-@Component(service = { EBusTypeProvider.class, ThingTypeProvider.class, ChannelTypeProvider.class,
-        ChannelGroupTypeProvider.class, ManagedService.class }, configurationPid = BINDING_PID, immediate = true)
-public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTypeProvider {
+@Component(service = { IEBusTypeProvider.class, ThingTypeProvider.class, ChannelTypeProvider.class,
+        ChannelGroupTypeProvider.class }, configurationPid = BINDING_PID, immediate = true)
+public class EBusTypeProviderImpl extends EBusTypeProviderBase implements IEBusTypeProvider {
 
     private final Logger logger = LoggerFactory.getLogger(EBusTypeProviderImpl.class);
 
     @Nullable
     private EBusCommandRegistry commandRegistry;
 
-    @Reference
+    @Reference(cardinality = ReferenceCardinality.OPTIONAL)
     private ConfigurationAdmin configurationAdmin;
-
-    private boolean skipFirstConfigurationAdminUpdate = true;
 
     /**
      * Activating this component - called from DS.
@@ -101,22 +102,10 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
     @Activate
     public void activate(ComponentContext componentContext) {
 
-        logger.debug("Loading eBUS Type Provider ...");
+        logger.info("Loading eBUS Type Provider ...");
 
         commandRegistry = new EBusCommandRegistry(EBusConfigurationReaderExt.class, false);
-        skipFirstConfigurationAdminUpdate = true;
-
-        try {
-            if (configurationAdmin != null) {
-                Configuration configuration = configurationAdmin.getConfiguration(BINDING_PID, null);
-                updateConfiguration(configuration.getProperties());
-            } else {
-                logger.warn("Unable to get current binding configuration, use default!");
-            }
-
-        } catch (IOException e) {
-            logger.error("error!", e);
-        }
+        updateConfiguration(componentContext.getProperties());
     }
 
     /**
@@ -251,6 +240,10 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
                 itemType = EBusBindingConstants.ITEM_TYPE_TEMPERATURE;
             }
 
+            if (StringUtils.isEmpty(itemType)) {
+                logger.warn("Label type for {}/{} is undefined!", uid, label);
+            }
+
             return ChannelTypeBuilder.state(uid, label, itemType).withConfigDescriptionURI(configDescriptionURI)
                     .isAdvanced(advanced).withStateDescription(state).build();
         }
@@ -302,7 +295,6 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
         channelGroupTypes.clear();
         channelTypes.clear();
         thingTypes.clear();
-        listeners.clear();
 
         if (commandRegistry != null) {
             commandRegistry.clear();
@@ -312,6 +304,7 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
 
     @Override
     public @Nullable EBusCommandRegistry getCommandRegistry() {
+        logger.info("EBusTypeProviderImpl.getCommandRegistry()");
         return commandRegistry;
     }
 
@@ -370,9 +363,8 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
                 updateCollection(collection);
             }
         }
-        logger.debug("Generated all eBUS command collections ...");
 
-        fireOnUpdate();
+        logger.debug("Generated all eBUS command collections ...");
     }
 
     /**
@@ -461,11 +453,24 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
         thingTypes.put(thingType.getUID(), thingType);
     }
 
+    private EBusBindingConfiguration getConfiguration(Dictionary<String, ?> properties) {
+        List<String> keys = Collections.list(properties.keys());
+        Map<String, Object> dictCopy = keys.stream().collect(Collectors.toMap(Function.identity(), properties::get));
+
+        org.eclipse.smarthome.config.core.Configuration c = new org.eclipse.smarthome.config.core.Configuration(
+                dictCopy);
+
+        return c.as(EBusBindingConfiguration.class);
+    }
+
     @SuppressWarnings("null")
     private void updateConfiguration(@Nullable Dictionary<String, ?> properties) {
 
         logger.trace("Update eBUS configuration ...");
 
+        EBusBindingConfiguration configuration = getConfiguration(properties);
+
+        // Map
         if (commandRegistry == null) {
             return;
         }
@@ -476,55 +481,36 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements EBusTy
 
         if (properties != null && !properties.isEmpty()) {
 
-            String configurationUrl = (String) properties.get(CONFIGURATION_URL);
-            String configurationUrl1 = (String) properties.get(CONFIGURATION_URL1);
-            String configurationUrl2 = (String) properties.get(CONFIGURATION_URL2);
-            String configurationUrlBundle = (String) properties.get(CONFIGURATION_BUNDLE_URL);
-
-            if (configurationUrl != null) {
-                logger.info("Load custom configuration file '{}' ...", configurationUrl);
+            if (configuration.configurationUrl != null) {
+                logger.info("Load custom configuration file '{}' ...", configuration.configurationUrl);
                 if (commandRegistry != null) {
 
-                    loadConfigurationByUrl(commandRegistry, configurationUrl);
+                    loadConfigurationByUrl(commandRegistry, configuration.configurationUrl);
                 }
             }
 
-            if (configurationUrl1 != null) {
-                logger.info("Load custom configuration file '{}' ...", configurationUrl1);
+            if (configuration.configurationUrl1 != null) {
+                logger.info("Load custom configuration file '{}' ...", configuration.configurationUrl1);
                 if (commandRegistry != null) {
-                    loadConfigurationByUrl(commandRegistry, configurationUrl1);
+                    loadConfigurationByUrl(commandRegistry, configuration.configurationUrl1);
                 }
             }
 
-            if (configurationUrl2 != null) {
-                logger.info("Load custom configuration file '{}' ...", configurationUrl2);
+            if (configuration.configurationUrl2 != null) {
+                logger.info("Load custom configuration file '{}' ...", configuration.configurationUrl2);
                 if (commandRegistry != null) {
-                    loadConfigurationByUrl(commandRegistry, configurationUrl2);
+                    loadConfigurationByUrl(commandRegistry, configuration.configurationUrl2);
                 }
             }
 
-            if (configurationUrlBundle != null) {
-                logger.info("Load custom configuration bundle '{}' ...", configurationUrlBundle);
+            if (configuration.configurationBundleUrl != null) {
+                logger.info("Load custom configuration bundle '{}' ...", configuration.configurationBundleUrl);
                 if (commandRegistry != null) {
-                    loadConfigurationBundleByUrl(commandRegistry, configurationUrlBundle);
+                    loadConfigurationBundleByUrl(commandRegistry, configuration.configurationBundleUrl);
                 }
             }
         }
 
         update(commandRegistry.getCommandCollections());
     }
-
-    @Override
-    public void updated(Dictionary<String, ?> properties) throws ConfigurationException {
-
-        // block the first update that directly follows after activate
-        if (skipFirstConfigurationAdminUpdate) {
-            skipFirstConfigurationAdminUpdate = false;
-            return;
-        }
-
-        logger.debug("Update eBUS Type Provider ...");
-        updateConfiguration(properties);
-    }
-
 }

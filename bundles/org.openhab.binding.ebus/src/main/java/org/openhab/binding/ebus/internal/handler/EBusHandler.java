@@ -51,6 +51,7 @@ import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.RefreshType;
 import org.eclipse.smarthome.core.types.State;
 import org.eclipse.smarthome.core.types.UnDefType;
+import org.openhab.binding.ebus.internal.EBusHandlerConfiguration;
 import org.openhab.binding.ebus.internal.utils.EBusBindingUtils;
 import org.openhab.binding.ebus.internal.utils.EBusClientBridge;
 import org.slf4j.Logger;
@@ -80,6 +81,8 @@ public class EBusHandler extends BaseThingHandler {
     private Random random = new Random(12);
 
     private Map<ByteBuffer, ScheduledFuture<?>> uniqueTelegramPollings = new HashMap<>();
+
+    private EBusHandlerConfiguration configuration;
 
     /**
      * @param thing
@@ -143,8 +146,8 @@ public class EBusHandler extends BaseThingHandler {
             if (value == null) {
                 state = UnDefType.NULL;
             } else {
-                logger.warn("Unexpected datatype {} for channel {} !", value.getClass().getSimpleName(),
-                        channel.getChannelTypeUID());
+                logger.warn("Unexpected datatype {} for channel {} [accepted type: {}] !",
+                        value.getClass().getSimpleName(), channel.getChannelTypeUID(), acceptedItemType);
                 state = UnDefType.UNDEF;
             }
         }
@@ -359,11 +362,13 @@ public class EBusHandler extends BaseThingHandler {
     @Override
     public void initialize() {
 
+        configuration = getConfigAs(EBusHandlerConfiguration.class);
+
         Bridge bridge = getBridge();
         if (bridge == null) {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "No bridge defined!");
 
-        } else if (StringUtils.isEmpty((String) thing.getConfiguration().get(SLAVE_ADDRESS))) {
+        } else if (StringUtils.isEmpty(configuration.slaveAddress)) {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Slave address is not set!");
 
         } else if (bridge.getStatus() != ThingStatus.ONLINE) {
@@ -512,26 +517,26 @@ public class EBusHandler extends BaseThingHandler {
      */
     public boolean supportsTelegram(byte[] receivedData, IEBusCommandMethod commandMethod) {
 
-        Configuration configuration = getThing().getConfiguration();
+        // EBusHandlerConfiguration configuration = getThing().getConfiguration().as(EBusHandlerConfiguration.class);
 
         byte sourceAddress = receivedData[0];
         byte destinationAddress = receivedData[1];
 
-        Byte masterAddress = EBusUtils.toByte((String) configuration.get(MASTER_ADDRESS));
-        Byte slaveAddress = EBusUtils.toByte((String) configuration.get(SLAVE_ADDRESS));
+        Byte masterAddress = EBusUtils.toByte(configuration.masterAddress);
+        Byte slaveAddress = EBusUtils.toByte(configuration.slaveAddress);
 
         // only interesting for broadcasts
         Byte masterAddressComp = masterAddress == null ? EBusUtils.getMasterAddress(slaveAddress) : masterAddress;
 
-        boolean filterAcceptSource = BooleanUtils.isTrue((Boolean) configuration.get(FILTER_ACCEPT_MASTER));
-        boolean filterAcceptDestination = BooleanUtils.isTrue((Boolean) configuration.get(FILTER_ACCEPT_SLAVE));
-        boolean filterAcceptBroadcast = BooleanUtils.isTrue((Boolean) configuration.get(FILTER_ACCEPT_BROADCAST));
+        boolean filterAcceptSource = BooleanUtils.isTrue(configuration.filterAcceptMaster);
+        boolean filterAcceptDestination = BooleanUtils.isTrue(configuration.filterAcceptSlave);
+        boolean filterAcceptBroadcast = BooleanUtils.isTrue(configuration.filterAcceptBroadcasts);
+
+        logger.trace("eBUS handler cfg {}", configuration);
 
         String collectionId = thing.getThingTypeUID().getId();
 
         if (!commandMethod.getParent().getParentCollection().getId().equals(collectionId)) {
-            logger.trace("eBUS node handler {} use collectionId {}, not {} ...", thing.getUID(), collectionId,
-                    commandMethod.getParent().getParentCollection().getId());
             return false;
         }
 

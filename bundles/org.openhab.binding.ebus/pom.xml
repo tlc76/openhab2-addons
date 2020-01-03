@@ -7,8 +7,13 @@
 	<parent>
 		<groupId>org.openhab.addons.bundles</groupId>
 		<artifactId>org.openhab.addons.reactor.bundles</artifactId>
-		<version>3.0.0-SNAPSHOT</version>
+		<version>2.5.1-SNAPSHOT</version>
 	</parent>
+
+    <properties>
+        <ebus.core.version>1.0.1-SNAPSHOT</ebus.core.version>
+        <ebus.config.version>1.0.2-SNAPSHOT</ebus.config.version>
+    </properties>
 
 	<artifactId>org.openhab.binding.ebus</artifactId>
 
@@ -18,23 +23,22 @@
 		<dependency>
 			<groupId>de.cs-dev.ebus</groupId>
 			<artifactId>ebus-core</artifactId>
-			<version>1.0.0-SNAPSHOT</version>
-			<type>bundle</type>
+			<version>${ebus.core.version}</version>
+			<scope>compile</scope>
 		</dependency>
 
 		<dependency>
 			<groupId>de.cs-dev.ebus</groupId>
 			<artifactId>ebus-configuration</artifactId>
-			<version>1.0.1-SNAPSHOT</version>
-			<type>bundle</type>
+			<version>${ebus.config.version}</version>
+			<scope>compile</scope>
 		</dependency>
 
 		<dependency>
 			<groupId>com.fazecast</groupId>
 			<artifactId>jSerialComm</artifactId>
 			<version>2.5.3</version>
-			<type>bundle</type>
-			<optional>true</optional>
+			<scope>compile</scope>
 		</dependency>
 
 	</dependencies>

@@ -12,7 +12,7 @@
  */
 package org.openhab.binding.ebus.internal;
 
-import static org.openhab.binding.ebus.internal.EBusBindingConstants.*;
+import static org.openhab.binding.ebus.internal.EBusBindingConstants.BINDING_ID;
 
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -31,13 +31,11 @@ import org.eclipse.smarthome.core.thing.binding.ThingHandlerFactory;
 import org.openhab.binding.ebus.internal.handler.EBusBridgeHandler;
 import org.openhab.binding.ebus.internal.handler.EBusHandler;
 import org.openhab.binding.ebus.internal.services.EBusDiscoveryService;
-import org.openhab.binding.ebus.internal.things.EBusTypeProvider;
+import org.openhab.binding.ebus.internal.things.IEBusTypeProvider;
 import org.osgi.framework.ServiceRegistration;
-import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
-import org.osgi.service.component.annotations.ReferencePolicy;
 
 /**
  * The {@link EBusHandlerFactory} is responsible for creating things and thing
@@ -46,25 +44,18 @@ import org.osgi.service.component.annotations.ReferencePolicy;
  * @author Christian Sowada - Initial contribution
  */
 @NonNullByDefault
-// @Component(service = { ThingHandlerFactory.class }, configurationPid = BINDING_PID, property = {
-// "service.pid:String=org.openhab.ebus" }, immediate = true)
-@Component(service = { ThingHandlerFactory.class }, configurationPid = BINDING_PID, immediate = true)
+@Component(service = { ThingHandlerFactory.class }, immediate = true)
 public class EBusHandlerFactory extends BaseThingHandlerFactory {
 
     private Map<ThingUID, @Nullable ServiceRegistration<?>> discoveryServiceRegs = new HashMap<>();
 
     @Nullable
-    private EBusTypeProvider typeProvider;
+    @Reference(cardinality = ReferenceCardinality.MANDATORY)
+    private volatile IEBusTypeProvider typeProvider;
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.eclipse.smarthome.core.thing.binding.BaseThingHandlerFactory#activate(org.osgi.service.component.
-     * ComponentContext)
-     */
-    @Override
-    protected void activate(ComponentContext componentContext) {
-        super.activate(componentContext);
+    @Nullable
+    public IEBusTypeProvider getEBusTypeProvider() {
+        return typeProvider;
     }
 
     /*
@@ -137,11 +128,6 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory {
         }
     }
 
-    @Reference(policy = ReferencePolicy.STATIC, cardinality = ReferenceCardinality.MANDATORY)
-    public synchronized void setTypeProvider(EBusTypeProvider typeProvider) {
-        this.typeProvider = typeProvider;
-    }
-
     /*
      * (non-Javadoc)
      *
@@ -152,12 +138,5 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory {
     @Override
     public boolean supportsThingType(ThingTypeUID thingTypeUID) {
         return BINDING_ID.equals(thingTypeUID.getBindingId());
-    }
-
-    /**
-     * @param typeProvider
-     */
-    public synchronized void unsetTypeProvider(EBusTypeProvider typeProvider) {
-        this.typeProvider = null;
     }
 }

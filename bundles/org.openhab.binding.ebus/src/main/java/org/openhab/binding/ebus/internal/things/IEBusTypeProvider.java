@@ -24,7 +24,6 @@ import org.eclipse.smarthome.core.thing.type.ChannelGroupTypeProvider;
 import org.eclipse.smarthome.core.thing.type.ChannelGroupTypeUID;
 import org.eclipse.smarthome.core.thing.type.ChannelTypeProvider;
 import org.eclipse.smarthome.core.thing.type.ChannelTypeRegistry;
-import org.osgi.service.cm.ManagedService;
 
 import de.csdev.ebus.command.EBusCommandRegistry;
 import de.csdev.ebus.command.IEBusCommandCollection;
@@ -34,23 +33,12 @@ import de.csdev.ebus.command.IEBusCommandCollection;
  * @author Christian Sowada - Initial contribution
  */
 @NonNullByDefault
-public interface EBusTypeProvider
-        extends ThingTypeProvider, ChannelGroupTypeProvider, ChannelTypeProvider, ManagedService {
+public interface IEBusTypeProvider extends ThingTypeProvider, ChannelGroupTypeProvider, ChannelTypeProvider {
 
     /**
      * @param collections
      */
     public void update(List<IEBusCommandCollection> collections);
-
-    /**
-     * @param listener
-     */
-    public void addTypeProviderListener(IEBusTypeProviderListener listener);
-
-    /**
-     * @param listener
-     */
-    public void removeTypeProviderListener(IEBusTypeProviderListener listener);
 
     /**
      * @return

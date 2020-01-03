@@ -31,7 +31,7 @@ import org.eclipse.smarthome.io.console.Console;
 import org.eclipse.smarthome.io.console.extensions.ConsoleCommandExtension;
 import org.openhab.binding.ebus.internal.handler.EBusBridgeHandler;
 import org.openhab.binding.ebus.internal.handler.EBusHandler;
-import org.openhab.binding.ebus.internal.things.EBusTypeProvider;
+import org.openhab.binding.ebus.internal.things.IEBusTypeProvider;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -79,7 +79,7 @@ public class EBusConsoleCommandExtension implements ConsoleCommandExtension {
     private ThingRegistry thingRegistry;
 
     @Nullable
-    private EBusTypeProvider typeProvider;
+    private IEBusTypeProvider typeProvider;
 
     /**
      * Activating this component - called from DS.
@@ -105,11 +105,11 @@ public class EBusConsoleCommandExtension implements ConsoleCommandExtension {
     }
 
     @Reference(policy = ReferencePolicy.STATIC, cardinality = ReferenceCardinality.MANDATORY)
-    public void setTypeProvider(EBusTypeProvider typeProvider) {
+    public void setTypeProvider(IEBusTypeProvider typeProvider) {
         this.typeProvider = typeProvider;
     }
 
-    public void unsetTypeProvider(EBusTypeProvider typeProvider) {
+    public void unsetTypeProvider(IEBusTypeProvider typeProvider) {
         this.typeProvider = null;
     }
 

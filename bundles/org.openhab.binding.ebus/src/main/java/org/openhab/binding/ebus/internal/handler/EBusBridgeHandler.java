@@ -30,11 +30,10 @@ import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.types.Command;
 import org.openhab.binding.ebus.internal.EBusBindingConstants;
-import org.openhab.binding.ebus.internal.EBusConfiguration;
+import org.openhab.binding.ebus.internal.EBusBridgeHandlerConfiguration;
 import org.openhab.binding.ebus.internal.EBusHandlerFactory;
 import org.openhab.binding.ebus.internal.services.EBusMetricsService;
-import org.openhab.binding.ebus.internal.things.EBusTypeProvider;
-import org.openhab.binding.ebus.internal.things.IEBusTypeProviderListener;
+import org.openhab.binding.ebus.internal.things.IEBusTypeProvider;
 import org.openhab.binding.ebus.internal.utils.EBusAdvancedLogging;
 import org.openhab.binding.ebus.internal.utils.EBusClientBridge;
 import org.slf4j.Logger;
@@ -44,6 +43,7 @@ import de.csdev.ebus.command.EBusCommandRegistry;
 import de.csdev.ebus.command.IEBusCommandMethod;
 import de.csdev.ebus.core.EBusDataException;
 import de.csdev.ebus.core.IEBusConnectorEventListener;
+import de.csdev.ebus.core.IEBusController.ConnectionStatus;
 import de.csdev.ebus.service.parser.IEBusParserListener;
 import de.csdev.ebus.utils.EBusUtils;
 
@@ -54,7 +54,7 @@ import de.csdev.ebus.utils.EBusUtils;
  * @author Christian Sowada - Initial contribution
  */
 public class EBusBridgeHandler extends EBusBaseBridgeHandler
-        implements IEBusParserListener, IEBusConnectorEventListener, IEBusTypeProviderListener {
+        implements IEBusParserListener, IEBusConnectorEventListener {
 
     private final Logger logger = LoggerFactory.getLogger(EBusBridgeHandler.class);
 
@@ -63,22 +63,21 @@ public class EBusBridgeHandler extends EBusBaseBridgeHandler
 
     private EBusClientBridge clientBridge;
 
+    @NonNull
     private EBusHandlerFactory handlerFactory;
-
-    private EBusTypeProvider typeProvider;
 
     private EBusAdvancedLogging advanceLogger;
 
-    private EBusConfiguration config;
+    private EBusBridgeHandlerConfiguration configuration;
 
     private EBusMetricsService metricsService;
 
-    public EBusBridgeHandler(@NonNull Bridge bridge, EBusTypeProvider typeProvider, EBusHandlerFactory handlerFactory) {
+    public EBusBridgeHandler(@NonNull Bridge bridge, IEBusTypeProvider typeProvider,
+            EBusHandlerFactory handlerFactory) {
 
         super(bridge);
 
         // reference configuration
-        this.typeProvider = typeProvider;
         this.handlerFactory = handlerFactory;
     }
 
@@ -101,7 +100,10 @@ public class EBusBridgeHandler extends EBusBaseBridgeHandler
     @Override
     public void initialize() {
 
-        config = getConfigAs(EBusConfiguration.class);
+        logger.trace("EBusBridgeHandler.initialize()");
+
+        IEBusTypeProvider typeProvider = this.handlerFactory.getEBusTypeProvider();
+        configuration = getConfigAs(EBusBridgeHandlerConfiguration.class);
 
         if (typeProvider == null) {
             throw new RuntimeException("Type provider not available!");
@@ -133,15 +135,15 @@ public class EBusBridgeHandler extends EBusBaseBridgeHandler
         Byte masterAddress = (byte) 0xFF;
 
         try {
-            ipAddress = config.getIpAddress();
-            port = config.getPort();
-            networkDriver = config.getNetworkDriver();
+            ipAddress = configuration.ipAddress;
+            port = configuration.port;
+            networkDriver = configuration.networkDriver;
 
-            masterAddressStr = config.getMasterAddress();
-            serialPort = config.getSerialPort();
-            serialPortDriver = config.getSerialPortDriver();
+            masterAddressStr = configuration.masterAddress;
+            serialPort = configuration.serialPort;
+            serialPortDriver = configuration.serialPortDriver;
 
-            if (config.getAdvancedLogging().equals(Boolean.TRUE)) {
+            if (configuration.advancedLogging.equals(Boolean.TRUE)) {
                 logger.warn("Enable advanced logging for eBUS commands!");
                 advanceLogger = new EBusAdvancedLogging();
             }
@@ -197,28 +199,23 @@ public class EBusBridgeHandler extends EBusBaseBridgeHandler
         clientBridge.getClient().addEBusEventListener(this);
         clientBridge.getClient().addEBusParserListener(this);
 
-        typeProvider.addTypeProviderListener(this);
-
         // startMetricScheduler();
         metricsService = new EBusMetricsService(this);
         metricsService.activate();
 
         // start eBus controller
         clientBridge.startClient();
-
-        updateStatus(ThingStatus.ONLINE);
-
     }
 
     @Override
     public void dispose() {
 
+        logger.trace("EBusBridgeHandler.dispose()");
+
         if (metricsService != null) {
             metricsService.deactivate();
             metricsService = null;
         }
-
-        typeProvider.removeTypeProviderListener(this);
 
         if (advanceLogger != null) {
             clientBridge.getClient().removeEBusParserListener(advanceLogger);
@@ -343,23 +340,6 @@ public class EBusBridgeHandler extends EBusBaseBridgeHandler
     /*
      * (non-Javadoc)
      *
-     * @see org.openhab.binding.ebus.thing.IEBusTypeProviderListener#onTypeProviderUpdate()
-     */
-    @Override
-    public void onTypeProviderUpdate() {
-
-        // update all handlers
-        for (Thing thing : getThing().getThings()) {
-            EBusHandler handler = (EBusHandler) thing.getHandler();
-            if (handler != null) {
-                handler.updateHandler();
-            }
-        }
-    }
-
-    /*
-     * (non-Javadoc)
-     *
      * @see de.csdev.ebus.service.parser.IEBusParserListener#onTelegramResolveFailed(de.csdev.ebus.command.
      * IEBusCommandMethod, byte[], java.lang.Integer, java.lang.String)
      */
@@ -376,5 +356,24 @@ public class EBusBridgeHandler extends EBusBaseBridgeHandler
                     commandChannel.getParent().getLabel(), commandChannel.getParent().getParentCollection().getLabel(),
                     EBusUtils.toHexDumpString(receivedData));
         }
+    }
+
+    @Override
+    public void onConnectionStatusChanged(ConnectionStatus status) {
+
+        Bridge bridge = getThing();
+        ThingStatus thingStatus = bridge.getStatus();
+
+        if (status == ConnectionStatus.DISCONNECTED && thingStatus != ThingStatus.OFFLINE) {
+            updateStatus(ThingStatus.OFFLINE);
+
+        } else if (status == ConnectionStatus.CONNECTING && thingStatus != ThingStatus.UNKNOWN) {
+            updateStatus(ThingStatus.UNKNOWN, ThingStatusDetail.NONE, "Connecting to eBUS ...");
+
+        } else if (status == ConnectionStatus.CONNECTED && thingStatus != ThingStatus.ONLINE) {
+            updateStatus(ThingStatus.ONLINE);
+
+        }
+
     }
 }
