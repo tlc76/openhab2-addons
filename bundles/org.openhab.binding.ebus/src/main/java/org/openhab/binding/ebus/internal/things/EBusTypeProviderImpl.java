@@ -102,7 +102,7 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements IEBusT
     @Activate
     public void activate(ComponentContext componentContext) {
 
-        logger.info("Loading eBUS Type Provider ...");
+        logger.trace("Loading eBUS Type Provider ...");
 
         commandRegistry = new EBusCommandRegistry(EBusConfigurationReaderExt.class, false);
         updateConfiguration(componentContext.getProperties());
@@ -290,7 +290,7 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements IEBusT
     @Deactivate
     public void deactivate(ComponentContext componentContext) {
 
-        logger.debug("Stopping eBUS Type Provider ...");
+        logger.trace("Stopping eBUS Type Provider ...");
 
         channelGroupTypes.clear();
         channelTypes.clear();
@@ -304,7 +304,6 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements IEBusT
 
     @Override
     public @Nullable EBusCommandRegistry getCommandRegistry() {
-        logger.info("EBusTypeProviderImpl.getCommandRegistry()");
         return commandRegistry;
     }
 

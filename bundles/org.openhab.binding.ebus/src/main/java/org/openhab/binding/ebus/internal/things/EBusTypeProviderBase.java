@@ -27,16 +27,12 @@ import org.eclipse.smarthome.core.thing.type.ChannelGroupTypeUID;
 import org.eclipse.smarthome.core.thing.type.ChannelType;
 import org.eclipse.smarthome.core.thing.type.ChannelTypeUID;
 import org.eclipse.smarthome.core.thing.type.ThingType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author Christian Sowada - Initial contribution
  */
 public abstract class EBusTypeProviderBase implements IEBusTypeProvider {
-
-    private final Logger logger = LoggerFactory.getLogger(EBusTypeProviderBase.class);
 
     protected final List<String> supportedBridgeTypeUIDs = Arrays.asList(THING_TYPE_EBUS_BRIDGE.getAsString());
 
