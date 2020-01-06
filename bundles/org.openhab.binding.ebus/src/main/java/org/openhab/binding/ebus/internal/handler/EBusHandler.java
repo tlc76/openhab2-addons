@@ -57,11 +57,13 @@ import org.openhab.binding.ebus.internal.utils.EBusClientBridge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.csdev.ebus.client.EBusClient;
 import de.csdev.ebus.command.IEBusCommandCollection;
 import de.csdev.ebus.command.IEBusCommandMethod;
 import de.csdev.ebus.command.datatypes.EBusTypeException;
 import de.csdev.ebus.core.EBusConsts;
 import de.csdev.ebus.core.EBusControllerException;
+import de.csdev.ebus.core.IEBusController.ConnectionStatus;
 import de.csdev.ebus.utils.EBusDateTime;
 import de.csdev.ebus.utils.EBusUtils;
 
@@ -428,7 +430,12 @@ public class EBusHandler extends BaseThingHandler {
                             EBusUtils.toHexDumpString(telegram).toString());
 
                     try {
-                        libClient.getClient().addToSendQueue(EBusUtils.toByteArray(telegram), 2);
+                        EBusClient client = libClient.getClient();
+                        if (client.getController().getConnectionStatus() == ConnectionStatus.CONNECTED) {
+                            client.addToSendQueue(EBusUtils.toByteArray(telegram), 2);
+                        } else {
+                            logger.trace("Unable to send polling command due to a unconnected controller");
+                        }
 
                     } catch (EBusControllerException e) {
                         logger.debug("Remove polling job for {} due to controller exception", channelUID);
