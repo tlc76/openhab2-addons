@@ -431,7 +431,8 @@ public class EBusHandler extends BaseThingHandler {
 
                     try {
                         EBusClient client = libClient.getClient();
-                        if (client.getController().getConnectionStatus() == ConnectionStatus.CONNECTED) {
+                        if (client.getController() != null
+                                && client.getController().getConnectionStatus() == ConnectionStatus.CONNECTED) {
                             client.addToSendQueue(EBusUtils.toByteArray(telegram), 2);
                         } else {
                             logger.trace("Unable to send polling command due to a unconnected controller");
