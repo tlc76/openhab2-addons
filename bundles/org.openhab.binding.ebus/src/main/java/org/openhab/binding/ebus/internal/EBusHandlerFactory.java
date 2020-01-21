@@ -33,9 +33,15 @@ import org.openhab.binding.ebus.internal.handler.EBusHandler;
 import org.openhab.binding.ebus.internal.services.EBusDiscoveryService;
 import org.openhab.binding.ebus.internal.things.IEBusTypeProvider;
 import org.osgi.framework.ServiceRegistration;
+import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import de.csdev.ebus.configuration.EBusConfigurationVersion;
+import de.csdev.ebus.core.EBusVersion;
 
 /**
  * The {@link EBusHandlerFactory} is responsible for creating things and thing
@@ -47,6 +53,8 @@ import org.osgi.service.component.annotations.ReferenceCardinality;
 @Component(service = { ThingHandlerFactory.class }, immediate = true)
 public class EBusHandlerFactory extends BaseThingHandlerFactory {
 
+    private final Logger logger = LoggerFactory.getLogger(EBusHandlerFactory.class);
+
     private Map<ThingUID, @Nullable ServiceRegistration<?>> discoveryServiceRegs = new HashMap<>();
 
     @Nullable
@@ -56,6 +64,23 @@ public class EBusHandlerFactory extends BaseThingHandlerFactory {
     @Nullable
     public IEBusTypeProvider getEBusTypeProvider() {
         return typeProvider;
+    }
+
+    @Override
+    // @Activate
+    protected void activate(ComponentContext componentContext) {
+
+        super.activate(componentContext);
+
+        logger.info("Use eBUS binding {} [eBUS core: {}, eBUS configuration: {}]", EbusBindingVersion.getVersion(),
+                EBusVersion.getVersion(), EBusConfigurationVersion.getVersion());
+
+        logger.info("eBUS core -> timestamp {}, commit: #{}, build-no: #{}", EBusVersion.getBuildTimestamp(),
+                EBusVersion.getBuildCommit(), EBusVersion.getBuildNumber());
+
+        logger.info("eBUS configuration -> timestamp {}, commit: #{}, build-no: #{}",
+                EBusConfigurationVersion.getBuildTimestamp(), EBusConfigurationVersion.getBuildCommit(),
+                EBusConfigurationVersion.getBuildNumber());
     }
 
     /*
