@@ -43,6 +43,7 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import de.csdev.ebus.client.EBusClient;
 import de.csdev.ebus.command.IEBusCommandCollection;
 import de.csdev.ebus.core.EBusControllerException;
+import de.csdev.ebus.core.EBusDataException;
 import de.csdev.ebus.core.EBusLowLevelController;
 import de.csdev.ebus.core.IEBusController;
 import de.csdev.ebus.core.connection.EBusEmulatorConnection;
@@ -314,8 +315,17 @@ public class EBusConsoleCommandExtension implements ConsoleCommandExtension {
                 }
 
                 if (bridge != null) {
+                    EBusClient client = bridge.getLibClient().getClient();
                     byte[] data = EBusUtils.toByteArray(args[1]);
-                    bridge.getLibClient().sendTelegram(data);
+
+                    EBusConsoleSendReceiver sendReceiver = new EBusConsoleSendReceiver(client, console);
+
+                    // send and wait for the result, self-removing from listener
+                    try {
+                        sendReceiver.send(data);
+                    } catch (EBusDataException e) {
+                        console.println("The send telegram is invalid! " + e.getMessage());
+                    }
                 }
             } else if (StringUtils.equals(args[0], SUBCMD_RELOAD)) {
                 console.println("Reload all eBUS configurations ...");
