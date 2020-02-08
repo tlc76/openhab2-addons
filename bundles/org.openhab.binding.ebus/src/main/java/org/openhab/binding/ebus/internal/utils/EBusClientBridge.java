@@ -21,6 +21,7 @@ import org.apache.commons.lang.StringUtils;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.smarthome.core.library.types.DecimalType;
+import org.eclipse.smarthome.core.library.types.OnOffType;
 import org.eclipse.smarthome.core.thing.Channel;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.types.Command;
@@ -185,13 +186,21 @@ public class EBusClientBridge {
 
         if (command instanceof State) {
             State state = (State) command;
-            DecimalType decimalValue = state.as(DecimalType.class);
 
-            if (decimalValue == null) {
-                decimalValue = new DecimalType(state.toString());
+            if (state instanceof OnOffType) {
+                OnOffType onOff = state.as(OnOffType.class);
+                values.put(valueName, onOff == OnOffType.ON);
+
+            } else if (state instanceof DecimalType) {
+                DecimalType decimalValue = state.as(DecimalType.class);
+                if (decimalValue != null) {
+                    values.put(valueName, decimalValue.toBigDecimal());
+                }
+            } else {
+                DecimalType decimalValue = new DecimalType(state.toString());
+                values.put(valueName, decimalValue.toBigDecimal());
+
             }
-
-            values.put(valueName, decimalValue.toBigDecimal());
         }
 
         return client.buildTelegram(commandMethod, target, values);
