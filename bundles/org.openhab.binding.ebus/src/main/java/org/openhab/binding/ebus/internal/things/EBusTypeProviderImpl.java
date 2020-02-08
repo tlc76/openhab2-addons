@@ -393,9 +393,13 @@ public class EBusTypeProviderImpl extends EBusTypeProviderBase implements IEBusT
             } else if (commandChannelTypes.contains(IEBusCommandMethod.Method.BROADCAST)) {
                 mainMethod = command.getCommandMethod(IEBusCommandMethod.Method.BROADCAST);
 
-            } else {
+            } else if (commandChannelTypes.contains(IEBusCommandMethod.Method.SET)) {
                 logger.warn("eBUS command {} only contains a setter channel!", command.getId());
-                // mh ... not correct!
+                mainMethod = command.getCommandMethod(IEBusCommandMethod.Method.SET);
+
+            } else {
+                logger.warn("eBUS command {} doesn't contain a known channel!", command.getId());
+
             }
 
             if (mainMethod != null) {
