@@ -525,7 +525,10 @@ public class EBusHandler extends BaseThingHandler {
      */
     public boolean supportsTelegram(byte[] receivedData, IEBusCommandMethod commandMethod) {
 
-        // EBusHandlerConfiguration configuration = getThing().getConfiguration().as(EBusHandlerConfiguration.class);
+        final String collectionId = thing.getThingTypeUID().getId();
+        if (!commandMethod.getParent().getParentCollection().getId().equals(collectionId)) {
+            return false;
+        }
 
         byte sourceAddress = receivedData[0];
         byte destinationAddress = receivedData[1];
@@ -533,20 +536,16 @@ public class EBusHandler extends BaseThingHandler {
         Byte masterAddress = EBusUtils.toByte(configuration.masterAddress);
         Byte slaveAddress = EBusUtils.toByte(configuration.slaveAddress);
 
-        // only interesting for broadcasts
-        Byte masterAddressComp = masterAddress == null ? EBusUtils.getMasterAddress(slaveAddress) : masterAddress;
-
         boolean filterAcceptSource = BooleanUtils.isTrue(configuration.filterAcceptMaster);
         boolean filterAcceptDestination = BooleanUtils.isTrue(configuration.filterAcceptSlave);
         boolean filterAcceptBroadcast = BooleanUtils.isTrue(configuration.filterAcceptBroadcasts);
 
         logger.trace("eBUS handler cfg {}", configuration);
 
-        String collectionId = thing.getThingTypeUID().getId();
-
-        if (!commandMethod.getParent().getParentCollection().getId().equals(collectionId)) {
-            return false;
-        }
+        // only interesting for broadcasts
+        Byte masterAddressComp = masterAddress == null
+                ? (slaveAddress != null ? EBusUtils.getMasterAddress(slaveAddress) : null)
+                : masterAddress;
 
         // check if broadcast filter is set (default true)
         if (filterAcceptBroadcast && destinationAddress == EBusConsts.BROADCAST_ADDRESS) {
@@ -563,14 +562,14 @@ public class EBusHandler extends BaseThingHandler {
         }
 
         // check if destination address filter is set (default true)
-        if (filterAcceptDestination && slaveAddress != null) {
+        if (filterAcceptDestination) {
 
             if (EBusUtils.isMasterAddress(destinationAddress) && masterAddressComp != null
                     && destinationAddress == masterAddressComp) {
                 // master-master telegram
                 return true;
 
-            } else if (slaveAddress == destinationAddress) {
+            } else if (slaveAddress != null && slaveAddress == destinationAddress) {
                 // master-slave telegram
                 return true;
             }
