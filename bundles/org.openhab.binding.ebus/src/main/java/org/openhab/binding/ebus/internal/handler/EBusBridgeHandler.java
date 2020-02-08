@@ -15,6 +15,7 @@ package org.openhab.binding.ebus.internal.handler;
 import static org.openhab.binding.ebus.internal.EBusBindingConstants.*;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -28,7 +29,9 @@ import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
+import org.eclipse.smarthome.core.thing.binding.ThingHandlerService;
 import org.eclipse.smarthome.core.types.Command;
+import org.openhab.binding.ebus.action.EBusActions;
 import org.openhab.binding.ebus.internal.EBusBindingConstants;
 import org.openhab.binding.ebus.internal.EBusBridgeHandlerConfiguration;
 import org.openhab.binding.ebus.internal.EBusHandlerFactory;
@@ -71,6 +74,11 @@ public class EBusBridgeHandler extends EBusBaseBridgeHandler
     private EBusBridgeHandlerConfiguration configuration;
 
     private EBusMetricsService metricsService;
+
+    @Override
+    public Collection<@NonNull Class<? extends @NonNull ThingHandlerService>> getServices() {
+        return Collections.singleton(EBusActions.class);
+    }
 
     public EBusBridgeHandler(@NonNull Bridge bridge, IEBusTypeProvider typeProvider,
             EBusHandlerFactory handlerFactory) {

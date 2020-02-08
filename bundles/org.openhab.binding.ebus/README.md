@@ -222,6 +222,35 @@ Bridge ebus:bridge:home2 "eBUS Bridge2" [ ipAddress="10.0.0.2", port=80 ] {
 Number Heating_HC_Program "Heating Program [%s]" (Heating) { channel="ebus:vrc430:home1:15:vrc430_heating_program-heating-circuit#program" }
 ```
 
+## Actions
+
+This binding includes two rule actions, which allows to send eBUS telegrams from within rules.
+
+**sendCommand**
+
+Send a command with given values to a destination address. See configuration JSON files for the correct keys for the map.
+
+``sendCommand("<collectionId>", "<commandId>", "<Dst Address>", MapObject)``
+
+**sendRawTelegram**
+
+Sends a raw hex string telegram over the eBUS binding. The bridge source address is not relevant.
+
+``sendRawTelegram("<Telegram as HEX String")``
+
+**Example**
+
+```
+   val ebusAction = getActions("ebus","ebus:bridge:<uid>")
+   val values = newLinkedHashMap(
+       'temp_d_lead_water' -> 45.5,
+       'temp_d_srv_water' -> 40.0,
+       'turnoff_water_heating' -> true,
+       'turnoffservice_water_heating' -> true
+   ) 
+
+   ebusAction.sendCommand("bai", "boiler.control.setopdata", "00", values)
+```
 
 ## Console Commands
 
