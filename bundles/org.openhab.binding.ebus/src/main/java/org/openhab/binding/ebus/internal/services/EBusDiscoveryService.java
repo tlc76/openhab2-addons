@@ -56,6 +56,10 @@ public class EBusDiscoveryService extends AbstractDiscoveryService implements IE
 
     private IEBusBridgeHandler bridgeHandle;
 
+    private boolean disableDiscovery = false;
+
+    private static final String REPRESENTATION_PROPERTY = "ebusRepresentationId";
+
     public EBusDiscoveryService(EBusBridgeHandler bridgeHandle) throws IllegalArgumentException {
         super(new HashSet<>(Arrays.asList(bridgeHandle.getThing().getThingTypeUID())), 20, false);
 
@@ -86,6 +90,13 @@ public class EBusDiscoveryService extends AbstractDiscoveryService implements IE
     public void activate(Map<String, @Nullable Object> configProperties) {
         super.activate(configProperties);
         logger.debug("Start eBUS discovery service ...");
+
+        disableDiscovery = Boolean.getBoolean(System.getProperty("EBUS_DISABLE_DISCOVERY", "false").toLowerCase());
+
+        if (disableDiscovery) {
+            logger.warn("eBUS Discovery Service is DISABLED! You will not receive any new Things in your Inbox.");
+            logger.warn("!!! This is a temporary switch that will be removed later !!!");
+        }
     }
 
     @Override
@@ -126,6 +137,9 @@ public class EBusDiscoveryService extends AbstractDiscoveryService implements IE
         properties.put(EBusBindingConstants.MASTER_ADDRESS, masterAddress);
         properties.put(EBusBindingConstants.SLAVE_ADDRESS, slaveAddress);
 
+        // add represenation property for correct discovery
+        properties.put(REPRESENTATION_PROPERTY, collection.getId() + "-" + slaveAddress);
+
         // not nice from the api, one time Map<String, String> another time <String, Object>
         Map<String, String> deviceProperties = new HashMap<>();
         updateThingProperties(device, deviceProperties);
@@ -134,6 +148,7 @@ public class EBusDiscoveryService extends AbstractDiscoveryService implements IE
         DiscoveryResult discoveryResult = DiscoveryResultBuilder.create(thingUID).withThingType(thingTypeUID)
                 .withProperties(properties).withBridge(bridgeHandle.getThing().getUID())
                 .withRepresentationProperty(String.format("%s (%s)", collection.getLabel(), slaveAddress))
+                .withRepresentationProperty(REPRESENTATION_PROPERTY)
                 .withLabel(String.format("%s (%s)", collection.getLabel(), slaveAddress)).build();
 
         thingDiscovered(discoveryResult);
@@ -144,20 +159,25 @@ public class EBusDiscoveryService extends AbstractDiscoveryService implements IE
 
         if (!type.equals(TYPE.UPDATE_ACTIVITY)) {
 
-            EBusClient client = bridgeHandle.getLibClient().getClient();
+            if (!disableDiscovery) {
 
-            Collection<IEBusCommandCollection> commandCollections = client.getCommandCollections();
-            IEBusCommandCollection commonCollection = client.getCommandCollection(EBusConsts.COLLECTION_STD);
+                EBusClient client = bridgeHandle.getLibClient().getClient();
 
-            // update common thing
-            updateDiscoveredThing(device, commonCollection);
+                Collection<IEBusCommandCollection> commandCollections = client.getCommandCollections();
+                IEBusCommandCollection commonCollection = client.getCommandCollection(EBusConsts.COLLECTION_STD);
 
-            // search for collection with device id
-            String deviceStr = EBusUtils.toHexDumpString(device.getDeviceId()).toString();
-            for (final IEBusCommandCollection collection : commandCollections) {
-                if (collection.getIdentification().contains(deviceStr)) {
-                    logger.debug("Discovered eBUS device {} ...", collection.getId());
-                    updateDiscoveredThing(device, collection);
+                // update common thing
+                updateDiscoveredThing(device, commonCollection);
+
+                // search for collection with device id
+                String deviceStr = EBusUtils.toHexDumpString(device.getDeviceId()).toString();
+                for (final IEBusCommandCollection collection : commandCollections) {
+                    if (collection.getIdentification().contains(deviceStr)) {
+                        logger.debug("Discovered eBUS device {} ...", collection.getId());
+
+                        updateDiscoveredThing(device, collection);
+
+                    }
                 }
             }
 
