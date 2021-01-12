@@ -13,9 +13,10 @@
 package org.openhab.automation.jsscripting.internal;
 
 import java.util.*;
-
+import java.io.File;
 import javax.script.ScriptEngine;
 
+import org.openhab.core.OpenHAB;
 import org.openhab.core.automation.module.script.ScriptEngineFactory;
 import org.osgi.service.component.annotations.Component;
 
@@ -47,7 +48,13 @@ public final class GraalJSScriptEngineFactory implements ScriptEngineFactory {
 
     @Override
     public ScriptEngine createScriptEngine(String scriptType) {
-        OpenhabGraalJSScriptEngine engine = new OpenhabGraalJSScriptEngine();
+
+        // final String MODULE_DIR = String.join(File.separator, OpenHAB.getConfigFolder(), "automation", "lib",
+        //         "javascript", "personal");
+
+        final String MODULE_DIR = String.join(File.separator, OpenHAB.getConfigFolder(), "automation", "jsr223-ts");
+
+        OpenhabGraalJSScriptEngine engine = new OpenhabGraalJSScriptEngine(MODULE_DIR);
         return new DebuggingGraalScriptEngine<>(engine);
     }
 }

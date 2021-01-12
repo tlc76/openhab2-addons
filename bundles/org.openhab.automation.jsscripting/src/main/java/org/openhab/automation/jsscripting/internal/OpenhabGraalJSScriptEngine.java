@@ -50,8 +50,8 @@ public class OpenhabGraalJSScriptEngine extends InvocationInterceptingScriptEngi
     private static final Logger logger = LoggerFactory.getLogger(OpenhabGraalJSScriptEngine.class);
 
     private static final String REQUIRE_WRAPPER_NAME = "__wraprequire__";
-    private static final String MODULE_DIR = String.join(File.separator, OpenHAB.getConfigFolder(), "automation", "lib",
-            "javascript", "personal");
+    // private static final String MODULE_DIR = String.join(File.separator, OpenHAB.getConfigFolder(), "automation", "lib",
+    //         "javascript", "personal");
 
     // these fields start as null because they are populated on first use
     @NonNullByDefault({})
@@ -65,11 +65,12 @@ public class OpenhabGraalJSScriptEngine extends InvocationInterceptingScriptEngi
      * Creates an implementation of ScriptEngine (& Invocable), wrapping the contained engine, that tracks the script
      * lifecycle and provides hooks for scripts to do so too.
      */
-    public OpenhabGraalJSScriptEngine() {
+    public OpenhabGraalJSScriptEngine(String moduleDir) {
         super(null); // delegate depends on fields not yet initialised, so we cannot set it immediately
+
         delegate = GraalJSScriptEngine.create(null,
                 Context.newBuilder("js").allowExperimentalOptions(true).allowAllAccess(true)
-                        .option("js.commonjs-require-cwd", MODULE_DIR).option("js.nashorn-compat", "true") // to ease
+                        .option("js.commonjs-require-cwd", moduleDir).option("js.nashorn-compat", "true") // to ease
                                                                                                            // migration
                         .option("js.commonjs-require", "true") // enable CommonJS module support
                         .fileSystem(new DelegatingFileSystem(FileSystems.getDefault().provider()) {
