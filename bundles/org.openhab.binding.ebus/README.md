@@ -256,6 +256,7 @@ Sends a raw hex string telegram over the eBUS binding. The bridge source address
 
 This binding also brings some useful console commands to get more information from
 the configuration.
+The below commands are usable with OH 2.5. In OH 3.x you have to replace ```smarthome``` with ```openhab```.
 
     smarthome:ebus list                                    lists all eBUS devices
     smarthome:ebus send "<ebus telegram>" [<bridgeUID>]    sends a raw hex telegram to an eBUS bridge or if not set to first bridge
